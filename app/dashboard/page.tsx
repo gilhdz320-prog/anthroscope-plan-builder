@@ -1,8 +1,8 @@
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const [
     { count: patientsCount },
@@ -10,111 +10,164 @@ export default async function DashboardPage() {
     { count: templatesCount },
     { count: equivalentsCount },
   ] = await Promise.all([
-    supabase.from('patients').select('*', { count: 'exact', head: true }),
-    supabase.from('plans').select('*', { count: 'exact', head: true }),
-    supabase.from('templates').select('*', { count: 'exact', head: true }),
-    supabase.from('equivalents').select('*', { count: 'exact', head: true }),
-  ])
+    supabase.from("patients").select("*", { count: "exact", head: true }),
+    supabase.from("plans").select("*", { count: "exact", head: true }),
+    supabase.from("templates").select("*", { count: "exact", head: true }),
+    supabase.from("equivalents").select("*", { count: "exact", head: true }),
+  ]);
 
   const stats = [
     {
-      label: 'Patients',
+      label: "Pacientes",
+      labelEn: "Patients",
       value: patientsCount ?? 0,
-      description: 'Active patients on file',
-      href: '/dashboard/patients',
+      description: "Pacientes en tu lista",
+      href: "/dashboard/patients",
     },
     {
-      label: 'Plans',
+      label: "Planes",
+      labelEn: "Plans",
       value: plansCount ?? 0,
-      description: 'Nutrition plans created',
-      href: '/dashboard/plans',
+      description: "Planes de nutrición creados",
+      href: "/dashboard/plans",
     },
     {
-      label: 'Templates',
+      label: "Plantillas",
+      labelEn: "Templates",
       value: templatesCount ?? 0,
-      description: 'Reusable meal templates',
-      href: '/dashboard/templates',
+      description: "Plantillas reutilizables",
+      href: "/dashboard/templates",
     },
     {
-      label: 'Equivalents',
+      label: "Equivalentes",
+      labelEn: "Equivalents",
       value: equivalentsCount ?? 0,
-      description: 'Food exchange entries',
-      href: '/dashboard/equivalents',
+      description: "Alimentos en catálogo",
+      href: "/dashboard/equivalents",
     },
-  ]
+  ];
 
   const quickLinks = [
     {
-      title: 'New patient',
-      description: 'Add a patient and start their record.',
-      href: '/dashboard/patients/new',
-      cta: 'Add patient',
+      title: "Nuevo paciente",
+      titleEn: "New patient",
+      description: "Agrega un paciente y crea su expediente.",
+      href: "/dashboard/patients/new",
+      cta: "Crear paciente",
+      variant: "brand" as const,
     },
     {
-      title: 'New plan',
-      description: 'Build a nutrition plan from a patient and template.',
-      href: '/dashboard/plans/new',
-      cta: 'Create plan',
+      title: "Nuevo plan",
+      titleEn: "New plan",
+      description: "Construye un plan a partir de un paciente y plantilla.",
+      href: "/dashboard/plans/new",
+      cta: "Crear plan",
+      variant: "primary" as const,
     },
     {
-      title: 'Browse templates',
-      description: 'Review seed and custom meal templates.',
-      href: '/dashboard/templates',
-      cta: 'View templates',
+      title: "Ver plantillas",
+      titleEn: "Templates",
+      description: "Revisa plantillas iniciales y personalizadas.",
+      href: "/dashboard/templates",
+      cta: "Ver plantillas",
+      variant: "ghost" as const,
     },
-  ]
+  ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-xl font-semibold text-stone-900">Overview</h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Welcome to Anthroscope Plan Builder.
+    <div className="space-y-12">
+      <div className="rise">
+        <p className="eyebrow">Vista general</p>
+        <h1
+          className="font-display mt-3"
+          style={{
+            fontSize: "44px",
+            color: "var(--ink-strong)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.02,
+          }}
+        >
+          Bienvenido de vuelta.
+        </h1>
+        <p
+          className="mt-3 max-w-xl text-base"
+          style={{ color: "var(--ink-muted)" }}
+        >
+          Tu estudio profesional para construir planes de nutrición de alto nivel.
         </p>
       </div>
 
-      <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-stone-400">
-          At a glance
-        </h2>
+      <section className="rise rise-1">
+        <div className="mb-4 flex items-baseline justify-between">
+          <p className="eyebrow">A primera vista</p>
+          <span
+            className="font-display italic text-xs"
+            style={{ color: "var(--ink-subtle)" }}
+          >
+            At a glance
+          </span>
+        </div>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {stats.map((stat) => (
             <Link
               key={stat.label}
               href={stat.href}
-              className="group rounded-xl border border-stone-200 bg-white p-5 transition hover:border-teal-300 hover:shadow-sm"
+              className="card-luxe group block p-6"
             >
-              <p className="text-2xl font-semibold text-stone-900 group-hover:text-teal-700">
-                {stat.value}
-              </p>
-              <p className="mt-1 text-sm font-medium text-stone-700">
+              <p
+                className="text-[10px] font-medium uppercase tracking-[0.18em]"
+                style={{ color: "var(--ink-subtle)" }}
+              >
                 {stat.label}
               </p>
-              <p className="mt-0.5 text-xs text-stone-400">
+              <p className="stat-num mt-3">{stat.value}</p>
+              <p
+                className="mt-2 text-xs"
+                style={{ color: "var(--ink-muted)" }}
+              >
                 {stat.description}
               </p>
+              <div
+                className="mt-4 h-px w-8 transition-all group-hover:w-16"
+                style={{ background: "var(--brand-600)" }}
+              />
             </Link>
           ))}
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-stone-400">
-          Quick actions
-        </h2>
+      <section className="rise rise-2">
+        <div className="mb-4 flex items-baseline justify-between">
+          <p className="eyebrow">Acciones rápidas</p>
+          <span
+            className="font-display italic text-xs"
+            style={{ color: "var(--ink-subtle)" }}
+          >
+            Quick actions
+          </span>
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           {quickLinks.map((item) => (
-            <div
-              key={item.title}
-              className="rounded-xl border border-stone-200 bg-white p-5"
-            >
-              <h3 className="text-sm font-semibold text-stone-900">
+            <div key={item.title} className="card-luxe flex flex-col p-6">
+              <h3
+                className="font-display"
+                style={{
+                  fontSize: "22px",
+                  color: "var(--ink-strong)",
+                  letterSpacing: "-0.015em",
+                }}
+              >
                 {item.title}
               </h3>
-              <p className="mt-1 text-sm text-stone-500">{item.description}</p>
+              <p
+                className="mt-2 flex-1 text-sm leading-relaxed"
+                style={{ color: "var(--ink-muted)" }}
+              >
+                {item.description}
+              </p>
               <Link
                 href={item.href}
-                className="mt-4 inline-block rounded-lg bg-teal-700 px-4 py-2 text-xs font-medium text-white transition hover:bg-teal-800"
+                className={`btn btn-${item.variant} mt-5 self-start`}
               >
                 {item.cta}
               </Link>
@@ -123,5 +176,5 @@ export default async function DashboardPage() {
         </div>
       </section>
     </div>
-  )
+  );
 }

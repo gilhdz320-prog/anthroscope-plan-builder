@@ -1,74 +1,129 @@
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-
-const navLinks = [
-  { href: '/dashboard', label: 'Overview' },
-  { href: '/dashboard/patients', label: 'Patients' },
-  { href: '/dashboard/plans', label: 'Plans' },
-  { href: '/dashboard/templates', label: 'Templates' },
-  { href: '/dashboard/equivalents', label: 'Equivalents' },
-  { href: '/dashboard/settings', label: 'Settings' },
-]
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { SidebarNav } from "@/components/SidebarNav";
+import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
 
 export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   return (
-    <div className="flex min-h-screen bg-stone-50">
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-stone-200 bg-white md:flex">
-        <div className="border-b border-stone-200 px-5 py-4">
-          <span className="text-sm font-semibold tracking-tight text-teal-700">
-            Anthroscope
-          </span>
+    <div className="flex min-h-screen">
+      <aside
+        className="hidden w-60 shrink-0 flex-col border-r md:flex"
+        style={{
+          background: "var(--surface-raised)",
+          borderColor: "var(--border-subtle)",
+        }}
+      >
+        <div
+          className="px-5 pt-6 pb-5 border-b"
+          style={{ borderColor: "var(--border-subtle)" }}
+        >
+          <Link href="/dashboard" className="block">
+            <p className="eyebrow">Plan Builder</p>
+            <h2
+              className="font-display mt-1.5"
+              style={{
+                fontSize: "22px",
+                color: "var(--ink-strong)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+              }}
+            >
+              Anthroscope
+            </h2>
+          </Link>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 p-3">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <SidebarNav />
 
-        <div className="border-t border-stone-200 p-3">
+        <div
+          className="border-t px-3 pt-3 pb-4"
+          style={{ borderColor: "var(--border-subtle)" }}
+        >
           <Link
-            href="/"
-            className="block rounded-lg px-3 py-2 text-xs text-stone-400 transition-colors hover:text-stone-600"
+            href="https://anthroscope.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-md p-3"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--brand-900) 0%, #0a4736 100%)",
+              color: "var(--ink-inverse)",
+            }}
           >
-            ← Back to home
+            <p
+              className="text-[10px] font-medium uppercase tracking-[0.18em]"
+              style={{ color: "var(--gold-300)" }}
+            >
+              Edición completa
+            </p>
+            <p
+              className="font-display mt-1 text-base italic"
+              style={{ color: "var(--ink-inverse)" }}
+            >
+              Descubre Anthroscope →
+            </p>
+            <p
+              className="mt-1 text-[11px] leading-snug"
+              style={{ color: "rgba(248,245,238,0.7)" }}
+            >
+              ISAK, hidratación, periodización y AI coaching.
+            </p>
           </Link>
         </div>
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-3">
-          <p className="text-sm font-medium text-stone-500">Dashboard</p>
+        <header
+          className="flex items-center justify-between border-b px-6 py-3"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--border-subtle)",
+          }}
+        >
+          <p
+            className="text-xs uppercase tracking-[0.18em]"
+            style={{ color: "var(--ink-subtle)" }}
+          >
+            Panel
+          </p>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-stone-500">{user?.email}</span>
+            <span
+              className="text-xs"
+              style={{ color: "var(--ink-muted)" }}
+            >
+              {user?.email}
+            </span>
             <form action="/logout" method="post">
-              <button
-                type="submit"
-                className="rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-100"
-              >
-                Sign out
+              <button type="submit" className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: "12px" }}>
+                Cerrar sesión
               </button>
             </form>
           </div>
         </header>
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 px-6 py-8 md:px-10">
+          <div className="mx-auto max-w-6xl">{children}</div>
+        </main>
+
+        <footer
+          className="border-t px-6 py-5"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--border-subtle)",
+          }}
+        >
+          <PoweredByAnthroscope variant="minimal" className="text-center" />
+        </footer>
       </div>
     </div>
-  )
+  );
 }

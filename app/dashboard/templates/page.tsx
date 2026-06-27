@@ -1,73 +1,97 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server";
 
 const goalLabel: Record<string, string> = {
-  weight_loss: 'Weight loss',
-  maintenance: 'Maintenance',
-  muscle_gain: 'Muscle gain',
-  performance: 'Performance',
-  therapeutic: 'Therapeutic',
-}
+  weight_loss: "Pérdida de peso",
+  maintenance: "Mantenimiento",
+  muscle_gain: "Ganancia muscular",
+  performance: "Rendimiento",
+  therapeutic: "Terapéutico",
+};
 
 export default async function TemplatesPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const { data: templates, error } = await supabase
-    .from('templates')
-    .select('id, name, description, goal, kcal_target, is_seed, is_public, user_id')
-    .order('is_seed', { ascending: false })
-    .order('created_at', { ascending: false })
+    .from("templates")
+    .select("id, name, description, goal, kcal_target, is_seed, is_public, user_id")
+    .order("is_seed", { ascending: false })
+    .order("created_at", { ascending: false });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">Templates</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            Reusable meal-plan skeletons you can apply to any patient.
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div className="rise">
+        <p className="eyebrow">Plantillas</p>
+        <h1
+          className="font-display mt-3"
+          style={{
+            fontSize: "38px",
+            color: "var(--ink-strong)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.02,
+          }}
+        >
+          Plantillas reutilizables
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--ink-muted)" }}>
+          Esqueletos de plan que puedes aplicar a cualquier paciente.
+        </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+        <div
+          className="rounded-md border p-3 text-xs"
+          style={{
+            background: "var(--danger-bg)",
+            borderColor: "rgba(184,60,42,0.2)",
+            color: "var(--danger)",
+          }}
+        >
           {error.message}
         </div>
       )}
 
-      <div className="rounded-xl border border-stone-200 bg-white">
-        <div className="border-b border-stone-100 px-5 py-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">
-            All templates
-          </p>
+      <div className="card-luxe overflow-hidden rise rise-1" style={{ padding: 0 }}>
+        <div
+          className="border-b px-5 py-3.5"
+          style={{ borderColor: "var(--border-subtle)" }}
+        >
+          <p className="eyebrow">Todas las plantillas</p>
         </div>
 
         {!templates || templates.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-stone-400">
-            No templates yet.
+          <div
+            className="px-5 py-14 text-center text-sm"
+            style={{ color: "var(--ink-subtle)" }}
+          >
+            Aún no hay plantillas.
           </div>
         ) : (
-          <ul className="divide-y divide-stone-100">
+          <ul>
             {templates.map((tpl) => (
               <li
                 key={tpl.id}
-                className="flex items-center justify-between px-5 py-4"
+                className="flex items-center justify-between border-t px-5 py-4 transition-colors hover:bg-[var(--surface-sunken)]/40"
+                style={{ borderColor: "var(--border-subtle)" }}
               >
                 <div>
-                  <p className="text-sm font-medium text-stone-800">
+                  <p
+                    className="font-display"
+                    style={{
+                      fontSize: "17px",
+                      color: "var(--ink-strong)",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
                     {tpl.name}
                   </p>
-                  <p className="mt-0.5 text-xs text-stone-400">
-                    {tpl.goal ? goalLabel[tpl.goal] ?? tpl.goal : '—'} ·{' '}
-                    {tpl.kcal_target ? `${tpl.kcal_target} kcal` : 'no target'}
+                  <p className="mt-1 text-xs" style={{ color: "var(--ink-muted)" }}>
+                    {tpl.goal ? goalLabel[tpl.goal] ?? tpl.goal : "Sin objetivo"} ·{" "}
+                    <span className="font-mono-tabular">
+                      {tpl.kcal_target ? `${tpl.kcal_target} kcal` : "sin meta"}
+                    </span>
                   </p>
                 </div>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs ${
-                    tpl.is_seed
-                      ? 'bg-stone-100 text-stone-500'
-                      : 'bg-teal-50 text-teal-700'
-                  }`}
-                >
-                  {tpl.is_seed ? 'seed' : 'custom'}
+                <span className={tpl.is_seed ? "chip" : "chip chip-brand"}>
+                  {tpl.is_seed ? "Inicial" : "Personalizada"}
                 </span>
               </li>
             ))}
@@ -75,5 +99,5 @@ export default async function TemplatesPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

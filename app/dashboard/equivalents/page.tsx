@@ -59,7 +59,6 @@ export default async function EquivalentsPage() {
   const groups: FoodGroup[] = groupsRes.data ?? []
   const error = equivRes.error?.message || groupsRes.error?.message
 
-  // Build a map of group_key -> equivalents
   const byGroup: Record<string, Equivalent[]> = {}
   for (const e of equivalents) {
     const key = e.group_key || e.group_name || 'other'
@@ -67,8 +66,6 @@ export default async function EquivalentsPage() {
     byGroup[key].push(e)
   }
 
-  // Determine display order: canonical groups first (by display_order),
-  // then any orphan groups not in food_groups
   const groupsByKey: Record<string, FoodGroup> = {}
   for (const g of groups) groupsByKey[g.key] = g
   const orderedKeys = [
@@ -79,95 +76,145 @@ export default async function EquivalentsPage() {
   const totalCount = equivalents.length
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-end justify-between gap-6 rise">
         <div>
-          <h1 className="text-xl font-semibold text-stone-900">
+          <p className="eyebrow">{locale === 'en' ? 'Catalog' : 'Catálogo'}</p>
+          <h1
+            className="font-display mt-3"
+            style={{
+              fontSize: '38px',
+              color: 'var(--ink-strong)',
+              letterSpacing: '-0.025em',
+              lineHeight: 1.02,
+            }}
+          >
             {tr('equivalents_title', locale)}
           </h1>
-          <p className="mt-1 text-sm text-stone-500">
+          <p className="mt-2 text-sm" style={{ color: 'var(--ink-muted)' }}>
             {tr('equivalents_subtitle', locale)}
           </p>
         </div>
         {totalCount > 0 && (
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-600">
+          <span className="chip chip-gold">
             {totalCount} {locale === 'es' ? 'alimentos' : 'foods'}
           </span>
         )}
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+        <div
+          className="rounded-md border p-3 text-xs"
+          style={{
+            background: 'var(--danger-bg)',
+            borderColor: 'rgba(184,60,42,0.2)',
+            color: 'var(--danger)',
+          }}
+        >
           {error}
         </div>
       )}
 
       {orderedKeys.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center text-sm text-stone-400">
+        <div
+          className="card-luxe px-6 py-16 text-center text-sm"
+          style={{ borderStyle: 'dashed', color: 'var(--ink-subtle)' }}
+        >
           {tr('equivalents_empty', locale)}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {orderedKeys.map((key) => {
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {orderedKeys.map((key, idx) => {
             const items = byGroup[key]
             const meta = groupsByKey[key]
-            const groupLabel = meta
-              ? (locale === 'en' ? meta.name_en : meta.name_es)
-              : key
-            const groupNote = meta
-              ? (locale === 'en' ? meta.notes_en : meta.notes_es)
-              : null
+            const groupLabel = meta ? (locale === 'en' ? meta.name_en : meta.name_es) : key
+            const groupNote = meta ? (locale === 'en' ? meta.notes_en : meta.notes_es) : null
             return (
               <div
                 key={key}
-                className="rounded-xl border border-stone-200 bg-white"
+                className={`card-luxe rise rise-${Math.min(idx + 1, 4)}`}
+                style={{ padding: 0 }}
               >
-                <div className="border-b border-stone-100 px-4 py-3">
+                <div
+                  className="border-b px-5 py-4"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-500">
+                    <h2
+                      className="font-display"
+                      style={{
+                        fontSize: '17px',
+                        color: 'var(--ink-strong)',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
                       {groupLabel}
                     </h2>
                     {meta?.exchange_kcal && (
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                      <span className="chip chip-brand">
                         {meta.exchange_kcal} kcal
                       </span>
                     )}
                   </div>
                   {groupNote && (
-                    <p className="mt-1 text-[11px] text-stone-400">{groupNote}</p>
+                    <p
+                      className="mt-1.5 text-[11px]"
+                      style={{ color: 'var(--ink-subtle)' }}
+                    >
+                      {groupNote}
+                    </p>
                   )}
                 </div>
-                <ul className="divide-y divide-stone-100">
+                <ul>
                   {items.map((item) => {
-                    const altName =
-                      locale === 'es' ? item.food_name_en : item.food_name_es
+                    const altName = locale === 'es' ? item.food_name_en : item.food_name_es
                     return (
-                      <li key={item.id} className="px-4 py-2.5">
+                      <li
+                        key={item.id}
+                        className="border-t px-5 py-3"
+                        style={{ borderColor: 'var(--border-subtle)' }}
+                      >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-stone-800">
+                          <p
+                            className="text-sm font-medium"
+                            style={{ color: 'var(--ink-strong)' }}
+                          >
                             {pickName(item, locale)}
                           </p>
                           {item.source === 'usda' && (
-                            <span className="shrink-0 rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-medium uppercase text-blue-600">
+                            <span
+                              className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+                              style={{
+                                background: 'var(--surface-sunken)',
+                                color: 'var(--ink-subtle)',
+                                fontFamily: 'var(--font-jetbrains)',
+                              }}
+                            >
                               USDA
                             </span>
                           )}
                         </div>
                         {altName && altName !== pickName(item, locale) && (
-                          <p className="text-[11px] italic text-stone-400">
+                          <p
+                            className="text-[11px] italic font-display"
+                            style={{ color: 'var(--ink-subtle)' }}
+                          >
                             {altName}
                           </p>
                         )}
-                        <p className="mt-1 text-xs text-stone-500">
+                        <p
+                          className="mt-1 text-xs font-mono-tabular"
+                          style={{ color: 'var(--ink-muted)' }}
+                        >
                           {pickServing(item, locale)}
                           {item.kcal != null && ` · ${item.kcal} kcal`}
                         </p>
-                        {(item.protein_g != null ||
-                          item.carbs_g != null ||
-                          item.fat_g != null) && (
-                          <p className="mt-0.5 text-[10px] tabular-nums text-stone-400">
-                            P {item.protein_g ?? 0} · C {item.carbs_g ?? 0} · G{' '}
-                            {item.fat_g ?? 0}
+                        {(item.protein_g != null || item.carbs_g != null || item.fat_g != null) && (
+                          <p
+                            className="mt-0.5 text-[10px] font-mono-tabular"
+                            style={{ color: 'var(--ink-subtle)' }}
+                          >
+                            P {item.protein_g ?? 0} · C {item.carbs_g ?? 0} · G {item.fat_g ?? 0}
                             {item.fiber_g ? ` · Fib ${item.fiber_g}` : ''}
                           </p>
                         )}

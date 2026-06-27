@@ -1,94 +1,131 @@
-import Link from 'next/link'
-import { signup } from './actions'
+import Link from "next/link";
+import { signup } from "./actions";
+import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
 
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const sp = await searchParams
+  const sp = await searchParams;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-lg font-semibold text-teal-700">Anthroscope</h1>
-          <p className="mt-1 text-sm text-stone-500">Create your account</p>
+    <main className="flex min-h-screen flex-col">
+      <div className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <Link href="/" className="inline-block">
+              <p className="eyebrow">Plan Builder · Pro</p>
+              <h1
+                className="font-display mt-2"
+                style={{
+                  fontSize: "34px",
+                  color: "var(--ink-strong)",
+                  letterSpacing: "-0.025em",
+                  lineHeight: 1,
+                }}
+              >
+                Anthroscope
+              </h1>
+            </Link>
+            <p
+              className="mt-3 text-sm"
+              style={{ color: "var(--ink-muted)" }}
+            >
+              Crea tu cuenta y comienza a construir planes profesionales.
+            </p>
+          </div>
+
+          <div className="card-luxe p-8 rise">
+            {sp.error && (
+              <div
+                className="mb-5 rounded-md border p-3 text-xs"
+                style={{
+                  background: "var(--danger-bg)",
+                  borderColor: "rgba(184,60,42,0.2)",
+                  color: "var(--danger)",
+                }}
+              >
+                {sp.error}
+              </div>
+            )}
+
+            <form action={signup} className="space-y-5">
+              <div>
+                <label htmlFor="full_name" className="label">
+                  Nombre completo
+                </label>
+                <input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  required
+                  className="input"
+                  placeholder="Gilbert Hernandez"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="label">
+                  Correo electrónico
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="input"
+                  placeholder="tu@correo.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="label">
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  minLength={6}
+                  className="input"
+                  placeholder="Mínimo 6 caracteres"
+                />
+                <p
+                  className="mt-1.5 text-[11px]"
+                  style={{ color: "var(--ink-subtle)" }}
+                >
+                  Usa al menos 6 caracteres.
+                </p>
+              </div>
+
+              <button type="submit" className="btn btn-brand w-full">
+                Crear cuenta
+              </button>
+            </form>
+
+            <p
+              className="mt-6 text-center text-xs"
+              style={{ color: "var(--ink-muted)" }}
+            >
+              ¿Ya tienes cuenta?{" "}
+              <Link
+                href="/login"
+                className="font-display italic"
+                style={{ color: "var(--brand-700)" }}
+              >
+                Inicia sesión
+              </Link>
+            </p>
+          </div>
+
+          <div className="mt-8">
+            <PoweredByAnthroscope />
+          </div>
         </div>
-
-        {sp.error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-            {sp.error}
-          </div>
-        )}
-
-        <form action={signup} className="space-y-4">
-          <div>
-            <label
-              htmlFor="full_name"
-              className="block text-xs font-medium text-stone-700"
-            >
-              Full name
-            </label>
-            <input
-              id="full_name"
-              name="full_name"
-              type="text"
-              required
-              className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-teal-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-xs font-medium text-stone-700"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-teal-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-xs font-medium text-stone-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              minLength={6}
-              className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-teal-500"
-            />
-            <p className="mt-1 text-xs text-stone-400">Mínimo 6 caracteres.</p>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
-          >
-            Create account
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-xs text-stone-500">
-          Already have an account?{' '}
-          <Link href="/login" className="text-teal-700 hover:underline">
-            Sign in
-          </Link>
-        </p>
       </div>
-    </div>
-  )
+    </main>
+  );
 }

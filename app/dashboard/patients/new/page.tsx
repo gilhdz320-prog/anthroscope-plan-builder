@@ -1,264 +1,209 @@
-import Link from 'next/link'
-import { createPatient } from '../actions'
+import Link from "next/link";
+import { createPatient } from "../actions";
 
 export default async function NewPatientPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const sp = await searchParams
-
-  const input =
-    'mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-teal-500'
-  const label = 'block text-xs font-medium text-stone-700'
+  const sp = await searchParams;
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-8">
+      <div className="rise">
         <Link
           href="/dashboard/patients"
-          className="text-xs text-stone-400 hover:text-stone-600"
+          className="text-xs"
+          style={{ color: "var(--ink-subtle)" }}
         >
-          ← Back to patients
+          ← Volver a pacientes
         </Link>
-        <h1 className="mt-2 text-xl font-semibold text-stone-900">
-          New patient
+        <p className="eyebrow mt-4">Nuevo paciente</p>
+        <h1
+          className="font-display mt-2"
+          style={{
+            fontSize: "36px",
+            color: "var(--ink-strong)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.02,
+          }}
+        >
+          Crear expediente
         </h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Fill in the patient&apos;s information. Only first and last name are
-          required.
+        <p
+          className="mt-2 max-w-xl text-sm"
+          style={{ color: "var(--ink-muted)" }}
+        >
+          Solo nombre y apellido son obligatorios. El resto es opcional pero ayuda a personalizar el plan.
         </p>
       </div>
 
       {sp.error && (
-        <div className="max-w-2xl rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+        <div
+          className="max-w-2xl rounded-md border p-3 text-xs"
+          style={{
+            background: "var(--danger-bg)",
+            borderColor: "rgba(184,60,42,0.2)",
+            color: "var(--danger)",
+          }}
+        >
           {sp.error}
         </div>
       )}
 
-      <form
-        action={createPatient}
-        className="max-w-2xl space-y-6 rounded-xl border border-stone-200 bg-white p-6"
-      >
+      <form action={createPatient} className="card-luxe max-w-3xl space-y-8 p-8 rise rise-1">
         {/* Basics */}
-        <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-            Basics
-          </h2>
+        <section className="space-y-5">
+          <div className="flex items-baseline justify-between">
+            <p className="eyebrow">Datos básicos</p>
+            <span
+              className="font-display italic text-xs"
+              style={{ color: "var(--ink-subtle)" }}
+            >
+              Basics
+            </span>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="first_name" className={label}>
-                First name *
-              </label>
-              <input
-                id="first_name"
-                name="first_name"
-                type="text"
-                required
-                className={input}
-              />
+              <label htmlFor="first_name" className="label">Nombre *</label>
+              <input id="first_name" name="first_name" type="text" required className="input" />
             </div>
             <div>
-              <label htmlFor="last_name" className={label}>
-                Last name *
-              </label>
-              <input
-                id="last_name"
-                name="last_name"
-                type="text"
-                required
-                className={input}
-              />
+              <label htmlFor="last_name" className="label">Apellido *</label>
+              <input id="last_name" name="last_name" type="text" required className="input" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="email" className={label}>
-                Email
-              </label>
-              <input id="email" name="email" type="email" className={input} />
+              <label htmlFor="email" className="label">Correo</label>
+              <input id="email" name="email" type="email" className="input" />
             </div>
             <div>
-              <label htmlFor="phone" className={label}>
-                Phone
-              </label>
-              <input id="phone" name="phone" type="tel" className={input} />
+              <label htmlFor="phone" className="label">Teléfono</label>
+              <input id="phone" name="phone" type="tel" className="input" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="birth_date" className={label}>
-                Date of birth
-              </label>
-              <input
-                id="birth_date"
-                name="birth_date"
-                type="date"
-                className={input}
-              />
+              <label htmlFor="birth_date" className="label">Fecha de nacimiento</label>
+              <input id="birth_date" name="birth_date" type="date" className="input" />
             </div>
             <div>
-              <label htmlFor="sex" className={label}>
-                Sex
-              </label>
-              <select id="sex" name="sex" className={input}>
-                <option value="">Select</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="other">Other</option>
+              <label htmlFor="sex" className="label">Sexo</label>
+              <select id="sex" name="sex" className="input">
+                <option value="">Seleccionar</option>
+                <option value="female">Femenino</option>
+                <option value="male">Masculino</option>
+                <option value="other">Otro</option>
               </select>
             </div>
           </div>
         </section>
 
         {/* Anthropometry */}
-        <section className="space-y-4 border-t border-stone-100 pt-5">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-            Anthropometry (optional)
-          </h2>
+        <section className="space-y-5 border-t pt-7" style={{ borderColor: "var(--border-subtle)" }}>
+          <div className="flex items-baseline justify-between">
+            <p className="eyebrow">Antropometría (opcional)</p>
+            <span
+              className="font-display italic text-xs"
+              style={{ color: "var(--ink-subtle)" }}
+            >
+              Anthropometry
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label htmlFor="weight_kg" className={label}>
-                Weight (kg)
-              </label>
-              <input
-                id="weight_kg"
-                name="weight_kg"
-                type="number"
-                step="0.1"
-                className={input}
-              />
+              <label htmlFor="weight_kg" className="label">Peso (kg)</label>
+              <input id="weight_kg" name="weight_kg" type="number" step="0.1" className="input" />
             </div>
             <div>
-              <label htmlFor="height_cm" className={label}>
-                Height (cm)
-              </label>
-              <input
-                id="height_cm"
-                name="height_cm"
-                type="number"
-                step="0.1"
-                className={input}
-              />
+              <label htmlFor="height_cm" className="label">Altura (cm)</label>
+              <input id="height_cm" name="height_cm" type="number" step="0.1" className="input" />
             </div>
             <div>
-              <label htmlFor="body_fat_pct" className={label}>
-                Body fat %
-              </label>
-              <input
-                id="body_fat_pct"
-                name="body_fat_pct"
-                type="number"
-                step="0.1"
-                className={input}
-              />
+              <label htmlFor="body_fat_pct" className="label">% Grasa</label>
+              <input id="body_fat_pct" name="body_fat_pct" type="number" step="0.1" className="input" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="waist_cm" className={label}>
-                Waist (cm)
-              </label>
-              <input
-                id="waist_cm"
-                name="waist_cm"
-                type="number"
-                step="0.1"
-                className={input}
-              />
+              <label htmlFor="waist_cm" className="label">Cintura (cm)</label>
+              <input id="waist_cm" name="waist_cm" type="number" step="0.1" className="input" />
             </div>
             <div>
-              <label htmlFor="hip_cm" className={label}>
-                Hip (cm)
-              </label>
-              <input
-                id="hip_cm"
-                name="hip_cm"
-                type="number"
-                step="0.1"
-                className={input}
-              />
+              <label htmlFor="hip_cm" className="label">Cadera (cm)</label>
+              <input id="hip_cm" name="hip_cm" type="number" step="0.1" className="input" />
             </div>
           </div>
         </section>
 
-        {/* Sport / activity */}
-        <section className="space-y-4 border-t border-stone-100 pt-5">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-            Sport &amp; activity
-          </h2>
+        {/* Sport */}
+        <section className="space-y-5 border-t pt-7" style={{ borderColor: "var(--border-subtle)" }}>
+          <div className="flex items-baseline justify-between">
+            <p className="eyebrow">Deporte y actividad</p>
+            <span
+              className="font-display italic text-xs"
+              style={{ color: "var(--ink-subtle)" }}
+            >
+              Sport &amp; activity
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label htmlFor="sport" className={label}>
-                Sport
-              </label>
-              <input
-                id="sport"
-                name="sport"
-                type="text"
-                placeholder="Soccer, Track & Field…"
-                className={input}
-              />
+              <label htmlFor="sport" className="label">Deporte</label>
+              <input id="sport" name="sport" type="text" placeholder="Fútbol, Atletismo…" className="input" />
             </div>
             <div>
-              <label htmlFor="activity_level" className={label}>
-                Activity level
-              </label>
-              <select id="activity_level" name="activity_level" className={input}>
-                <option value="">Select</option>
-                <option value="sedentary">Sedentary</option>
-                <option value="light">Light</option>
-                <option value="moderate">Moderate</option>
-                <option value="active">Active</option>
-                <option value="very_active">Very active</option>
+              <label htmlFor="activity_level" className="label">Nivel de actividad</label>
+              <select id="activity_level" name="activity_level" className="input">
+                <option value="">Seleccionar</option>
+                <option value="sedentary">Sedentario</option>
+                <option value="light">Ligero</option>
+                <option value="moderate">Moderado</option>
+                <option value="active">Activo</option>
+                <option value="very_active">Muy activo</option>
               </select>
             </div>
             <div>
-              <label htmlFor="goal" className={label}>
-                Goal
-              </label>
-              <select id="goal" name="goal" className={input}>
-                <option value="">Select</option>
-                <option value="weight_loss">Weight loss</option>
-                <option value="maintenance">Maintenance</option>
-                <option value="muscle_gain">Muscle gain</option>
-                <option value="performance">Performance</option>
+              <label htmlFor="goal" className="label">Objetivo</label>
+              <select id="goal" name="goal" className="input">
+                <option value="">Seleccionar</option>
+                <option value="weight_loss">Pérdida de peso</option>
+                <option value="maintenance">Mantenimiento</option>
+                <option value="muscle_gain">Ganancia muscular</option>
+                <option value="performance">Rendimiento</option>
               </select>
             </div>
           </div>
         </section>
 
         {/* Notes */}
-        <section className="border-t border-stone-100 pt-5">
-          <label htmlFor="notes" className={label}>
-            Notes
-          </label>
+        <section className="border-t pt-7" style={{ borderColor: "var(--border-subtle)" }}>
+          <label htmlFor="notes" className="label">Notas</label>
           <textarea
             id="notes"
             name="notes"
             rows={3}
-            placeholder="Allergies, relevant conditions, context…"
-            className={`${input} resize-none`}
+            placeholder="Alergias, condiciones relevantes, contexto…"
+            className="input resize-none"
           />
         </section>
 
-        <div className="flex items-center gap-3 border-t border-stone-100 pt-5">
-          <button
-            type="submit"
-            className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
-          >
-            Save patient
+        <div className="flex items-center gap-3 border-t pt-7" style={{ borderColor: "var(--border-subtle)" }}>
+          <button type="submit" className="btn btn-brand">
+            Guardar paciente
           </button>
           <Link
             href="/dashboard/patients"
-            className="text-sm text-stone-500 hover:text-stone-700"
+            className="text-sm"
+            style={{ color: "var(--ink-muted)" }}
           >
-            Cancel
+            Cancelar
           </Link>
         </div>
       </form>
     </div>
-  )
+  );
 }

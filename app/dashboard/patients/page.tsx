@@ -1,80 +1,147 @@
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { deletePatient } from './actions'
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { deletePatient } from "./actions";
+
+const goalLabel: Record<string, string> = {
+  weight_loss: "Pérdida de peso",
+  maintenance: "Mantenimiento",
+  muscle_gain: "Ganancia muscular",
+  performance: "Rendimiento",
+};
 
 export default async function PatientsPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const { data: patients, error } = await supabase
-    .from('patients')
-    .select('id, first_name, last_name, email, sex, birth_date, sport, goal, created_at')
-    .order('created_at', { ascending: false })
+    .from("patients")
+    .select(
+      "id, first_name, last_name, email, sex, birth_date, sport, goal, created_at",
+    )
+    .order("created_at", { ascending: false });
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-end justify-between gap-6 rise">
         <div>
-          <h1 className="text-xl font-semibold text-stone-900">Patients</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            Manage your active patients and their records.
+          <p className="eyebrow">Pacientes</p>
+          <h1
+            className="font-display mt-3"
+            style={{
+              fontSize: "38px",
+              color: "var(--ink-strong)",
+              letterSpacing: "-0.025em",
+              lineHeight: 1.02,
+            }}
+          >
+            Tus pacientes
+          </h1>
+          <p
+            className="mt-2 text-sm"
+            style={{ color: "var(--ink-muted)" }}
+          >
+            Administra los expedientes de tus pacientes activos.
           </p>
         </div>
-        <Link
-          href="/dashboard/patients/new"
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
-        >
-          + New patient
+        <Link href="/dashboard/patients/new" className="btn btn-brand">
+          + Nuevo paciente
         </Link>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+        <div
+          className="rounded-md border p-3 text-xs"
+          style={{
+            background: "var(--danger-bg)",
+            borderColor: "rgba(184,60,42,0.2)",
+            color: "var(--danger)",
+          }}
+        >
           {error.message}
         </div>
       )}
 
       {!patients || patients.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center">
-          <p className="text-sm font-medium text-stone-600">No patients yet</p>
-          <p className="mt-1 text-sm text-stone-400">
-            Add your first patient to get started.
+        <div
+          className="card-luxe px-6 py-20 text-center rise rise-1"
+          style={{ borderStyle: "dashed" }}
+        >
+          <p
+            className="font-display"
+            style={{ fontSize: "22px", color: "var(--ink-strong)" }}
+          >
+            Aún no hay pacientes.
+          </p>
+          <p
+            className="mt-2 text-sm"
+            style={{ color: "var(--ink-muted)" }}
+          >
+            Agrega tu primer paciente para comenzar.
           </p>
           <Link
             href="/dashboard/patients/new"
-            className="mt-4 inline-block rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
+            className="btn btn-brand mt-6"
           >
-            Add patient
+            Agregar paciente
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+        <div className="card-luxe overflow-hidden rise rise-1" style={{ padding: 0 }}>
           <table className="w-full text-sm">
-            <thead className="border-b border-stone-100 bg-stone-50 text-left text-xs uppercase tracking-wider text-stone-500">
+            <thead
+              className="text-left"
+              style={{
+                background: "var(--surface-sunken)",
+                color: "var(--ink-subtle)",
+              }}
+            >
               <tr>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Sport</th>
-                <th className="px-4 py-3">Goal</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em]">
+                  Nombre
+                </th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em]">
+                  Correo
+                </th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em]">
+                  Deporte
+                </th>
+                <th className="px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em]">
+                  Objetivo
+                </th>
+                <th className="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-[0.16em]">
+                  Acciones
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody>
               {patients.map((p) => (
-                <tr key={p.id} className="hover:bg-stone-50">
-                  <td className="px-4 py-3 font-medium text-stone-800">
+                <tr
+                  key={p.id}
+                  className="border-t transition-colors hover:bg-[var(--surface-sunken)]/50"
+                  style={{ borderColor: "var(--border-subtle)" }}
+                >
+                  <td
+                    className="px-5 py-3.5 font-medium"
+                    style={{ color: "var(--ink-strong)" }}
+                  >
                     {p.first_name} {p.last_name}
                   </td>
-                  <td className="px-4 py-3 text-stone-500">{p.email ?? '—'}</td>
-                  <td className="px-4 py-3 text-stone-500">{p.sport ?? '—'}</td>
-                  <td className="px-4 py-3 text-stone-500">{p.goal ?? '—'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-5 py-3.5" style={{ color: "var(--ink-muted)" }}>
+                    {p.email ?? "—"}
+                  </td>
+                  <td className="px-5 py-3.5" style={{ color: "var(--ink-muted)" }}>
+                    {p.sport ?? "—"}
+                  </td>
+                  <td className="px-5 py-3.5" style={{ color: "var(--ink-muted)" }}>
+                    {p.goal ? goalLabel[p.goal] ?? p.goal : "—"}
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
                     <form action={deletePatient} className="inline">
                       <input type="hidden" name="id" value={p.id} />
                       <button
                         type="submit"
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs transition-colors"
+                        style={{ color: "var(--danger)" }}
                       >
-                        Delete
+                        Eliminar
                       </button>
                     </form>
                   </td>
@@ -85,5 +152,5 @@ export default async function PatientsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

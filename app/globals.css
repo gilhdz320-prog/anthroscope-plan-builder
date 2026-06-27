@@ -1,26 +1,436 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   Anthroscope Plan Builder — Luxury Sport Design System
+   Inspired by editorial luxury watch brands + premium athletic performance
+   ============================================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces — cream-leaning neutrals (warm, premium, not stark white) */
+  --surface-base: #F8F5EE;        /* Ivory / page background */
+  --surface-raised: #FFFFFF;       /* Cards, panels */
+  --surface-sunken: #F0EBE0;       /* Inset sections */
+  --surface-muted: #ECE6D8;        /* Subtle backgrounds */
+
+  /* Ink — sophisticated dark, not pure black */
+  --ink-strong: #0E1410;           /* Carbon — headings, hero */
+  --ink-default: #1B2520;          /* Body */
+  --ink-muted: #5A655F;            /* Secondary text */
+  --ink-subtle: #8A938D;           /* Hints, captions */
+  --ink-inverse: #F8F5EE;          /* On dark surfaces */
+
+  /* Brand — emerald (signature accent) */
+  --brand-50: #E8F4EF;
+  --brand-100: #C7E4D6;
+  --brand-300: #6FB594;
+  --brand-500: #1F8A65;            /* Primary CTA */
+  --brand-600: #0F7B5C;            /* Hover */
+  --brand-700: #0A5B45;            /* Pressed */
+  --brand-900: #053024;            /* Deep emerald */
+
+  /* Gold — luxury secondary accent (badges, premium markers) */
+  --gold-300: #E2C77E;
+  --gold-500: #C9A24A;             /* Champagne */
+  --gold-600: #A8842F;
+  --gold-700: #7E6322;
+
+  /* Functional */
+  --danger: #B83C2A;
+  --danger-bg: #FBE8E3;
+  --success: var(--brand-600);
+  --warning: #B47424;
+  --warning-bg: #FBF1D9;
+
+  /* Borders & dividers */
+  --border-subtle: rgba(14, 20, 16, 0.06);
+  --border-default: rgba(14, 20, 16, 0.12);
+  --border-strong: rgba(14, 20, 16, 0.22);
+  --border-emerald: rgba(15, 123, 92, 0.20);
+
+  /* Shadows — soft, premium */
+  --shadow-xs: 0 1px 2px rgba(14, 20, 16, 0.04);
+  --shadow-sm: 0 1px 3px rgba(14, 20, 16, 0.06), 0 1px 2px rgba(14, 20, 16, 0.03);
+  --shadow-md: 0 4px 16px rgba(14, 20, 16, 0.06), 0 2px 4px rgba(14, 20, 16, 0.04);
+  --shadow-lg: 0 12px 32px rgba(14, 20, 16, 0.08), 0 4px 8px rgba(14, 20, 16, 0.04);
+  --shadow-elev: 0 24px 56px rgba(14, 20, 16, 0.12), 0 8px 16px rgba(14, 20, 16, 0.05);
+  --shadow-emerald: 0 8px 24px rgba(15, 123, 92, 0.18);
+
+  /* Typography */
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* Animation curves */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Tailwind v4 theme bridge */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--surface-base);
+  --color-foreground: var(--ink-default);
+
+  --color-surface: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-muted: var(--surface-muted);
+
+  --color-ink: var(--ink-default);
+  --color-ink-strong: var(--ink-strong);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-inverse: var(--ink-inverse);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-300: var(--brand-300);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-900: var(--brand-900);
+
+  --color-gold-300: var(--gold-300);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-emerald: var(--border-emerald);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================================
+   Base
+   ============================================================================ */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-base);
+  color: var(--ink-default);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.005em;
+}
+
+/* Subtle grain on body for "real paper" feel — premium editorial */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.55;
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+
+body > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ============================================================================
+   Typography helpers
+   ============================================================================ */
+
+.font-display {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.022em;
+}
+
+.font-mono-tabular {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "ss01";
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   Reusable patterns
+   ============================================================================ */
+
+/* Premium card */
+.card-luxe {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 240ms var(--ease-out), transform 240ms var(--ease-out);
+}
+
+.card-luxe:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Subtle hairline divider */
+.hairline {
+  border-color: var(--border-subtle);
+}
+
+/* Pill / chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+}
+
+.chip-brand {
+  background: var(--brand-50);
+  color: var(--brand-700);
+}
+
+.chip-gold {
+  background: linear-gradient(135deg, #F4E5B7 0%, #E2C77E 100%);
+  color: var(--gold-700);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: all 180ms var(--ease-out);
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--ink-strong);
+  color: var(--ink-inverse);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background: var(--brand-900);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-brand {
+  background: var(--brand-600);
+  color: var(--ink-inverse);
+  box-shadow: var(--shadow-emerald);
+}
+
+.btn-brand:hover {
+  background: var(--brand-700);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-default);
+  border-color: var(--border-default);
+}
+
+.btn-ghost:hover {
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: rgba(184, 60, 42, 0.2);
+}
+
+.btn-danger:hover {
+  background: var(--danger-bg);
+}
+
+/* Input */
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-raised);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--ink-default);
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(15, 123, 92, 0.12);
+}
+
+.input::placeholder {
+  color: var(--ink-subtle);
+}
+
+/* Label */
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+/* Eyebrow (section labels) */
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-700);
+}
+
+/* Section heading */
+.section-h {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  color: var(--ink-strong);
+  line-height: 1.05;
+}
+
+/* Decorative dot leader */
+.dot-leader::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dotted var(--border-default);
+  margin: 0 8px;
+  align-self: end;
+  height: 10px;
+}
+
+/* Subtle reveal animation */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rise {
+  animation: rise 480ms var(--ease-out) both;
+}
+
+.rise-1 { animation-delay: 60ms; }
+.rise-2 { animation-delay: 120ms; }
+.rise-3 { animation-delay: 180ms; }
+.rise-4 { animation-delay: 240ms; }
+
+/* Spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 600ms linear infinite;
+  display: inline-block;
+}
+
+/* Stats number */
+.stat-num {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Hero text */
+.hero-text {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.02;
+  letter-spacing: -0.028em;
+  color: var(--ink-strong);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 999px;
+  border: 2px solid var(--surface-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Selection */
+::selection {
+  background: var(--brand-100);
+  color: var(--brand-900);
 }
