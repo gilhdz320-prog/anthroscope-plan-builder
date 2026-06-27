@@ -1,0 +1,340 @@
+-- ============================================================================
+-- MIGRATION: bilingual equivalents (en/es) + canonical group keys + USDA source
+-- ============================================================================
+-- Apply in Supabase SQL Editor AFTER schema.sql and fix_permissions.sql.
+-- Safe to run multiple times (idempotent).
+-- ============================================================================
+
+-- 1. Add locale to profiles (per-user UI language preference)
+alter table public.profiles
+  add column if not exists locale text not null default 'es' check (locale in ('es', 'en'));
+
+-- 2. Extend equivalents with bilingual fields + canonical group + USDA source
+alter table public.equivalents
+  add column if not exists food_name_en text,
+  add column if not exists food_name_es text,
+  add column if not exists serving_desc_en text,
+  add column if not exists serving_desc_es text,
+  add column if not exists group_key text,
+  add column if not exists fiber_g numeric(7, 2),
+  add column if not exists source text default 'manual' check (source in ('manual', 'usda', 'mexico_inn', 'custom')),
+  add column if not exists fdc_id integer;
+
+-- Index for fast filtering by group_key
+create index if not exists equivalents_group_key_idx on public.equivalents (group_key);
+create index if not exists equivalents_source_idx on public.equivalents (source);
+create index if not exists equivalents_fdc_id_idx on public.equivalents (fdc_id) where fdc_id is not null;
+
+-- 3. Canonical food groups (single source of truth for category labels)
+create table if not exists public.food_groups (
+  key            text primary key,
+  name_es        text not null,
+  name_en        text not null,
+  display_order  smallint not null default 0,
+  exchange_kcal  numeric(5, 1),
+  exchange_protein_g numeric(5, 1),
+  exchange_carbs_g numeric(5, 1),
+  exchange_fat_g numeric(5, 1),
+  notes_es       text,
+  notes_en       text
+);
+
+alter table public.food_groups enable row level security;
+
+drop policy if exists "food_groups_select_all" on public.food_groups;
+create policy "food_groups_select_all"
+  on public.food_groups for select
+  to authenticated
+  using (true);
+
+-- Seed canonical groups (Sistema Mexicano de Equivalentes + ADA Exchanges)
+insert into public.food_groups (key, name_es, name_en, display_order, exchange_kcal, exchange_protein_g, exchange_carbs_g, exchange_fat_g, notes_es, notes_en) values
+  ('cereales',        'Cereales y tubérculos',  'Grains & starches',     1, 70,  2, 15, 0,  'Sin grasa adicional', 'Without added fat'),
+  ('cereales_grasa',  'Cereales con grasa',     'Grains with fat',       2, 115, 2, 15, 5,  'Con grasa añadida',   'With added fat'),
+  ('leguminosas',     'Leguminosas',            'Legumes',               3, 120, 8, 20, 1,  'Frijol, lenteja, garbanzo', 'Beans, lentils, chickpeas'),
+  ('verduras',        'Verduras',               'Vegetables',            4, 25,  2, 4,  0,  'No incluye almidonadas', 'Non-starchy'),
+  ('frutas',          'Frutas',                 'Fruits',                5, 60,  0, 15, 0,  null, null),
+  ('lacteos_descremados', 'Lácteos descremados', 'Skim dairy',           6, 95,  9, 12, 0,  null, null),
+  ('lacteos_semi',    'Lácteos semidescremados', 'Reduced-fat dairy',    7, 110, 9, 12, 4,  null, null),
+  ('lacteos_enteros', 'Lácteos enteros',        'Whole dairy',           8, 150, 9, 12, 8,  null, null),
+  ('proteina_muy_baja', 'Proteínas muy bajas en grasa', 'Very lean protein', 9, 40, 7, 0, 1, '~3 g grasa o menos', '~3 g fat or less'),
+  ('proteina_baja',   'Proteínas bajas en grasa', 'Lean protein',        10, 55, 7, 0, 3, null, null),
+  ('proteina_media',  'Proteínas moderadas en grasa', 'Medium-fat protein', 11, 75, 7, 0, 5, null, null),
+  ('proteina_alta',   'Proteínas altas en grasa', 'High-fat protein',    12, 100, 7, 0, 8, null, null),
+  ('grasas_mono',     'Grasas monoinsaturadas', 'Monounsaturated fats',  13, 45, 0, 0, 5, 'Aceite oliva, aguacate', 'Olive oil, avocado'),
+  ('grasas_poli',     'Grasas poliinsaturadas', 'Polyunsaturated fats',  14, 45, 0, 0, 5, null, null),
+  ('grasas_saturadas', 'Grasas saturadas',       'Saturated fats',        15, 45, 0, 0, 5, 'Mantequilla, manteca', 'Butter, lard'),
+  ('azucares',        'Azúcares libres',        'Free sugars',           16, 40, 0, 10, 0, 'Mermelada, miel, azúcar', 'Jam, honey, sugar'),
+  ('bebidas_deporte', 'Bebidas deportivas',     'Sports drinks',         17, 50, 0, 14, 0, 'Por porción de 240 ml', 'Per 240 ml serving')
+on conflict (key) do update set
+  name_es = excluded.name_es,
+  name_en = excluded.name_en,
+  display_order = excluded.display_order,
+  exchange_kcal = excluded.exchange_kcal,
+  exchange_protein_g = excluded.exchange_protein_g,
+  exchange_carbs_g = excluded.exchange_carbs_g,
+  exchange_fat_g = excluded.exchange_fat_g,
+  notes_es = excluded.notes_es,
+  notes_en = excluded.notes_en;
+
+-- 4. Backfill existing rows: copy food_name -> food_name_es, infer group_key from group_name
+update public.equivalents
+set food_name_es = coalesce(food_name_es, food_name),
+    serving_desc_es = coalesce(serving_desc_es, serving_desc)
+where food_name_es is null;
+
+-- Best-effort group_key inference from old group_name (Spanish or English)
+update public.equivalents set group_key = case
+  when lower(group_name) in ('almidones', 'cereals', 'cereales', 'cereales y tuberculos') then 'cereales'
+  when lower(group_name) in ('leguminosas', 'legumes') then 'leguminosas'
+  when lower(group_name) in ('verduras', 'vegetables') then 'verduras'
+  when lower(group_name) in ('frutas', 'fruits') then 'frutas'
+  when lower(group_name) in ('lacteos', 'lácteos', 'dairy') then 'lacteos_descremados'
+  when lower(group_name) in ('proteins', 'proteinas', 'proteínas') then 'proteina_baja'
+  when lower(group_name) in ('grasas', 'fats') then 'grasas_mono'
+  when lower(group_name) in ('azucares', 'azúcares', 'sugars') then 'azucares'
+  else group_key
+end
+where group_key is null;
+-- ============================================================================
+-- USDA bilingual food catalog seed
+-- Generated: 2026-06-27T08:56:12.583Z
+-- Source: USDA FoodData Central (https://fdc.nal.usda.gov)
+-- 224 foods across 17 groups
+-- ============================================================================
+
+-- Wipe existing seed equivalents (user_id is null) to avoid duplicates
+delete from public.equivalents where user_id is null;
+
+-- Insert curated bilingual catalog
+insert into public.equivalents (
+  user_id, group_name, group_key,
+  food_name, food_name_es, food_name_en,
+  serving_desc, serving_desc_es, serving_desc_en,
+  serving_g, kcal, protein_g, carbs_g, fat_g, fiber_g,
+  source, fdc_id
+) values
+  (null, 'cereales', 'cereales', 'Arroz blanco cocido', 'Arroz blanco cocido', 'White rice, cooked', '19 g', '19 g', '19 g', 19.5, 70, 1.4, 15.6, 0.3, 0.1, 'usda', 790214),
+  (null, 'cereales', 'cereales', 'Arroz integral cocido', 'Arroz integral cocido', 'Brown rice, cooked', '19 g', '19 g', '19 g', 19.2, 70, 1.4, 14.5, 0.7, 0, 'usda', 1104812),
+  (null, 'cereales', 'cereales', 'Pasta cocida', 'Pasta cocida', 'Pasta, cooked', '14 g', '14 g', '14 g', 14, 70, 5.7, 0.3, 5.1, 0, 'usda', 749420),
+  (null, 'cereales', 'cereales', 'Pasta integral cocida', 'Pasta integral cocida', 'Whole wheat pasta, cooked', '19 g', '19 g', '19 g', 18.9, 70, 2.9, 13.5, 0.5, 2, 'usda', 790085),
+  (null, 'cereales', 'cereales', 'Avena en hojuelas seca', 'Avena en hojuelas seca', 'Rolled oats, dry', '18 g', '18 g', '18 g', 18.3, 70, 2.5, 12.6, 1.1, 0, 'usda', 2346396),
+  (null, 'cereales', 'cereales', 'Quinoa cocida', 'Quinoa cocida', 'Quinoa, cooked', '18 g', '18 g', '18 g', 18.2, 70, 2.2, 12.6, 1.2, 1.1, 'usda', 2512372),
+  (null, 'cereales', 'cereales', 'Cebada cocida', 'Cebada cocida', 'Barley, cooked', '19 g', '19 g', '19 g', 19.1, 70, 1.7, 14.8, 0.5, 2.4, 'usda', 2512376),
+  (null, 'cereales', 'cereales', 'Cuscús cocido', 'Cuscús cocido', 'Couscous, cooked', '14 g', '14 g', '14 g', 14, 70, 5.7, 0.3, 5.1, 0, 'usda', 749420),
+  (null, 'cereales', 'cereales', 'Bulgur cocido', 'Bulgur cocido', 'Bulgur, cooked', '19 g', '19 g', '19 g', 18.8, 70, 2.2, 14.3, 0.5, 2.2, 'usda', 2710820),
+  (null, 'cereales', 'cereales', 'Pan blanco', 'Pan blanco', 'White bread', '19 g', '19 g', '19 g', 19.3, 70, 2.8, 14, 0.3, 0, 'usda', 790146),
+  (null, 'cereales', 'cereales', 'Pan de centeno', 'Pan de centeno', 'Rye bread', '19 g', '19 g', '19 g', 19.5, 70, 1.6, 15.1, 0.4, 2.7, 'usda', 2512375),
+  (null, 'cereales', 'cereales', 'Pan pita integral', 'Pan pita integral', 'Whole wheat pita', '19 g', '19 g', '19 g', 18.9, 70, 2.9, 13.5, 0.5, 2, 'usda', 790085),
+  (null, 'cereales', 'cereales', 'Bolillo', 'Bolillo', 'Mexican bread roll', '19 g', '19 g', '19 g', 19.3, 70, 2.8, 14, 0.3, 0, 'usda', 790146),
+  (null, 'cereales', 'cereales', 'Bagel simple', 'Bagel simple', 'Plain bagel', '140 g (~1 taza)', '140 g (~1 taza)', '140 g (~1 cup)', 140, 70, 5.9, 11.3, 0.1, 0, 'usda', 2647437),
+  (null, 'cereales', 'cereales', 'Tostada de maíz', 'Tostada de maíz', 'Corn tostada', '19 g', '19 g', '19 g', 19.2, 70, 1.2, 15.5, 0.3, 0.8, 'usda', 790276),
+  (null, 'cereales', 'cereales', 'Galleta María', 'Galleta María', 'Maria cookie', '17 g', '17 g', '17 g', 17.2, 70, 1.2, 12.2, 1.8, 0.6, 'usda', 171867),
+  (null, 'cereales', 'cereales', 'Galletas saladas', 'Galletas saladas', 'Saltine crackers', '17 g', '17 g', '17 g', 16.7, 70, 1.6, 12.4, 1.4, 0.5, 'usda', 172746),
+  (null, 'cereales', 'cereales', 'Hot cake simple', 'Hot cake simple', 'Pancake plain', '140 g (~1 taza)', '140 g (~1 taza)', '140 g (~1 cup)', 140, 70, 5.9, 11.3, 0.1, 0, 'usda', 2647437),
+  (null, 'cereales', 'cereales', 'Waffle simple', 'Waffle simple', 'Waffle plain', '140 g (~1 taza)', '140 g (~1 taza)', '140 g (~1 cup)', 140, 70, 5.9, 11.3, 0.1, 0, 'usda', 2647437),
+  (null, 'cereales', 'cereales', 'Cereal corn flakes', 'Cereal corn flakes', 'Corn flakes cereal', '18 g', '18 g', '18 g', 18.2, 70, 1.1, 16, 0.2, 0.5, 'usda', 174648),
+  (null, 'cereales', 'cereales', 'Cereal de salvado', 'Cereal de salvado', 'Bran flakes cereal', '17 g', '17 g', '17 g', 17.4, 70, 1.9, 11.9, 1.6, 6.1, 'usda', 2710839),
+  (null, 'cereales', 'cereales', 'Papa cocida', 'Papa cocida', 'Potato, boiled', '194 g (~1 taza)', '194 g (~1 taza)', '194 g (~1 cup)', 194.4, 70, 5.7, 10.3, 2.4, 0, 'usda', 326196),
+  (null, 'cereales', 'cereales', 'Papa horneada', 'Papa horneada', 'Potato, baked', '19 g', '19 g', '19 g', 19.4, 70, 1.6, 15.5, 0.2, 1, 'usda', 2261422),
+  (null, 'cereales', 'cereales', 'Camote cocido', 'Camote cocido', 'Sweet potato, cooked', '89 g (~1/2 taza)', '89 g (~1/2 taza)', '89 g (~1/2 cup)', 88.6, 70, 1.4, 15.3, 0.3, 0, 'usda', 2346404),
+  (null, 'cereales', 'cereales', 'Yuca cocida', 'Yuca cocida', 'Cassava, cooked', '20 g', '20 g', '20 g', 19.6, 70, 0.2, 17.1, 0.1, 0.9, 'usda', 2512377),
+  (null, 'cereales', 'cereales', 'Plátano macho cocido', 'Plátano macho cocido', 'Plantain, cooked', '54 g', '54 g', '54 g', 53.8, 70, 0.6, 15.7, 0.5, 1, 'usda', 2710843),
+  (null, 'cereales', 'cereales', 'Elote desgranado', 'Elote desgranado', 'Corn kernels', '83 g (~1/2 taza)', '83 g (~1/2 taza)', '83 g (~1/2 cup)', 82.7, 70, 2.3, 12.2, 1.3, 2, 'usda', 2710826),
+  (null, 'cereales', 'cereales', 'Elote en mazorca', 'Elote en mazorca', 'Corn on the cob', '71 g (~1/2 taza)', '71 g (~1/2 taza)', '71 g (~1/2 cup)', 71.4, 70, 2.3, 16.8, 0.6, 2, 'usda', 169365),
+  (null, 'cereales', 'cereales', 'Maíz pozolero', 'Maíz pozolero', 'Hominy', '97 g (~1/2 taza)', '97 g (~1/2 taza)', '97 g (~1/2 cup)', 97.2, 70, 1.4, 13.9, 0.9, 2.4, 'usda', 169701),
+  (null, 'cereales', 'cereales', 'Calabaza de Castilla cocida', 'Calabaza de Castilla cocida', 'Winter squash, cooked', '144 g (~1 taza)', '144 g (~1 taza)', '144 g (~1 cup)', 144, 70, 1.8, 15.1, 0.3, 3.8, 'usda', 2685571),
+  (null, 'cereales', 'cereales', 'Chícharos cocidos', 'Chícharos cocidos', 'Green peas, cooked', '87 g (~1/2 taza)', '87 g (~1/2 taza)', '87 g (~1/2 cup)', 87.4, 70, 4.1, 11.1, 1, 0, 'usda', 2644291),
+  (null, 'cereales', 'cereales', 'Harina de maíz', 'Harina de maíz', 'Cornmeal', '115 g (~1 taza)', '115 g (~1 taza)', '115 g (~1 cup)', 114.8, 70, 4.9, 6.1, 3.9, 4.9, 'usda', 326698),
+  (null, 'cereales', 'cereales', 'Harina de avena', 'Harina de avena', 'Oat flour', '18 g', '18 g', '18 g', 18, 70, 2.4, 12.6, 1.1, 1.9, 'usda', 2261421),
+  (null, 'cereales', 'cereales', 'Tapioca cocida', 'Tapioca cocida', 'Tapioca, cooked', '14 g', '14 g', '14 g', 14, 70, 5.7, 0.3, 5.1, 0, 'usda', 749420),
+  (null, 'cereales', 'cereales', 'Polenta cocida', 'Polenta cocida', 'Polenta, cooked', '14 g', '14 g', '14 g', 14, 70, 5.7, 0.3, 5.1, 0, 'usda', 749420),
+  (null, 'cereales', 'cereales', 'Arroz salvaje cocido', 'Arroz salvaje cocido', 'Wild rice, cooked', '19 g', '19 g', '19 g', 19, 70, 2.4, 14.4, 0.3, 0.8, 'usda', 2710821),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Donut glaseada', 'Donut glaseada', 'Glazed donut', '23 g', '23 g', '23 g', 23, 115, 1.9, 10.9, 8.2, 0.8, 'usda', 170593),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Croissant', 'Croissant', 'Croissant', '18 g', '18 g', '18 g', 17.8, 115, 3.7, 3.8, 9.4, 1.7, 'usda', 2262074),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Pan dulce', 'Pan dulce', 'Sweet bread', '36 g', '36 g', '36 g', 35.7, 115, 6.5, 0.8, 9.4, 0, 'usda', 746780),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Muffin de arándano', 'Muffin de arándano', 'Blueberry muffin', '39 g', '39 g', '39 g', 39.2, 115, 1.4, 23.9, 1.3, 0.5, 'usda', 172766),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Pan tostado con mantequilla', 'Pan tostado con mantequilla', 'Toast with butter', '37 g', '37 g', '37 g', 36.5, 115, 3.8, 19.2, 2.4, 0.9, 'usda', 172674),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Galletas con chispas de chocolate', 'Galletas con chispas de chocolate', 'Chocolate chip cookies', '23 g', '23 g', '23 g', 23.1, 115, 1.1, 15.3, 5.8, 0, 'usda', 174952),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Papas a la francesa', 'Papas a la francesa', 'French fries', '40 g', '40 g', '40 g', 39.7, 115, 1.3, 15.7, 5.2, 1.5, 'usda', 169009),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Palomitas con mantequilla', 'Palomitas con mantequilla', 'Buttered popcorn', '21 g', '21 g', '21 g', 21.5, 115, 1.8, 12.3, 6.5, 2.1, 'usda', 173141),
+  (null, 'cereales_grasa', 'cereales_grasa', 'Pastel de zanahoria', 'Pastel de zanahoria', 'Carrot cake', '282 g (~1 taza)', '282 g (~1 taza)', '282 g (~1 cup)', 281.9, 115, 2.3, 25.6, 0.4, 7.6, 'usda', 2258587),
+  (null, 'leguminosas', 'leguminosas', 'Frijol negro cocido', 'Frijol negro cocido', 'Black beans, cooked', '104 g (~1 taza)', '104 g (~1 taza)', '104 g (~1 cup)', 104.3, 120, 7.2, 20.7, 1.3, 0, 'usda', 2644285),
+  (null, 'leguminosas', 'leguminosas', 'Frijol pinto cocido', 'Frijol pinto cocido', 'Pinto beans, cooked', '103 g (~1 taza)', '103 g (~1 taza)', '103 g (~1 cup)', 102.6, 120, 6.9, 20.1, 1.3, 0, 'usda', 2644292),
+  (null, 'leguminosas', 'leguminosas', 'Frijol bayo cocido', 'Frijol bayo cocido', 'Bayo beans, cooked', '94 g (~1/2 taza)', '94 g (~1/2 taza)', '94 g (~1/2 cup)', 94.5, 120, 7.4, 19.8, 1.2, 0, 'usda', 2644289),
+  (null, 'leguminosas', 'leguminosas', 'Lenteja cocida', 'Lenteja cocida', 'Lentils, cooked', '33 g', '33 g', '33 g', 33.3, 120, 7.9, 20.7, 0.6, 0, 'usda', 2644283),
+  (null, 'leguminosas', 'leguminosas', 'Garbanzo cocido', 'Garbanzo cocido', 'Chickpeas, cooked', '31 g', '31 g', '31 g', 31.3, 120, 6.7, 18.9, 2, 0, 'usda', 2644282),
+  (null, 'leguminosas', 'leguminosas', 'Haba cocida', 'Haba cocida', 'Fava beans, cooked', '109 g (~1 taza)', '109 g (~1 taza)', '109 g (~1 cup)', 109.1, 120, 8.3, 21.4, 0.4, 5.9, 'usda', 173798),
+  (null, 'leguminosas', 'leguminosas', 'Frijol de soya cocido', 'Frijol de soya cocido', 'Soybeans, cooked', '24 g', '24 g', '24 g', 24, 120, 9.8, 0.5, 8.8, 0, 'usda', 749420),
+  (null, 'leguminosas', 'leguminosas', 'Edamame', 'Edamame', 'Edamame', '24 g', '24 g', '24 g', 24, 120, 9.8, 0.5, 8.8, 0, 'usda', 749420),
+  (null, 'leguminosas', 'leguminosas', 'Hummus', 'Hummus', 'Hummus', '52 g', '52 g', '52 g', 52.4, 120, 3.9, 7.8, 9, 2.8, 'usda', 321358),
+  (null, 'leguminosas', 'leguminosas', 'Tofu firme', 'Tofu firme', 'Tofu, firm', '141 g (~1 taza)', '141 g (~1 taza)', '141 g (~1 cup)', 141.2, 120, 15.4, 1.4, 5.9, 1.3, 'usda', 173788),
+  (null, 'leguminosas', 'leguminosas', 'Tofu suave', 'Tofu suave', 'Tofu, soft', '28 g', '28 g', '28 g', 27.9, 120, 1.6, 19.4, 4, 0.9, 'usda', 333008),
+  (null, 'leguminosas', 'leguminosas', 'Tempeh', 'Tempeh', 'Tempeh', '63 g (~1/2 taza)', '63 g (~1/2 taza)', '63 g (~1/2 cup)', 62.5, 120, 12.7, 4.8, 6.8, 0, 'usda', 174272),
+  (null, 'verduras', 'verduras', 'Brócoli cocido', 'Brócoli cocido', 'Broccoli, cooked', '81 g (~1/2 taza)', '81 g (~1/2 taza)', '81 g (~1/2 cup)', 80.6, 25, 2.1, 5.1, 0.3, 1.9, 'usda', 747447),
+  (null, 'verduras', 'verduras', 'Brócoli crudo', 'Brócoli crudo', 'Broccoli, raw', '81 g (~1/2 taza)', '81 g (~1/2 taza)', '81 g (~1/2 cup)', 80.6, 25, 2.1, 5.1, 0.3, 1.9, 'usda', 747447),
+  (null, 'verduras', 'verduras', 'Coliflor cocida', 'Coliflor cocida', 'Cauliflower, cooked', '91 g (~1/2 taza)', '91 g (~1/2 taza)', '91 g (~1/2 cup)', 90.6, 25, 1.5, 4.3, 0.2, 1.8, 'usda', 2685573),
+  (null, 'verduras', 'verduras', 'Espinaca cruda', 'Espinaca cruda', 'Spinach, raw', '94 g (~1/2 taza)', '94 g (~1/2 taza)', '94 g (~1/2 cup)', 94, 25, 2.7, 2.3, 0.6, 1.5, 'usda', 1999632),
+  (null, 'verduras', 'verduras', 'Espinaca cocida', 'Espinaca cocida', 'Spinach, cooked', '94 g (~1/2 taza)', '94 g (~1/2 taza)', '94 g (~1/2 cup)', 94, 25, 2.7, 2.3, 0.6, 1.5, 'usda', 1999632),
+  (null, 'verduras', 'verduras', 'Kale crudo', 'Kale crudo', 'Kale, raw', '71 g (~1/2 taza)', '71 g (~1/2 taza)', '71 g (~1/2 cup)', 71.4, 25, 2.1, 3.2, 1.1, 2.9, 'usda', 323505),
+  (null, 'verduras', 'verduras', 'Acelga cocida', 'Acelga cocida', 'Swiss chard, cooked', '125 g (~1 taza)', '125 g (~1 taza)', '125 g (~1 cup)', 125, 25, 2.3, 5.2, 0.1, 2.6, 'usda', 169343),
+  (null, 'verduras', 'verduras', 'Lechuga romana', 'Lechuga romana', 'Romaine lettuce', '147 g (~1 taza)', '147 g (~1 taza)', '147 g (~1 cup)', 147.1, 25, 1.8, 4.8, 0.4, 2.6, 'usda', 746769),
+  (null, 'verduras', 'verduras', 'Lechuga iceberg', 'Lechuga iceberg', 'Iceberg lettuce', '146 g (~1 taza)', '146 g (~1 taza)', '146 g (~1 cup)', 146.2, 25, 1.1, 4.9, 0.1, 0, 'usda', 2346388),
+  (null, 'verduras', 'verduras', 'Arugula', 'Arugula', 'Arugula', '81 g (~1/2 taza)', '81 g (~1/2 taza)', '81 g (~1/2 cup)', 80.6, 25, 1.3, 4.3, 0.3, 1.8, 'usda', 2710822),
+  (null, 'verduras', 'verduras', 'Jitomate', 'Jitomate', 'Tomato', '73 g (~1/2 taza)', '73 g (~1/2 taza)', '73 g (~1/2 cup)', 73.3, 25, 0.9, 5, 0.2, 0, 'usda', 2346408),
+  (null, 'verduras', 'verduras', 'Jitomate cherry', 'Jitomate cherry', 'Cherry tomato', '114 g (~1 taza)', '114 g (~1 taza)', '114 g (~1 cup)', 113.6, 25, 0.8, 4.4, 0.5, 1.1, 'usda', 1999634),
+  (null, 'verduras', 'verduras', 'Pepino', 'Pepino', 'Cucumber', '157 g (~1 taza)', '157 g (~1 taza)', '157 g (~1 cup)', 157.2, 25, 1, 4.6, 0.3, 0, 'usda', 2346406),
+  (null, 'verduras', 'verduras', 'Zanahoria cruda', 'Zanahoria cruda', 'Carrot, raw', '61 g (~1/2 taza)', '61 g (~1/2 taza)', '61 g (~1/2 cup)', 61.3, 25, 0.5, 5.6, 0.1, 1.6, 'usda', 2258587),
+  (null, 'verduras', 'verduras', 'Zanahoria cocida', 'Zanahoria cocida', 'Carrot, cooked', '61 g (~1/2 taza)', '61 g (~1/2 taza)', '61 g (~1/2 cup)', 61.3, 25, 0.5, 5.6, 0.1, 1.6, 'usda', 2258587),
+  (null, 'verduras', 'verduras', 'Apio crudo', 'Apio crudo', 'Celery, raw', '150 g (~1 taza)', '150 g (~1 taza)', '150 g (~1 cup)', 149.7, 25, 0.7, 5, 0.2, 0, 'usda', 2346405),
+  (null, 'verduras', 'verduras', 'Pimiento rojo', 'Pimiento rojo', 'Red bell pepper', '80 g (~1/2 taza)', '80 g (~1/2 taza)', '80 g (~1/2 cup)', 79.9, 25, 0.7, 5.3, 0.1, 0.9, 'usda', 2258590),
+  (null, 'verduras', 'verduras', 'Pimiento verde', 'Pimiento verde', 'Green bell pepper', '109 g (~1 taza)', '109 g (~1 taza)', '109 g (~1 cup)', 109.2, 25, 0.8, 5.2, 0.1, 1, 'usda', 2258588),
+  (null, 'verduras', 'verduras', 'Pimiento amarillo', 'Pimiento amarillo', 'Yellow bell pepper', '81 g (~1/2 taza)', '81 g (~1/2 taza)', '81 g (~1/2 cup)', 81.2, 25, 0.7, 5.4, 0.1, 0.9, 'usda', 2258589),
+  (null, 'verduras', 'verduras', 'Cebolla cruda', 'Cebolla cruda', 'Onion, raw', '57 g', '57 g', '57 g', 56.8, 25, 0.5, 5.6, 0.1, 1.3, 'usda', 790577),
+  (null, 'verduras', 'verduras', 'Cebolla morada', 'Cebolla morada', 'Red onion', '57 g', '57 g', '57 g', 56.8, 25, 0.5, 5.6, 0.1, 1.3, 'usda', 790577),
+  (null, 'verduras', 'verduras', 'Ajo crudo', 'Ajo crudo', 'Garlic, raw', '17 g', '17 g', '17 g', 17.5, 25, 1.2, 4.9, 0.1, 0.5, 'usda', 1104647),
+  (null, 'verduras', 'verduras', 'Champiñones crudos', 'Champiñones crudos', 'Mushrooms, raw', '80 g (~1/2 taza)', '80 g (~1/2 taza)', '80 g (~1/2 cup)', 80.1, 25, 2.3, 3.3, 0.3, 1.4, 'usda', 1999629),
+  (null, 'verduras', 'verduras', 'Champiñones cocidos', 'Champiñones cocidos', 'Mushrooms, cooked', '57 g', '57 g', '57 g', 56.7, 25, 1.4, 4.6, 0.1, 2.4, 'usda', 1999628),
+  (null, 'verduras', 'verduras', 'Calabacita cocida', 'Calabacita cocida', 'Zucchini, cooked', '132 g (~1 taza)', '132 g (~1 taza)', '132 g (~1 cup)', 131.6, 25, 1.3, 4.3, 0.3, 1, 'usda', 2685568),
+  (null, 'verduras', 'verduras', 'Berenjena cocida', 'Berenjena cocida', 'Eggplant, cooked', '96 g (~1/2 taza)', '96 g (~1/2 taza)', '96 g (~1/2 cup)', 95.8, 25, 0.8, 5.2, 0.1, 2.3, 'usda', 2685577),
+  (null, 'verduras', 'verduras', 'Ejotes cocidos', 'Ejotes cocidos', 'Green beans, cooked', '63 g (~1/2 taza)', '63 g (~1/2 taza)', '63 g (~1/2 cup)', 62.5, 25, 1.2, 4.6, 0.2, 1.9, 'usda', 2346400),
+  (null, 'verduras', 'verduras', 'Espárragos cocidos', 'Espárragos cocidos', 'Asparagus, cooked', '89 g (~1/2 taza)', '89 g (~1/2 taza)', '89 g (~1/2 cup)', 89, 25, 1.3, 4.5, 0.2, 1.7, 'usda', 2710823),
+  (null, 'verduras', 'verduras', 'Alcachofa cocida', 'Alcachofa cocida', 'Artichoke, cooked', '5 g', '5 g', '5 g', 5, 25, 2, 0.1, 1.8, 0, 'usda', 749420),
+  (null, 'verduras', 'verduras', 'Betabel cocido', 'Betabel cocido', 'Beets, cooked', '56 g', '56 g', '56 g', 56.1, 25, 0.9, 4.9, 0.2, 1.7, 'usda', 2685576),
+  (null, 'verduras', 'verduras', 'Col cocida', 'Col cocida', 'Cabbage, cooked', '80 g (~1/2 taza)', '80 g (~1/2 taza)', '80 g (~1/2 cup)', 79.6, 25, 0.8, 5.1, 0.2, 0, 'usda', 2346407),
+  (null, 'verduras', 'verduras', 'Col morada cruda', 'Col morada cruda', 'Red cabbage, raw', '73 g (~1/2 taza)', '73 g (~1/2 taza)', '73 g (~1/2 cup)', 73.3, 25, 0.9, 5, 0.2, 0, 'usda', 2346408),
+  (null, 'verduras', 'verduras', 'Coles de Bruselas cocidas', 'Coles de Bruselas cocidas', 'Brussels sprouts, cooked', '42 g', '42 g', '42 g', 42, 25, 1.7, 4, 0.2, 2, 'usda', 2685575),
+  (null, 'verduras', 'verduras', 'Nopales cocidos', 'Nopales cocidos', 'Nopales, cooked', '5 g', '5 g', '5 g', 5, 25, 2, 0.1, 1.8, 0, 'usda', 749420),
+  (null, 'verduras', 'verduras', 'Chayote cocido', 'Chayote cocido', 'Chayote, cooked', '5 g', '5 g', '5 g', 5, 25, 2, 0.1, 1.8, 0, 'usda', 749420),
+  (null, 'verduras', 'verduras', 'Rábano crudo', 'Rábano crudo', 'Radish, raw', '128 g (~1 taza)', '128 g (~1 taza)', '128 g (~1 cup)', 127.6, 25, 0.8, 5.2, 0.1, 1.7, 'usda', 2747665),
+  (null, 'verduras', 'verduras', 'Jícama cruda', 'Jícama cruda', 'Jicama, raw', '56 g', '56 g', '56 g', 56.1, 25, 0.9, 4.9, 0.2, 1.7, 'usda', 2685576),
+  (null, 'verduras', 'verduras', 'Poro cocido', 'Poro cocido', 'Leek, cooked', '5 g', '5 g', '5 g', 5, 25, 2, 0.1, 1.8, 0, 'usda', 749420),
+  (null, 'verduras', 'verduras', 'Chile jalapeño', 'Chile jalapeño', 'Jalapeño pepper', '104 g (~1 taza)', '104 g (~1 taza)', '104 g (~1 cup)', 103.7, 25, 0.6, 5.3, 0.2, 1.8, 'usda', 2747661),
+  (null, 'verduras', 'verduras', 'Chile poblano', 'Chile poblano', 'Poblano pepper', '89 g (~1/2 taza)', '89 g (~1/2 taza)', '89 g (~1/2 cup)', 89.3, 25, 1.3, 4.6, 0.2, 1.8, 'usda', 2747662),
+  (null, 'frutas', 'frutas', 'Manzana', 'Manzana', 'Apple', '93 g (~1/2 taza)', '93 g (~1/2 taza)', '93 g (~1/2 cup)', 92.7, 60, 0.1, 14.6, 0.2, 1.9, 'usda', 1750340),
+  (null, 'frutas', 'frutas', 'Manzana verde', 'Manzana verde', 'Green apple', '214 g (~1 taza)', '214 g (~1 taza)', '214 g (~1 cup)', 213.5, 60, 3.1, 10.9, 0.5, 4, 'usda', 2710823),
+  (null, 'frutas', 'frutas', 'Plátano', 'Plátano', 'Banana', '71 g (~1/2 taza)', '71 g (~1/2 taza)', '71 g (~1/2 cup)', 70.6, 60, 0.5, 14.2, 0.2, 1.2, 'usda', 1105073),
+  (null, 'frutas', 'frutas', 'Naranja', 'Naranja', 'Orange', '128 g (~1 taza)', '128 g (~1 taza)', '128 g (~1 cup)', 127.7, 60, 1.2, 15.1, 0.2, 2.6, 'usda', 746771),
+  (null, 'frutas', 'frutas', 'Mandarina', 'Mandarina', 'Tangerine', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Limón', 'Limón', 'Lime', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Pera', 'Pera', 'Pear', '105 g (~1 taza)', '105 g (~1 taza)', '105 g (~1 cup)', 105.3, 60, 0.4, 15.9, 0.2, 3.3, 'usda', 746773),
+  (null, 'frutas', 'frutas', 'Durazno', 'Durazno', 'Peach', '143 g (~1 taza)', '143 g (~1 taza)', '143 g (~1 cup)', 142.9, 60, 1.3, 14.4, 0.4, 2.1, 'usda', 325430),
+  (null, 'frutas', 'frutas', 'Nectarina', 'Nectarina', 'Nectarine', '154 g (~1 taza)', '154 g (~1 taza)', '154 g (~1 cup)', 153.8, 60, 1.6, 14.1, 0.4, 2.3, 'usda', 327357),
+  (null, 'frutas', 'frutas', 'Ciruela', 'Ciruela', 'Plum', '114 g (~1 taza)', '114 g (~1 taza)', '114 g (~1 cup)', 113.9, 60, 0.7, 15.4, 0.3, 1.5, 'usda', 2710837),
+  (null, 'frutas', 'frutas', 'Chabacano', 'Chabacano', 'Apricot', '124 g (~1 taza)', '124 g (~1 taza)', '124 g (~1 cup)', 124, 60, 1.2, 12.6, 0.5, 1.9, 'usda', 2710815),
+  (null, 'frutas', 'frutas', 'Cereza', 'Cereza', 'Cherries', '85 g (~1/2 taza)', '85 g (~1/2 taza)', '85 g (~1/2 cup)', 85.1, 60, 0.9, 13.8, 0.2, 0, 'usda', 2346399),
+  (null, 'frutas', 'frutas', 'Uva', 'Uva', 'Grapes', '70 g (~1/2 taza)', '70 g (~1/2 taza)', '70 g (~1/2 cup)', 69.8, 60, 0.6, 14.1, 0.1, 0, 'usda', 2346412),
+  (null, 'frutas', 'frutas', 'Uva verde', 'Uva verde', 'Green grapes', '75 g (~1/2 taza)', '75 g (~1/2 taza)', '75 g (~1/2 cup)', 74.9, 60, 0.7, 13.9, 0.2, 0, 'usda', 2346413),
+  (null, 'frutas', 'frutas', 'Fresa', 'Fresa', 'Strawberries', '165 g (~1 taza)', '165 g (~1 taza)', '165 g (~1 cup)', 164.8, 60, 1.1, 13.1, 0.4, 0, 'usda', 2346409),
+  (null, 'frutas', 'frutas', 'Frambuesa', 'Frambuesa', 'Raspberries', '105 g (~1 taza)', '105 g (~1 taza)', '105 g (~1 cup)', 104.7, 60, 1.1, 13.5, 0.2, 0, 'usda', 2346410),
+  (null, 'frutas', 'frutas', 'Arándano azul', 'Arándano azul', 'Blueberries', '94 g (~1/2 taza)', '94 g (~1/2 taza)', '94 g (~1/2 cup)', 93.9, 60, 0.7, 13.7, 0.3, 0, 'usda', 2346411),
+  (null, 'frutas', 'frutas', 'Sandía', 'Sandía', 'Watermelon', '309 g (~1 taza)', '309 g (~1 taza)', '309 g (~1 cup)', 309.3, 60, 1.6, 12.9, 0.2, 4.8, 'usda', 2747676),
+  (null, 'frutas', 'frutas', 'Melón', 'Melón', 'Cantaloupe', '176 g (~1 taza)', '176 g (~1 taza)', '176 g (~1 cup)', 176.5, 60, 1.4, 14.4, 0.3, 1.4, 'usda', 746770),
+  (null, 'frutas', 'frutas', 'Melón verde', 'Melón verde', 'Honeydew', '163 g (~1 taza)', '163 g (~1 taza)', '163 g (~1 cup)', 163.5, 60, 0.9, 13.3, 0.4, 0, 'usda', 2710816),
+  (null, 'frutas', 'frutas', 'Piña', 'Piña', 'Pineapple', '100 g (~1 taza)', '100 g (~1 taza)', '100 g (~1 cup)', 99.8, 60, 0.5, 14.1, 0.2, 0.9, 'usda', 2346398),
+  (null, 'frutas', 'frutas', 'Mango', 'Mango', 'Mango', '76 g (~1/2 taza)', '76 g (~1/2 taza)', '76 g (~1/2 cup)', 76.4, 60, 0.5, 13.3, 0.5, 1, 'usda', 2710834),
+  (null, 'frutas', 'frutas', 'Papaya', 'Papaya', 'Papaya', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Kiwi', 'Kiwi', 'Kiwi', '92 g (~1/2 taza)', '92 g (~1/2 taza)', '92 g (~1/2 cup)', 92.2, 60, 0.9, 12.7, 0.6, 2, 'usda', 2710831),
+  (null, 'frutas', 'frutas', 'Guayaba', 'Guayaba', 'Guava', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Tuna', 'Tuna', 'Prickly pear', '105 g (~1 taza)', '105 g (~1 taza)', '105 g (~1 cup)', 105.3, 60, 0.4, 15.9, 0.2, 3.3, 'usda', 746773),
+  (null, 'frutas', 'frutas', 'Granada', 'Granada', 'Pomegranate', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Higo', 'Higo', 'Fig', '24 g', '24 g', '24 g', 24.1, 60, 0.8, 15.4, 0.2, 2.4, 'usda', 746768),
+  (null, 'frutas', 'frutas', 'Dátil seco', 'Dátil seco', 'Dates, dried', '16 g', '16 g', '16 g', 16, 60, 12.8, 1, 0.1, 0, 'usda', 323793),
+  (null, 'frutas', 'frutas', 'Pasas', 'Pasas', 'Raisins', '14 g', '14 g', '14 g', 14, 60, 0.8, 9.7, 2, 0.5, 'usda', 333008),
+  (null, 'frutas', 'frutas', 'Coco rallado fresco', 'Coco rallado fresco', 'Coconut, fresh', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Aguacate', 'Aguacate', 'Avocado', '27 g', '27 g', '27 g', 26.9, 60, 0.5, 2.2, 5.5, 0, 'usda', 2710824),
+  (null, 'frutas', 'frutas', 'Caqui', 'Caqui', 'Persimmon', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Lichi', 'Lichi', 'Lychee', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Carambola', 'Carambola', 'Starfruit', '135 g (~1 taza)', '135 g (~1 taza)', '135 g (~1 cup)', 134.5, 60, 2.3, 11.8, 0.4, 4.2, 'usda', 2685576),
+  (null, 'frutas', 'frutas', 'Mamey', 'Mamey', 'Mamey sapote', '48 g', '48 g', '48 g', 48.4, 60, 0.7, 15.5, 0.2, 2.6, 'usda', 167760),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Leche descremada', 'Leche descremada', 'Skim milk', '1.2 taza (280 ml)', '1.2 taza (280 ml)', '1.2 cup (280 ml)', 279.4, 95, 9.6, 13.7, 0.2, 0, 'usda', 746776),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Leche deslactosada light', 'Leche deslactosada light', 'Lactose-free skim milk', '1.2 taza (280 ml)', '1.2 taza (280 ml)', '1.2 cup (280 ml)', 279.4, 95, 9.6, 13.7, 0.2, 0, 'usda', 746776),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Yogur natural sin grasa', 'Yogur natural sin grasa', 'Nonfat plain yogurt', '1/2 taza (190 ml)', '1/2 taza (190 ml)', '1/2 cup (190 ml)', 190, 95, 8, 15.4, 0.2, 0, 'usda', 2647437),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Yogur griego sin grasa', 'Yogur griego sin grasa', 'Nonfat Greek yogurt', '1/2 taza (155 ml)', '1/2 taza (155 ml)', '1/2 cup (155 ml)', 155.7, 95, 16, 5.7, 0.6, 0, 'usda', 330137),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Queso cottage bajo en grasa', 'Queso cottage bajo en grasa', 'Low-fat cottage cheese', '1/4 taza (115 ml)', '1/4 taza (115 ml)', '1/4 cup (115 ml)', 113.1, 95, 12.4, 4.9, 2.6, 0, 'usda', 328841),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Queso panela', 'Queso panela', 'Panela cheese', '25 ml', '25 ml', '25 ml', 23.3, 95, 5.4, 0.6, 7.9, 0, 'usda', 328637),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Queso ricotta parcialmente descremado', 'Queso ricotta parcialmente descremado', 'Part-skim ricotta', '30 ml', '30 ml', '30 ml', 31.9, 95, 7.6, 1.4, 6.5, 0, 'usda', 329370),
+  (null, 'lacteos_descremados', 'lacteos_descremados', 'Leche evaporada descremada', 'Leche evaporada descremada', 'Evaporated skim milk', '1.2 taza (280 ml)', '1.2 taza (280 ml)', '1.2 cup (280 ml)', 279.4, 95, 9.6, 13.7, 0.2, 0, 'usda', 746776),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Leche semidescremada (2%)', 'Leche semidescremada (2%)', '2% milk', '1/2 taza (220 ml)', '1/2 taza (220 ml)', '1/2 cup (220 ml)', 220, 110, 7.4, 10.8, 4.2, 0, 'usda', 746778),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Yogur natural 2%', 'Yogur natural 2%', '2% plain yogurt', '1/2 taza (220 ml)', '1/2 taza (220 ml)', '1/2 cup (220 ml)', 220, 110, 9.3, 17.8, 0.2, 0, 'usda', 2647437),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Yogur griego 2%', 'Yogur griego 2%', '2% Greek yogurt', '1/2 taza (180 ml)', '1/2 taza (180 ml)', '1/2 cup (180 ml)', 180.3, 110, 18.6, 6.6, 0.7, 0, 'usda', 330137),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Queso mozzarella semidescremado', 'Queso mozzarella semidescremado', 'Part-skim mozzarella', '35 ml', '35 ml', '35 ml', 36.9, 110, 8.7, 1.6, 7.5, 0, 'usda', 329370),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Queso fresco', 'Queso fresco', 'Queso fresco', '35 ml', '35 ml', '35 ml', 36.9, 110, 7, 1.1, 8.6, 0, 'usda', 2647442),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Queso Oaxaca', 'Queso Oaxaca', 'Oaxaca cheese', '35 ml', '35 ml', '35 ml', 37, 110, 8.2, 0.9, 8.2, 0, 'usda', 2647441),
+  (null, 'lacteos_semi', 'lacteos_semi', 'Queso feta', 'Queso feta', 'Feta cheese', '40 ml', '40 ml', '40 ml', 40.3, 110, 7.9, 2.2, 7.7, 0, 'usda', 2259796),
+  (null, 'lacteos_enteros', 'lacteos_enteros', 'Leche entera', 'Leche entera', 'Whole milk', '1.0 taza (250 ml)', '1.0 taza (250 ml)', '1.0 cup (250 ml)', 250, 150, 8.2, 11.6, 8, 0, 'usda', 746782),
+  (null, 'lacteos_enteros', 'lacteos_enteros', 'Yogur natural entero', 'Yogur natural entero', 'Whole plain yogurt', '1/2 taza (190 ml)', '1/2 taza (190 ml)', '1/2 cup (190 ml)', 192.3, 150, 7.3, 10.7, 8.6, 0, 'usda', 2259793),
+  (null, 'lacteos_enteros', 'lacteos_enteros', 'Queso cheddar', 'Queso cheddar', 'Cheddar cheese', '35 ml', '35 ml', '35 ml', 36.8, 150, 8.6, 0.9, 12.5, 0, 'usda', 328637),
+  (null, 'lacteos_enteros', 'lacteos_enteros', 'Queso manchego', 'Queso manchego', 'Manchego cheese', '35 ml', '35 ml', '35 ml', 36.8, 150, 8.6, 0.9, 12.5, 0, 'usda', 328637),
+  (null, 'lacteos_enteros', 'lacteos_enteros', 'Queso brie', 'Queso brie', 'Brie cheese', '35 ml', '35 ml', '35 ml', 36.8, 150, 8.6, 0.9, 12.5, 0, 'usda', 328637),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Clara de huevo', 'Clara de huevo', 'Egg white', '83 g (~1/2 taza)', '83 g (~1/2 taza)', '83 g (~1/2 cup)', 83.3, 40, 8.4, 0.6, 0.1, 0, 'usda', 323697),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Pechuga de pollo sin piel cocida', 'Pechuga de pollo sin piel cocida', 'Chicken breast skinless, cooked', '38 g', '38 g', '38 g', 37.7, 40, 8.5, 0, 0.7, 0, 'usda', 2646170),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Atún en agua', 'Atún en agua', 'Tuna canned in water', '44 g', '44 g', '44 g', 44.4, 40, 8.4, 0, 0.4, 0, 'usda', 334194),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Bacalao cocido', 'Bacalao cocido', 'Cod, cooked', '66 g (~1/2 taza)', '66 g (~1/2 taza)', '66 g (~1/2 cup)', 65.8, 40, 9.3, 0.3, 0.1, 0, 'usda', 2747654),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Tilapia cocida', 'Tilapia cocida', 'Tilapia, cooked', '42 g', '42 g', '42 g', 42.2, 40, 8, 0, 1, 0, 'usda', 2684442),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Mojarra cocida', 'Mojarra cocida', 'Sea bream, cooked', '19 g', '19 g', '19 g', 19.1, 40, 2.9, 0, 3.2, 0, 'usda', 2747668),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Camarón cocido', 'Camarón cocido', 'Shrimp, cooked', '56 g', '56 g', '56 g', 56, 40, 8.7, 0.3, 0.4, 0, 'usda', 2684443),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Langosta cocida', 'Langosta cocida', 'Lobster, cooked', '68 g (~1/2 taza)', '68 g (~1/2 taza)', '68 g (~1/2 cup)', 68, 40, 8.8, 0.6, 0.2, 0, 'usda', 2747657),
+  (null, 'proteina_muy_baja', 'proteina_muy_baja', 'Pulpo cocido', 'Pulpo cocido', 'Octopus, cooked', '8 g', '8 g', '8 g', 8, 40, 3.3, 0.2, 2.9, 0, 'usda', 749420),
+  (null, 'proteina_baja', 'proteina_baja', 'Pechuga de pollo con piel cocida', 'Pechuga de pollo con piel cocida', 'Chicken breast with skin', '43 g', '43 g', '43 g', 43.3, 55, 9.3, 0, 2.1, 0, 'usda', 2727569),
+  (null, 'proteina_baja', 'proteina_baja', 'Muslo de pollo sin piel', 'Muslo de pollo sin piel', 'Chicken thigh skinless', '38 g', '38 g', '38 g', 38.2, 55, 7.1, 0, 3, 0, 'usda', 2646171),
+  (null, 'proteina_baja', 'proteina_baja', 'Carne molida de res 95% magra', 'Carne molida de res 95% magra', '95% lean ground beef', '23 g', '23 g', '23 g', 22.6, 55, 4, 0, 4.4, 0, 'usda', 2514744),
+  (null, 'proteina_baja', 'proteina_baja', 'Bistec de res magro', 'Bistec de res magro', 'Lean beef steak', '39 g', '39 g', '39 g', 39, 55, 8.4, 0.3, 2.2, 0, 'usda', 2646173),
+  (null, 'proteina_baja', 'proteina_baja', 'Lomo de cerdo magro', 'Lomo de cerdo magro', 'Lean pork loin', '31 g', '31 g', '31 g', 31.3, 55, 8.7, 0, 2, 0, 'usda', 746758),
+  (null, 'proteina_baja', 'proteina_baja', 'Jamón de pavo bajo en grasa', 'Jamón de pavo bajo en grasa', 'Low-fat turkey ham', '45 g', '45 g', '45 g', 45.5, 55, 8.9, 1.1, 1.7, 0, 'usda', 746952),
+  (null, 'proteina_baja', 'proteina_baja', 'Atún fresco cocido', 'Atún fresco cocido', 'Fresh tuna, cooked', '30 g', '30 g', '30 g', 29.9, 55, 8.9, 0, 1.9, 0, 'usda', 173707),
+  (null, 'proteina_baja', 'proteina_baja', 'Salmón ahumado', 'Salmón ahumado', 'Smoked salmon', '28 g', '28 g', '28 g', 27.9, 55, 5.7, 0, 3.7, 0, 'usda', 2684441),
+  (null, 'proteina_baja', 'proteina_baja', 'Trucha cocida', 'Trucha cocida', 'Trout, cooked', '11 g', '11 g', '11 g', 11, 55, 4.5, 0.2, 4, 0, 'usda', 749420),
+  (null, 'proteina_baja', 'proteina_baja', 'Atún en aceite escurrido', 'Atún en aceite escurrido', 'Tuna canned in oil, drained', '61 g (~1/2 taza)', '61 g (~1/2 taza)', '61 g (~1/2 cup)', 61.1, 55, 11.6, 0, 0.6, 0, 'usda', 334194),
+  (null, 'proteina_baja', 'proteina_baja', 'Huevo entero', 'Huevo entero', 'Whole egg', '37 g', '37 g', '37 g', 36.7, 55, 4.5, 0.3, 3.8, 0, 'usda', 323604),
+  (null, 'proteina_media', 'proteina_media', 'Carne molida de res 85% magra', 'Carne molida de res 85% magra', '85% lean ground beef', '31 g', '31 g', '31 g', 30.9, 75, 5.4, 0, 6, 0, 'usda', 2514744),
+  (null, 'proteina_media', 'proteina_media', 'Pierna de cordero', 'Pierna de cordero', 'Lamb leg', '33 g', '33 g', '33 g', 33.3, 75, 8.8, 0, 4.1, 0, 'usda', 172485),
+  (null, 'proteina_media', 'proteina_media', 'Salmón cocido', 'Salmón cocido', 'Salmon, cooked', '38 g', '38 g', '38 g', 38.1, 75, 7.7, 0, 5, 0, 'usda', 2684441),
+  (null, 'proteina_media', 'proteina_media', 'Sardinas en aceite', 'Sardinas en aceite', 'Sardines in oil', '36 g', '36 g', '36 g', 36.4, 75, 9.8, 0.9, 3.6, 0, 'usda', 2747652),
+  (null, 'proteina_media', 'proteina_media', 'Costilla de cerdo magra', 'Costilla de cerdo magra', 'Pork ribs lean', '40 g', '40 g', '40 g', 39.7, 75, 7.7, 0, 4.7, 0, 'usda', 167895),
+  (null, 'proteina_media', 'proteina_media', 'Hígado de res', 'Hígado de res', 'Beef liver', '23 g', '23 g', '23 g', 22.9, 75, 3, 0.8, 6.6, 0, 'usda', 746779),
+  (null, 'proteina_media', 'proteina_media', 'Pierna de cerdo asada', 'Pierna de cerdo asada', 'Roast pork leg', '27 g', '27 g', '27 g', 27.5, 75, 7.4, 0, 4.8, 0, 'usda', 168223),
+  (null, 'proteina_alta', 'proteina_alta', 'Tocino', 'Tocino', 'Bacon', '20 g', '20 g', '20 g', 20, 100, 8.2, 0.4, 7.3, 0, 'usda', 749420),
+  (null, 'proteina_alta', 'proteina_alta', 'Salchicha de cerdo', 'Salchicha de cerdo', 'Pork sausage', '31 g', '31 g', '31 g', 31.1, 100, 5.7, 0.7, 8.1, 0, 'usda', 746780),
+  (null, 'proteina_alta', 'proteina_alta', 'Chorizo', 'Chorizo', 'Chorizo', '29 g', '29 g', '29 g', 28.9, 100, 5.6, 0.8, 8.1, 0, 'usda', 746781),
+  (null, 'proteina_alta', 'proteina_alta', 'Costilla de res', 'Costilla de res', 'Beef ribs', '30 g', '30 g', '30 g', 30.5, 100, 4.1, 1, 8.8, 0, 'usda', 746779),
+  (null, 'proteina_alta', 'proteina_alta', 'Chuleta de cerdo', 'Chuleta de cerdo', 'Pork chop', '72 g (~1/2 taza)', '72 g (~1/2 taza)', '72 g (~1/2 cup)', 72.5, 100, 16.5, 0, 4, 0, 'usda', 2727575),
+  (null, 'proteina_alta', 'proteina_alta', 'Queso americano', 'Queso americano', 'American cheese', '27 g', '27 g', '27 g', 26.7, 100, 4.7, 1.7, 8.3, 0, 'usda', 747429),
+  (null, 'proteina_alta', 'proteina_alta', 'Salami', 'Salami', 'Salami', '44 g', '44 g', '44 g', 43.9, 100, 7.8, 0, 7.7, 0, 'usda', 2514745),
+  (null, 'grasas_mono', 'grasas_mono', 'Aceite de oliva', 'Aceite de oliva', 'Olive oil', '22 g', '22 g', '22 g', 21.8, 45, 5.9, 0.5, 2.2, 0, 'usda', 2747652),
+  (null, 'grasas_mono', 'grasas_mono', 'Aceite de aguacate', 'Aceite de aguacate', 'Avocado oil', '20 g', '20 g', '20 g', 20.2, 45, 0.4, 1.7, 4.1, 0, 'usda', 2710824),
+  (null, 'grasas_mono', 'grasas_mono', 'Aceitunas verdes', 'Aceitunas verdes', 'Green olives', '35 g', '35 g', '35 g', 34.6, 45, 0.4, 1.7, 4.5, 1.4, 'usda', 332791),
+  (null, 'grasas_mono', 'grasas_mono', 'Aceitunas negras', 'Aceitunas negras', 'Black olives', '85 g', '85 g', '85 g', 85.4, 45, 0.5, 11.5, 0.2, 1.2, 'usda', 2710837),
+  (null, 'grasas_mono', 'grasas_mono', 'Almendras', 'Almendras', 'Almonds', '1 cda (7 g)', '1 cda (7 g)', '1 tbsp (7 g)', 7.2, 45, 1.5, 1.4, 3.7, 0.8, 'usda', 2346393),
+  (null, 'grasas_mono', 'grasas_mono', 'Nueces de la India', 'Nueces de la India', 'Cashews', '1 cda (8 g)', '1 cda (8 g)', '1 tbsp (8 g)', 8, 45, 1.4, 2.9, 3.1, 0.3, 'usda', 2515374),
+  (null, 'grasas_mono', 'grasas_mono', 'Avellanas', 'Avellanas', 'Hazelnuts', '1 cda (7 g)', '1 cda (7 g)', '1 tbsp (7 g)', 7, 45, 0.9, 1.9, 3.8, 0.6, 'usda', 2515375),
+  (null, 'grasas_mono', 'grasas_mono', 'Cacahuates', 'Cacahuates', 'Peanuts', '1 cda (8 g)', '1 cda (8 g)', '1 tbsp (8 g)', 7.7, 45, 1.8, 2, 3.3, 0.6, 'usda', 2515376),
+  (null, 'grasas_mono', 'grasas_mono', 'Crema de cacahuate natural', 'Crema de cacahuate natural', 'Natural peanut butter', '1 cda (7 g)', '1 cda (7 g)', '1 tbsp (7 g)', 7.1, 45, 1.7, 1.6, 3.5, 0.5, 'usda', 2262072),
+  (null, 'grasas_mono', 'grasas_mono', 'Crema de almendra', 'Crema de almendra', 'Almond butter', '1 cdta (7 g)', '1 cdta (7 g)', '1 tsp (7 g)', 7, 45, 1.5, 1.5, 3.7, 0.7, 'usda', 2262074),
+  (null, 'grasas_poli', 'grasas_poli', 'Semillas de chía', 'Semillas de chía', 'Chia seeds', '1 cda (9 g)', '1 cda (9 g)', '1 tbsp (9 g)', 8.7, 45, 1.5, 3.3, 2.9, 0, 'usda', 2710819),
+  (null, 'grasas_poli', 'grasas_poli', 'Semillas de linaza', 'Semillas de linaza', 'Flax seeds', '1 cda (8 g)', '1 cda (8 g)', '1 tbsp (8 g)', 8.3, 45, 1.5, 2.8, 3.1, 1.9, 'usda', 2262075),
+  (null, 'grasas_poli', 'grasas_poli', 'Semillas de girasol', 'Semillas de girasol', 'Sunflower seeds', '1 cda (7 g)', '1 cda (7 g)', '1 tbsp (7 g)', 7.4, 45, 1.4, 1.8, 3.6, 0.5, 'usda', 2515381),
+  (null, 'grasas_poli', 'grasas_poli', 'Semillas de calabaza', 'Semillas de calabaza', 'Pumpkin seeds', '1 cda (8 g)', '1 cda (8 g)', '1 tbsp (8 g)', 8.1, 45, 2.4, 1.5, 3.2, 0.4, 'usda', 2515380),
+  (null, 'grasas_poli', 'grasas_poli', 'Semillas de ajonjolí', 'Semillas de ajonjolí', 'Sesame seeds', '1 cda (8 g)', '1 cda (8 g)', '1 tbsp (8 g)', 8.1, 45, 2.4, 1.5, 3.2, 0.4, 'usda', 2515380),
+  (null, 'grasas_poli', 'grasas_poli', 'Nueces de Castilla', 'Nueces de Castilla', 'Walnuts', '1 cdta (6 g)', '1 cdta (6 g)', '1 tsp (6 g)', 6.2, 45, 0.9, 0.7, 4.3, 0.3, 'usda', 2346394),
+  (null, 'grasas_poli', 'grasas_poli', 'Nueces pecanas', 'Nueces pecanas', 'Pecans', '1 cdta (6 g)', '1 cdta (6 g)', '1 tsp (6 g)', 6, 45, 0.6, 0.8, 4.4, 0.3, 'usda', 2346395),
+  (null, 'grasas_saturadas', 'grasas_saturadas', 'Manteca de cerdo', 'Manteca de cerdo', 'Lard', '20 g', '20 g', '20 g', 19.7, 45, 3.5, 0, 3.5, 0, 'usda', 2514745),
+  (null, 'grasas_saturadas', 'grasas_saturadas', 'Crema espesa', 'Crema espesa', 'Heavy cream', '1 cda (13 g)', '1 cda (13 g)', '1 tbsp (13 g)', 13.1, 45, 0.3, 0.5, 4.7, 0, 'usda', 2346386),
+  (null, 'grasas_saturadas', 'grasas_saturadas', 'Crema ácida', 'Crema ácida', 'Sour cream', '23 g', '23 g', '23 g', 23, 45, 0.7, 1.3, 4.1, 0, 'usda', 2346387),
+  (null, 'grasas_saturadas', 'grasas_saturadas', 'Aceite de coco', 'Aceite de coco', 'Coconut oil', '1 cdta (5 g)', '1 cdta (5 g)', '1 tsp (5 g)', 5.4, 45, 0, 0, 5.4, 0, 'usda', 330458),
+  (null, 'grasas_saturadas', 'grasas_saturadas', 'Queso crema', 'Queso crema', 'Cream cheese', '1 cda (13 g)', '1 cda (13 g)', '1 tbsp (13 g)', 13.1, 45, 0.8, 0.6, 4.4, 0, 'usda', 2346385),
+  (null, 'azucares', 'azucares', 'Azúcar blanca', 'Azúcar blanca', 'White sugar', '10 g', '10 g', '10 g', 10.4, 40, 0, 10.3, 0, 0, 'usda', 746784),
+  (null, 'azucares', 'azucares', 'Azúcar morena', 'Azúcar morena', 'Brown sugar', '11 g', '11 g', '11 g', 11, 40, 0.8, 8.3, 0.4, 0, 'usda', 1104812),
+  (null, 'azucares', 'azucares', 'Miel de abeja', 'Miel de abeja', 'Honey', '13 g', '13 g', '13 g', 13.2, 40, 0, 10.8, 0, 0, 'usda', 169640),
+  (null, 'azucares', 'azucares', 'Miel de maple', 'Miel de maple', 'Maple syrup', '15 g', '15 g', '15 g', 15.4, 40, 0, 10.3, 0, 0, 'usda', 169661),
+  (null, 'azucares', 'azucares', 'Mermelada', 'Mermelada', 'Jam', '48 g', '48 g', '48 g', 48.2, 40, 3.9, 5.9, 0.1, 0.3, 'usda', 330415),
+  (null, 'azucares', 'azucares', 'Cajeta', 'Cajeta', 'Cajeta', '13 g', '13 g', '13 g', 12.7, 40, 0.9, 7, 0.9, 0, 'usda', 173461),
+  (null, 'azucares', 'azucares', 'Piloncillo', 'Piloncillo', 'Piloncillo', '11 g', '11 g', '11 g', 10.8, 40, 0, 10.7, 0, 0, 'usda', 2076885),
+  (null, 'azucares', 'azucares', 'Chocolate de mesa', 'Chocolate de mesa', 'Mexican chocolate', '9 g', '9 g', '9 g', 9.4, 40, 0.3, 7.3, 1.5, 0.4, 'usda', 167999),
+  (null, 'azucares', 'azucares', 'Helado de vainilla', 'Helado de vainilla', 'Vanilla ice cream', '19 g', '19 g', '19 g', 19.3, 40, 0.7, 4.6, 2.1, 0.1, 'usda', 167575),
+  (null, 'azucares', 'azucares', 'Refresco de cola', 'Refresco de cola', 'Cola soda', '108 g (~1 taza)', '108 g (~1 taza)', '108 g (~1 cup)', 108.1, 40, 0.1, 10.3, 0, 0, 'usda', 175093),
+  (null, 'bebidas_deporte', 'bebidas_deporte', 'Gatorade clásico', 'Gatorade clásico', 'Gatorade classic', '1.0 taza (240 ml)', '1.0 taza (240 ml)', '1.0 cup (240 ml)', 240, 19, 0, 4.8, 0, 0, 'usda', 2088133),
+  (null, 'bebidas_deporte', 'bebidas_deporte', 'Powerade', 'Powerade', 'Powerade', '1.0 taza (240 ml)', '1.0 taza (240 ml)', '1.0 cup (240 ml)', 240, 77, 0, 18.8, 0.1, 0, 'usda', 175108),
+  (null, 'bebidas_deporte', 'bebidas_deporte', 'Bebida isotónica', 'Bebida isotónica', 'Isotonic sports drink', '1.0 taza (240 ml)', '1.0 taza (240 ml)', '1.0 cup (240 ml)', 240, 62, 0, 15.4, 0, 0, 'usda', 2710771),
+  (null, 'bebidas_deporte', 'bebidas_deporte', 'Bebida de electrolitos sin azúcar', 'Bebida de electrolitos sin azúcar', 'Sugar-free electrolyte drink', '1.0 taza (240 ml)', '1.0 taza (240 ml)', '1.0 cup (240 ml)', 240, 2, 0.6, 1.7, 0.2, 0, 'usda', 174177),
+  (null, 'bebidas_deporte', 'bebidas_deporte', 'Agua de coco natural', 'Agua de coco natural', 'Coconut water', '1.0 taza (240 ml)', '1.0 taza (240 ml)', '1.0 cup (240 ml)', 240, 552, 5.5, 13.3, 57.1, 5.3, 'usda', 170172);
