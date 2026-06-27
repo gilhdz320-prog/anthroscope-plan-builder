@@ -5,9 +5,12 @@ import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; code?: string; from?: string }>;
 }) {
   const sp = await searchParams;
+  const prefillCode = sp.code ?? "";
+  const fromStripe = sp.from === "stripe";
+
   return (
     <main className="flex min-h-screen flex-col">
       <div className="flex flex-1 items-center justify-center px-4 py-12">
@@ -31,9 +34,23 @@ export default async function SignupPage({
               className="mt-3 text-sm"
               style={{ color: "var(--ink-muted)" }}
             >
-              Crea tu cuenta y comienza a construir planes profesionales.
+              Activa tu cuenta con el código que recibiste por correo.
             </p>
           </div>
+
+          {fromStripe && (
+            <div
+              className="mb-5 rounded-md border p-3 text-xs rise"
+              style={{
+                background: "var(--brand-50)",
+                borderColor: "var(--border-emerald)",
+                color: "var(--brand-700)",
+              }}
+            >
+              ¡Gracias por tu compra! Te enviamos tu código de acceso por
+              correo. Si no llega en unos minutos, revisa la carpeta de SPAM.
+            </div>
+          )}
 
           <div className="card-luxe p-8 rise">
             {sp.error && (
@@ -50,6 +67,41 @@ export default async function SignupPage({
             )}
 
             <form action={signup} className="space-y-5">
+              <div>
+                <label htmlFor="access_code" className="label">
+                  Código de acceso
+                </label>
+                <input
+                  id="access_code"
+                  name="access_code"
+                  type="text"
+                  required
+                  defaultValue={prefillCode}
+                  placeholder="APB-XXXX-XXXX-XXXX"
+                  autoComplete="off"
+                  className="input"
+                  style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                />
+                <p
+                  className="mt-1.5 text-[11px]"
+                  style={{ color: "var(--ink-subtle)" }}
+                >
+                  Lo recibiste por correo tras tu compra.{" "}
+                  <Link
+                    href="https://anthroscope.pro/recursos"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "var(--brand-700)" }}
+                  >
+                    ¿No tienes uno?
+                  </Link>
+                </p>
+              </div>
+
               <div>
                 <label htmlFor="full_name" className="label">
                   Nombre completo
@@ -93,16 +145,10 @@ export default async function SignupPage({
                   className="input"
                   placeholder="Mínimo 6 caracteres"
                 />
-                <p
-                  className="mt-1.5 text-[11px]"
-                  style={{ color: "var(--ink-subtle)" }}
-                >
-                  Usa al menos 6 caracteres.
-                </p>
               </div>
 
               <button type="submit" className="btn btn-brand w-full">
-                Crear cuenta
+                Activar mi cuenta
               </button>
             </form>
 
