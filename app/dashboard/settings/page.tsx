@@ -146,7 +146,7 @@ export default async function SettingsPage() {
           Diseñado para nutriólogos, dietistas y entrenadores de élite.
         </p>
         <Link
-          href="https://anthroscope.app"
+          href="https://app.anthroscope.pro"
           target="_blank"
           rel="noopener noreferrer"
           className="btn mt-6"

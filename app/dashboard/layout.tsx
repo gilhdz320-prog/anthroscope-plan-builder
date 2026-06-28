@@ -51,7 +51,7 @@ export default async function DashboardLayout({
           style={{ borderColor: "var(--border-subtle)" }}
         >
           <Link
-            href="https://anthroscope.app"
+            href="https://app.anthroscope.pro"
             target="_blank"
             rel="noopener noreferrer"
             className="block rounded-md p-3"
