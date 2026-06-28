@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/dashboard", label: "Vista general", labelEn: "Overview" },
   { href: "/dashboard/patients", label: "Pacientes", labelEn: "Patients" },
   { href: "/dashboard/plans", label: "Planes", labelEn: "Plans" },
+  { href: "/dashboard/intake/new", label: "Intake", labelEn: "Intake" },
   { href: "/dashboard/templates", label: "Plantillas", labelEn: "Templates" },
   { href: "/dashboard/equivalents", label: "Equivalentes", labelEn: "Equivalents" },
   { href: "/dashboard/settings", label: "Ajustes", labelEn: "Settings" },

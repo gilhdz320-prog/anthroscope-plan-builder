@@ -23,6 +23,24 @@ export async function createPlan(formData: FormData) {
   const valid_until = nullable(formData.get('valid_until'))
   const notes = nullable(formData.get('notes'))
 
+  const planModeRaw = nullable(formData.get('plan_mode'))
+  const plan_mode = planModeRaw === 'equivalentes' ? 'equivalentes' : 'macros'
+
+  const kcal = nullable(formData.get('kcal_target'))
+  const protein = nullable(formData.get('protein_g'))
+  const carbs = nullable(formData.get('carbs_g'))
+  const fat = nullable(formData.get('fat_g'))
+
+  // The plans table has no dedicated macro columns, so the energy target and
+  // macro split are recorded as a leading summary line in notes.
+  const summaryParts: string[] = []
+  if (kcal) summaryParts.push(`Meta: ${kcal} kcal`)
+  if (protein || carbs || fat) {
+    summaryParts.push(`P${protein ?? '?'}/C${carbs ?? '?'}/G${fat ?? '?'}`)
+  }
+  const summary = summaryParts.join(' · ')
+  const finalNotes = [summary, notes].filter(Boolean).join('\n') || null
+
   if (!title || !patient_id) {
     redirect(
       '/dashboard/plans/new?error=' +
@@ -37,7 +55,8 @@ export async function createPlan(formData: FormData) {
     title,
     valid_from,
     valid_until,
-    notes,
+    notes: finalNotes,
+    plan_mode,
   })
 
   if (error) {
