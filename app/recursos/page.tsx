@@ -240,7 +240,7 @@ export default function RecursosPage() {
               {/* CTAs */}
               <div className="mt-7 flex flex-wrap items-center gap-4">
                 <a
-                  href="#stripe-checkout"
+                  href="https://planbuilder.anthroscope.pro/comprar"
                   className="inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
                   style={{ background: C.cyan, color: "#080c14", boxShadow: "0 8px 24px rgba(0,212,255,0.25)" }}
                 >
