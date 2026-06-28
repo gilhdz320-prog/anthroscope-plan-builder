@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/SidebarNav";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
+import { getLocale, tr } from "@/lib/i18n";
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +13,7 @@ export default async function DashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const locale = await getLocale();
 
   return (
     <div className="flex min-h-screen">
@@ -93,7 +95,7 @@ export default async function DashboardLayout({
             className="text-xs uppercase tracking-[0.18em]"
             style={{ color: "var(--ink-subtle)" }}
           >
-            Panel
+            {tr("panel", locale)}
           </p>
           <div className="flex items-center gap-3">
             <span
@@ -104,7 +106,7 @@ export default async function DashboardLayout({
             </span>
             <form action="/logout" method="post">
               <button type="submit" className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: "12px" }}>
-                Cerrar sesión
+                {tr("signOut", locale)}
               </button>
             </form>
           </div>

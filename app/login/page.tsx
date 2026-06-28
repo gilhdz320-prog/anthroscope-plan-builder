@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { login } from "./actions";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
+import { getLocale, tr } from "@/lib/i18n";
 
 export default async function LoginPage({
   searchParams,
@@ -8,13 +9,15 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; message?: string; redirect?: string }>;
 }) {
   const sp = await searchParams;
+  const locale = await getLocale();
+
   return (
     <main className="flex min-h-screen flex-col">
       <div className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <Link href="/" className="inline-block">
-              <p className="eyebrow">Plan Builder · Pro</p>
+              <p className="eyebrow">{tr("login_eyebrow", locale)}</p>
               <h1
                 className="font-display mt-2"
                 style={{
@@ -31,7 +34,7 @@ export default async function LoginPage({
               className="mt-3 text-sm"
               style={{ color: "var(--ink-muted)" }}
             >
-              Inicia sesión para continuar con tu trabajo.
+              {tr("login_subtitle", locale)}
             </p>
           </div>
 
@@ -69,7 +72,7 @@ export default async function LoginPage({
               />
               <div>
                 <label htmlFor="email" className="label">
-                  Correo electrónico
+                  {tr("email", locale)}
                 </label>
                 <input
                   id="email"
@@ -78,13 +81,13 @@ export default async function LoginPage({
                   required
                   autoComplete="email"
                   className="input"
-                  placeholder="tu@correo.com"
+                  placeholder={tr("login_email_ph", locale)}
                 />
               </div>
 
               <div>
                 <label htmlFor="password" className="label">
-                  Contraseña
+                  {tr("password", locale)}
                 </label>
                 <input
                   id="password"
@@ -98,8 +101,18 @@ export default async function LoginPage({
                 />
               </div>
 
+              <div className="text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs"
+                  style={{ color: "var(--brand-700)" }}
+                >
+                  {tr("login_forgot", locale)}
+                </Link>
+              </div>
+
               <button type="submit" className="btn btn-primary w-full">
-                Iniciar sesión
+                {tr("login_submit", locale)}
               </button>
             </form>
 
@@ -107,13 +120,13 @@ export default async function LoginPage({
               className="mt-6 text-center text-xs"
               style={{ color: "var(--ink-muted)" }}
             >
-              ¿No tienes cuenta?{" "}
+              {tr("login_no_account", locale)}{" "}
               <Link
                 href="/signup"
                 className="font-display italic"
                 style={{ color: "var(--brand-700)" }}
               >
-                Crear una
+                {tr("login_create_one", locale)}
               </Link>
             </p>
           </div>

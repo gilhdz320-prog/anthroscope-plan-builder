@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signup } from "./actions";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
+import { getLocale, tr } from "@/lib/i18n";
 
 export default async function SignupPage({
   searchParams,
@@ -8,6 +9,7 @@ export default async function SignupPage({
   searchParams: Promise<{ error?: string; code?: string; from?: string }>;
 }) {
   const sp = await searchParams;
+  const locale = await getLocale();
   const prefillCode = sp.code ?? "";
   const fromStripe = sp.from === "stripe";
 
@@ -17,7 +19,7 @@ export default async function SignupPage({
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <Link href="/" className="inline-block">
-              <p className="eyebrow">Plan Builder · Pro</p>
+              <p className="eyebrow">{tr("login_eyebrow", locale)}</p>
               <h1
                 className="font-display mt-2"
                 style={{
@@ -34,7 +36,7 @@ export default async function SignupPage({
               className="mt-3 text-sm"
               style={{ color: "var(--ink-muted)" }}
             >
-              Activa tu cuenta con el código que recibiste por correo.
+              {tr("signup_subtitle", locale)}
             </p>
           </div>
 
@@ -47,8 +49,7 @@ export default async function SignupPage({
                 color: "var(--brand-700)",
               }}
             >
-              ¡Gracias por tu compra! Te enviamos tu código de acceso por
-              correo. Si no llega en unos minutos, revisa la carpeta de SPAM.
+              {tr("signup_from_stripe", locale)}
             </div>
           )}
 
@@ -69,7 +70,7 @@ export default async function SignupPage({
             <form action={signup} className="space-y-5">
               <div>
                 <label htmlFor="access_code" className="label">
-                  Código de acceso
+                  {tr("signup_access_code", locale)}
                 </label>
                 <input
                   id="access_code"
@@ -90,21 +91,21 @@ export default async function SignupPage({
                   className="mt-1.5 text-[11px]"
                   style={{ color: "var(--ink-subtle)" }}
                 >
-                  Lo recibiste por correo tras tu compra.{" "}
+                  {tr("signup_access_hint_pre", locale)}{" "}
                   <Link
                     href="https://anthroscope.pro/recursos"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: "var(--brand-700)" }}
                   >
-                    ¿No tienes uno?
+                    {tr("signup_access_hint_link", locale)}
                   </Link>
                 </p>
               </div>
 
               <div>
                 <label htmlFor="full_name" className="label">
-                  Nombre completo
+                  {tr("signup_full_name", locale)}
                 </label>
                 <input
                   id="full_name"
@@ -118,7 +119,7 @@ export default async function SignupPage({
 
               <div>
                 <label htmlFor="email" className="label">
-                  Correo electrónico
+                  {tr("email", locale)}
                 </label>
                 <input
                   id="email"
@@ -127,13 +128,13 @@ export default async function SignupPage({
                   required
                   autoComplete="email"
                   className="input"
-                  placeholder="tu@correo.com"
+                  placeholder={tr("login_email_ph", locale)}
                 />
               </div>
 
               <div>
                 <label htmlFor="password" className="label">
-                  Contraseña
+                  {tr("password", locale)}
                 </label>
                 <input
                   id="password"
@@ -143,12 +144,12 @@ export default async function SignupPage({
                   autoComplete="new-password"
                   minLength={6}
                   className="input"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder={tr("signup_password_ph", locale)}
                 />
               </div>
 
               <button type="submit" className="btn btn-brand w-full">
-                Activar mi cuenta
+                {tr("signup_submit", locale)}
               </button>
             </form>
 
@@ -156,13 +157,13 @@ export default async function SignupPage({
               className="mt-6 text-center text-xs"
               style={{ color: "var(--ink-muted)" }}
             >
-              ¿Ya tienes cuenta?{" "}
+              {tr("signup_have_account", locale)}{" "}
               <Link
                 href="/login"
                 className="font-display italic"
                 style={{ color: "var(--brand-700)" }}
               >
-                Inicia sesión
+                {tr("signup_sign_in", locale)}
               </Link>
             </p>
           </div>
