@@ -75,7 +75,7 @@ export default async function DashboardLayout({
               className="mt-1 text-[11px] leading-snug"
               style={{ color: "rgba(248,245,238,0.7)" }}
             >
-              ISAK, hidratación, periodización y AI coaching.
+              Antropometría, hidratación, periodización y AI coaching.
             </p>
           </Link>
         </div>

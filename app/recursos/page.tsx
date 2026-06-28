@@ -19,22 +19,22 @@ const C = {
 };
 
 const features = [
-  "224 alimentos bilingües (USDA + Sistema Mexicano de Equivalentes)",
-  "17 grupos de equivalentes con kcal y macros por porción",
-  "Plantillas reutilizables (pérdida de peso, mantenimiento, ganancia muscular, rendimiento)",
-  "Detección automática de idioma (ES/EN)",
+  "500+ alimentos bilingües (USDA + Sistema Mexicano de Equivalentes)",
+  "20 grupos de equivalentes con kcal y macros por porción",
+  "15 plantillas reutilizables (volumen, definición, mantenimiento, recomposición, keto, mediterránea, vegetariano, vegano y más)",
+  "Idioma manual ES/EN con persistencia, más detección automática",
   "Exportación PDF de lujo con portada, macros, comidas y branding del nutriólogo",
   "Acceso desde cualquier dispositivo, datos seguros en la nube",
 ];
 
 const comparison: { feature: string; builder: string; pro: string }[] = [
   { feature: "Planes de nutrición", builder: "✓ Manual + templates", pro: "✓ IA automático + templates" },
-  { feature: "Equivalentes alimentarios", builder: "✓ 224 alimentos", pro: "✓ USDA 500k+ foods" },
+  { feature: "Equivalentes alimentarios", builder: "✓ 500+ alimentos", pro: "✓ USDA 500k+ foods" },
   { feature: "Exportación PDF", builder: "✓ PDF de lujo", pro: "✓ PDF avanzado" },
   { feature: "AI Coaching", builder: "—", pro: "✓ GPT-4o-mini" },
   { feature: "CHO Periodización", builder: "—", pro: "✓" },
   { feature: "Ciclo Menstrual", builder: "—", pro: "✓" },
-  { feature: "Evaluación Antropométrica", builder: "—", pro: "✓ ISAK protocol" },
+  { feature: "Evaluación Antropométrica", builder: "—", pro: "✓ Protocolo avanzado" },
   { feature: "Altitud / Aclimatación", builder: "—", pro: "✓" },
   { feature: "Multi-atleta / Equipo", builder: "—", pro: "✓" },
   { feature: "Pago", builder: "Una sola vez", pro: "Suscripción mensual" },

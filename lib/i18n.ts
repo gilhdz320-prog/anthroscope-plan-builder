@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export type Locale = 'es' | 'en'
@@ -6,11 +7,17 @@ const DEFAULT_LOCALE: Locale =
   (process.env.NEXT_PUBLIC_DEFAULT_LOCALE as Locale) || 'es'
 
 /**
- * Get the current user's preferred locale from their profile.
- * Falls back to NEXT_PUBLIC_DEFAULT_LOCALE, then 'es'.
+ * Get the current locale. The manual `locale` cookie (set by the in-app
+ * language toggle) takes precedence over the profile preference so the toggle
+ * overrides auto-detection. Falls back to the profile, then
+ * NEXT_PUBLIC_DEFAULT_LOCALE, then 'es'.
  */
 export async function getLocale(): Promise<Locale> {
   try {
+    const cookieStore = await cookies()
+    const cookieLocale = cookieStore.get('locale')?.value
+    if (cookieLocale === 'en' || cookieLocale === 'es') return cookieLocale
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return DEFAULT_LOCALE

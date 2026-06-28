@@ -1,13 +1,75 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
+import { useLocale } from "@/components/LocaleProvider";
+
+const copy = {
+  es: {
+    eyebrow: "Acceso único — De por vida",
+    brand: "Plan Builder",
+    subtitle:
+      "Tu plan nutricional personalizado, con alimentos USDA bilingües, equivalencias mexicanas y PDF descargable. Pago único, acceso de por vida.",
+    once: "Pago único",
+    lifetime: "De por vida",
+    features: [
+      "500+ alimentos con equivalencias mexicanas",
+      "Cálculo automático de macros y porciones",
+      "PDF luxury descargable, listo para imprimir",
+      "Código de acceso único enviado por email",
+      "Pago seguro procesado por Stripe",
+    ],
+    buy: "Comprar ahora — $57",
+    redirecting: "Redirigiendo a Stripe…",
+    secure:
+      "Procesado de forma segura por Stripe. Aceptamos tarjetas de todo el mundo.",
+    canceled: "Cancelaste el pago. Puedes intentarlo de nuevo cuando quieras.",
+    payErr: "Error al iniciar el pago: ",
+    afterPay:
+      "Tras el pago recibirás un código único de acceso por correo electrónico para crear tu cuenta.",
+  },
+  en: {
+    eyebrow: "One-time access — Lifetime",
+    brand: "Plan Builder",
+    subtitle:
+      "Your personalized nutrition plan, with bilingual USDA foods, Mexican exchanges and a downloadable PDF. One-time payment, lifetime access.",
+    once: "One-time payment",
+    lifetime: "Lifetime",
+    features: [
+      "500+ foods with Mexican exchanges",
+      "Automatic macro and portion calculation",
+      "Downloadable luxury PDF, print-ready",
+      "Unique access code sent by email",
+      "Secure payment processed by Stripe",
+    ],
+    buy: "Buy now — $57",
+    redirecting: "Redirecting to Stripe…",
+    secure: "Securely processed by Stripe. We accept cards worldwide.",
+    canceled: "You canceled the payment. You can try again whenever you like.",
+    payErr: "Error starting payment: ",
+    afterPay:
+      "After payment you will receive a unique access code by email to create your account.",
+  },
+};
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+function rise(delay: number) {
+  return {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, ease: EASE, delay },
+  };
+}
 
 export default function ComprarPage({
   searchParams,
 }: {
   searchParams?: { canceled?: string; error?: string };
 }) {
+  const { locale } = useLocale();
+  const c = copy[locale];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,52 +97,74 @@ export default function ComprarPage({
   }
 
   return (
-    <main className="flex min-h-screen flex-col">
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
+    <main
+      className="flex min-h-screen flex-col"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
+      <div className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="w-full max-w-xl">
           <div className="text-center">
-            <p className="eyebrow rise">Acceso unico — De por vida</p>
+            <motion.p
+              {...rise(0)}
+              className="label-accent"
+              style={{ color: "var(--gold)" }}
+            >
+              {c.eyebrow}
+            </motion.p>
 
-            <h1
-              className="font-display mt-5 rise rise-1"
+            <motion.h1
+              {...rise(0.08)}
+              className="mt-5"
               style={{
-                fontSize: "52px",
-                color: "var(--ink-strong)",
-                letterSpacing: "-0.03em",
+                fontFamily:
+                  "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif",
+                fontSize: "56px",
+                color: "var(--text-primary)",
+                letterSpacing: "-0.02em",
                 lineHeight: 1.0,
               }}
             >
               Anthroscope{" "}
-              <span className="italic" style={{ color: "var(--brand-700)" }}>
-                Plan Builder
+              <span className="italic" style={{ color: "var(--gold)" }}>
+                {c.brand}
               </span>
-            </h1>
+            </motion.h1>
 
-            <p
-              className="mx-auto mt-6 max-w-lg text-base leading-relaxed rise rise-2"
-              style={{ color: "var(--ink-muted)" }}
+            <motion.p
+              {...rise(0.16)}
+              className="mx-auto mt-6 max-w-lg text-base leading-relaxed"
+              style={{ color: "var(--text-muted)" }}
             >
-              Tu plan nutricional personalizado, con 224 alimentos USDA
-              bilingues, equivalencias mexicanas y PDF descargable. Pago unico,
-              acceso de por vida.
-            </p>
+              {c.subtitle}
+            </motion.p>
           </div>
 
-          <div className="card-luxe mt-10 p-8 rise rise-3">
+          <motion.div
+            {...rise(0.24)}
+            className="mt-10 p-8"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border-soft)",
+              borderRadius: "16px",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
+            }}
+          >
             <div className="flex items-baseline justify-between">
               <div>
                 <p
-                  className="text-sm uppercase tracking-wider"
-                  style={{ color: "var(--ink-muted)" }}
+                  className="label-accent"
+                  style={{ color: "var(--text-muted)" }}
                 >
-                  Pago unico
+                  {c.once}
                 </p>
                 <p
-                  className="font-display mt-1"
+                  className="mt-1"
                   style={{
-                    fontSize: "56px",
-                    color: "var(--ink-strong)",
-                    letterSpacing: "-0.03em",
+                    fontFamily:
+                      "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif",
+                    fontSize: "60px",
+                    color: "var(--gold)",
+                    letterSpacing: "-0.02em",
                     lineHeight: 1,
                   }}
                 >
@@ -88,9 +172,9 @@ export default function ComprarPage({
                   <span
                     style={{
                       fontSize: "18px",
-                      color: "var(--ink-muted)",
+                      color: "var(--text-muted)",
                       letterSpacing: 0,
-                      marginLeft: "6px",
+                      marginLeft: "8px",
                     }}
                   >
                     USD
@@ -98,39 +182,33 @@ export default function ComprarPage({
                 </p>
               </div>
               <div
-                className="rounded-full px-3 py-1 text-xs uppercase tracking-wider"
+                className="label-accent rounded-full px-3 py-1"
                 style={{
-                  background: "var(--brand-50)",
-                  color: "var(--brand-700)",
-                  border: "1px solid var(--brand-200)",
+                  background: "rgba(201,169,97,0.12)",
+                  color: "var(--gold)",
+                  border: "1px solid var(--border-soft)",
                 }}
               >
-                De por vida
+                {c.lifetime}
               </div>
             </div>
 
             <ul className="mt-7 space-y-3 text-sm">
-              {[
-                "224 alimentos USDA con equivalencias mexicanas",
-                "Calculo automatico de macros y porciones",
-                "PDF luxury descargable, listo para imprimir",
-                "Codigo de acceso unico enviado por email",
-                "Pago seguro procesado por Stripe",
-              ].map((f) => (
+              {c.features.map((f) => (
                 <li
                   key={f}
                   className="flex items-start gap-3"
-                  style={{ color: "var(--ink-strong)" }}
+                  style={{ color: "var(--text-primary)" }}
                 >
                   <span
                     aria-hidden
                     style={{
-                      color: "var(--brand-700)",
-                      fontSize: "14px",
-                      marginTop: "2px",
+                      color: "var(--gold)",
+                      fontSize: "15px",
+                      marginTop: "1px",
                     }}
                   >
-                    ✦
+                    ✓
                   </span>
                   <span>{f}</span>
                 </li>
@@ -149,27 +227,26 @@ export default function ComprarPage({
                 cursor: loading ? "wait" : "pointer",
               }}
             >
-              {loading ? "Redirigiendo a Stripe…" : "Comprar ahora — $57"}
+              {loading ? c.redirecting : c.buy}
             </button>
 
             <p
               className="mt-4 text-center text-xs"
-              style={{ color: "var(--ink-muted)" }}
+              style={{ color: "var(--text-muted)" }}
             >
-              Procesado de forma segura por Stripe. Aceptamos tarjetas de todo
-              el mundo.
+              {c.secure}
             </p>
 
             {canceled && (
               <div
                 className="mt-5 rounded-md border px-4 py-3 text-sm"
                 style={{
-                  borderColor: "#f0d9a8",
-                  background: "#fdf6e7",
-                  color: "#7a5a14",
+                  borderColor: "rgba(201,169,97,0.3)",
+                  background: "rgba(201,169,97,0.06)",
+                  color: "var(--gold-soft)",
                 }}
               >
-                Cancelaste el pago. Puedes intentarlo de nuevo cuando quieras.
+                {c.canceled}
               </div>
             )}
 
@@ -177,12 +254,13 @@ export default function ComprarPage({
               <div
                 className="mt-5 rounded-md border px-4 py-3 text-sm"
                 style={{
-                  borderColor: "#f3c2c2",
-                  background: "#fdecec",
-                  color: "#7a1414",
+                  borderColor: "rgba(184,60,42,0.4)",
+                  background: "rgba(184,60,42,0.12)",
+                  color: "#e8a99a",
                 }}
               >
-                Error al iniciar el pago: {decodeURIComponent(urlError)}
+                {c.payErr}
+                {decodeURIComponent(urlError)}
               </div>
             )}
 
@@ -190,27 +268,27 @@ export default function ComprarPage({
               <div
                 className="mt-5 rounded-md border px-4 py-3 text-sm"
                 style={{
-                  borderColor: "#f3c2c2",
-                  background: "#fdecec",
-                  color: "#7a1414",
+                  borderColor: "rgba(184,60,42,0.4)",
+                  background: "rgba(184,60,42,0.12)",
+                  color: "#e8a99a",
                 }}
               >
                 {error}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          <p
+          <motion.p
+            {...rise(0.32)}
             className="mt-8 text-center text-xs"
-            style={{ color: "var(--ink-muted)" }}
+            style={{ color: "var(--text-muted)" }}
           >
-            Tras el pago recibiras un codigo unico de acceso por correo
-            electronico para crear tu cuenta.
-          </p>
+            {c.afterPay}
+          </motion.p>
         </div>
       </div>
 
-      <PoweredByAnthroscope />
+      <PoweredByAnthroscope variant="dark" />
     </main>
   );
 }

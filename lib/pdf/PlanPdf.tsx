@@ -52,7 +52,7 @@ Font.registerHyphenationCallback((word) => [word]);
 
 // ──────────── Color tokens ────────────
 const COLORS = {
-  ivory: "#F8F5EE",
+  ivory: "#FAFAF8",
   paper: "#FFFFFF",
   sunken: "#F0EBE0",
   inkStrong: "#0E1410",
@@ -61,7 +61,7 @@ const COLORS = {
   inkSubtle: "#8A938D",
   brand: "#0F7B5C",
   brandDeep: "#053024",
-  gold: "#C9A24A",
+  gold: "#c9a961",
   goldDeep: "#7E6322",
   border: "#D9D2C0",
   borderSubtle: "#ECE6D8",
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 8,
     letterSpacing: 2.4,
-    color: COLORS.brand,
+    color: COLORS.gold,
     textTransform: "uppercase",
     marginBottom: 8,
   },
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces",
     fontStyle: "italic",
     fontSize: 9,
-    color: COLORS.brandDeep,
+    color: COLORS.goldDeep,
     letterSpacing: -0.2,
   },
   pageNum: {
@@ -692,12 +692,9 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
         )}
 
         <View style={styles.footer} fixed>
-          <View>
-            <Text style={styles.footerText}>Plan generado con</Text>
-            <Text style={styles.footerBrand}>
-              Anthroscope Plan Builder
-            </Text>
-          </View>
+          <Text style={styles.footerBrand}>
+            Powered by Anthroscope · planbuilder.anthroscope.pro
+          </Text>
           <Text
             style={styles.pageNum}
             render={({ pageNumber, totalPages }) =>

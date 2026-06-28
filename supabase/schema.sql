@@ -385,12 +385,26 @@ create policy "alerts_all_own"
 -- =============================================================================
 -- Seed: public templates (visible to all signed-in users)
 -- =============================================================================
+-- 15 seed templates. name/description are bilingual (ES · EN). goal stores the
+-- category; kcal_target the daily energy. Macro targets (P/C/G grams) are noted
+-- in the description so they survive in the current single-description schema.
 insert into public.templates (id, user_id, name, description, goal, kcal_target, is_public, is_seed)
 values
-  ('11111111-1111-1111-1111-111111111111', null, 'Pérdida de peso — 1200 kcal', 'Plan básico de pérdida de peso', 'weight_loss', 1200, true, true),
-  ('22222222-2222-2222-2222-222222222222', null, 'Mantenimiento — 1800 kcal', 'Plan de mantenimiento estándar', 'maintenance', 1800, true, true),
-  ('33333333-3333-3333-3333-333333333333', null, 'Weight loss — 1200 kcal', 'Basic weight loss plan', 'weight_loss', 1200, true, true),
-  ('44444444-4444-4444-4444-444444444444', null, 'Maintenance — 1800 kcal', 'Standard maintenance plan', 'maintenance', 1800, true, true)
+  ('a0000000-0000-0000-0000-000000000001', null, 'Volumen limpio · Clean bulk', 'Excedente calórico limpio para ganancia muscular. P200/C400/G90. · Clean caloric surplus for muscle gain. P200/C400/F90.', 'bulk', 3200, true, true),
+  ('a0000000-0000-0000-0000-000000000002', null, 'Volumen agresivo · Aggressive bulk', 'Excedente alto para máxima ganancia de masa. P220/C480/G110. · High surplus for maximum mass gain. P220/C480/F110.', 'bulk', 3800, true, true),
+  ('a0000000-0000-0000-0000-000000000003', null, 'Definición moderada · Moderate cut', 'Déficit moderado preservando músculo. P200/C200/G65. · Moderate deficit preserving muscle. P200/C200/F65.', 'cut', 2200, true, true),
+  ('a0000000-0000-0000-0000-000000000004', null, 'Definición agresiva · Aggressive cut', 'Déficit agresivo con proteína alta. P180/C150/G55. · Aggressive deficit with high protein. P180/C150/F55.', 'cut', 1800, true, true),
+  ('a0000000-0000-0000-0000-000000000005', null, 'Mantenimiento · Maintenance', 'Energía de mantenimiento equilibrada. P160/C290/G75. · Balanced maintenance energy. P160/C290/F75.', 'maintenance', 2600, true, true),
+  ('a0000000-0000-0000-0000-000000000006', null, 'Recomposición · Body recomp', 'Recomposición corporal con proteína alta. P190/C240/G70. · Body recomposition with high protein. P190/C240/F70.', 'recomp', 2400, true, true),
+  ('a0000000-0000-0000-0000-000000000007', null, 'Resistencia · Endurance performance', 'Alto aporte de carbohidratos para resistencia. P170/C480/G90. · High carbohydrate intake for endurance. P170/C480/F90.', 'performance', 3500, true, true),
+  ('a0000000-0000-0000-0000-000000000008', null, 'Fuerza · Strength performance', 'Soporte de fuerza con proteína elevada. P220/C360/G95. · Strength support with elevated protein. P220/C360/F95.', 'performance', 3300, true, true),
+  ('a0000000-0000-0000-0000-000000000009', null, 'Vegetariano balanceado · Balanced vegetarian', 'Plan vegetariano equilibrado. P130/C300/G75. · Balanced vegetarian plan. P130/C300/F75.', 'vegetarian', 2400, true, true),
+  ('a0000000-0000-0000-0000-000000000010', null, 'Vegano alto en proteína · High-protein vegan', 'Plan vegano con énfasis en proteína. P150/C290/G80. · Vegan plan with protein emphasis. P150/C290/F80.', 'vegan', 2500, true, true),
+  ('a0000000-0000-0000-0000-000000000011', null, 'Keto / baja en carbs · Keto / low-carb', 'Cetogénico bajo en carbohidratos. P150/C50/G165. · Ketogenic low-carbohydrate. P150/C50/F165.', 'keto', 2200, true, true),
+  ('a0000000-0000-0000-0000-000000000012', null, 'Mediterránea · Mediterranean', 'Patrón mediterráneo rico en grasas saludables. P140/C260/G90. · Mediterranean pattern rich in healthy fats. P140/C260/F90.', 'mediterranean', 2400, true, true),
+  ('a0000000-0000-0000-0000-000000000013', null, 'Pérdida de grasa mujeres · Female fat loss', 'Pérdida de grasa enfocada en mujeres. P130/C140/G50. · Fat loss focused for women. P130/C140/F50.', 'cut', 1600, true, true),
+  ('a0000000-0000-0000-0000-000000000014', null, 'Volumen mujeres · Female lean gain', 'Ganancia magra enfocada en mujeres. P140/C240/G70. · Lean gain focused for women. P140/C240/F70.', 'bulk', 2200, true, true),
+  ('a0000000-0000-0000-0000-000000000015', null, 'Atleta adolescente · Teen athlete', 'Soporte energético para atletas adolescentes. P140/C360/G80. · Energy support for teen athletes. P140/C360/F80.', 'performance', 2800, true, true)
 on conflict (id) do nothing;
 
 -- =============================================================================

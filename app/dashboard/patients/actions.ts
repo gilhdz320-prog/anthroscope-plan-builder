@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { MAX_CLIENTS } from '@/lib/constants'
 
 function nullable(v: FormDataEntryValue | null): string | null {
   const s = (v ?? '').toString().trim()
@@ -49,6 +50,20 @@ export async function createPatient(formData: FormData) {
     redirect(
       '/dashboard/patients/new?error=' +
         encodeURIComponent('First name and last name are required.'),
+    )
+  }
+
+  const { count } = await supabase
+    .from('patients')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
+  if ((count ?? 0) >= MAX_CLIENTS) {
+    redirect(
+      '/dashboard/patients/new?error=' +
+        encodeURIComponent(
+          `Has alcanzado el límite de ${MAX_CLIENTS} clientes. / You have reached the ${MAX_CLIENTS} client limit.`,
+        ),
     )
   }
 

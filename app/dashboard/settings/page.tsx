@@ -142,7 +142,7 @@ export default async function SettingsPage() {
           .
         </h2>
         <p className="mt-3 text-sm" style={{ color: "rgba(248,245,238,0.78)", maxWidth: "520px" }}>
-          ISAK, periodización, hidratación, evaluaciones avanzadas y AI coaching.
+          Antropometría, periodización, hidratación, evaluaciones avanzadas y AI coaching.
           Diseñado para nutriólogos, dietistas y entrenadores de élite.
         </p>
         <Link

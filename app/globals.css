@@ -6,6 +6,16 @@
    ============================================================================ */
 
 :root {
+  /* Luxury dark palette — black / champagne gold (premium checkout & marketing) */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --surface: #1a1a1a;
+  --gold: #c9a961;
+  --gold-soft: #d4b876;
+  --text-primary: #f5f5f0;
+  --text-muted: #9a9a93;
+  --border-soft: rgba(201,169,97,0.18);
+
   /* Surfaces — cream-leaning neutrals (warm, premium, not stark white) */
   --surface-base: #F8F5EE;        /* Ivory / page background */
   --surface-raised: #FFFFFF;       /* Cards, panels */
@@ -101,6 +111,15 @@
   --color-gold-600: var(--gold-600);
   --color-gold-700: var(--gold-700);
 
+  /* Luxury dark palette utilities */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-surface-luxe: var(--surface);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+
   --color-danger: var(--danger);
   --color-danger-bg: var(--danger-bg);
   --color-warning: var(--warning);
@@ -156,6 +175,47 @@ body::before {
 body > * {
   position: relative;
   z-index: 2;
+}
+
+/* Luxury editorial type — Cormorant Garamond display headings + Inter body */
+h1, h2, h3 {
+  font-family: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.label-accent {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 11px;
+}
+
+/* Premium gold CTA used on the luxury dark surfaces (e.g. /comprar) */
+.btn-luxe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: var(--gold);
+  color: #0a0a0a;
+  border: 1px solid var(--gold-soft);
+  transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out),
+    background 240ms var(--ease-out);
+  cursor: pointer;
+}
+
+.btn-luxe:hover {
+  transform: scale(1.02);
+  background: var(--gold-soft);
+  box-shadow: 0 0 0 1px rgba(201, 169, 97, 0.4),
+    0 12px 40px rgba(201, 169, 97, 0.28);
+}
+
+.btn-luxe:active {
+  transform: scale(1.0);
 }
 
 /* ============================================================================
