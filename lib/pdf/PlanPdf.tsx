@@ -7,6 +7,11 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import type React from "react";
+import {
+  EQUIVALENTES_GRUPOS,
+  GRUPO_KEYS,
+  type Equivalentes,
+} from "@/lib/equivalentes";
 
 // Register Google Fonts via direct woff/ttf URLs (react-pdf supports TTF)
 // Fraunces (display serif) + Inter (sans) + JetBrains Mono (mono)
@@ -328,6 +333,67 @@ const styles = StyleSheet.create({
     textAlign: "right",
     fontFamily: "Inter",
   },
+  // Equivalentes table
+  eqTable: {
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
+    borderRadius: 6,
+    marginBottom: 24,
+    overflow: "hidden",
+  },
+  eqHeaderRow: {
+    flexDirection: "row",
+    backgroundColor: COLORS.gold,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  eqHeaderCell: {
+    fontSize: 7,
+    letterSpacing: 1.2,
+    color: COLORS.inkStrong,
+    textTransform: "uppercase",
+    fontFamily: "Inter",
+  },
+  eqRow: {
+    flexDirection: "row",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: COLORS.borderSubtle,
+    backgroundColor: COLORS.paper,
+  },
+  eqTotalRow: {
+    flexDirection: "row",
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gold,
+    backgroundColor: COLORS.sunken,
+  },
+  eqGroupCell: {
+    flex: 3,
+    fontSize: 9,
+    color: COLORS.ink,
+  },
+  eqNumCell: {
+    flex: 1,
+    fontSize: 9,
+    color: COLORS.inkMuted,
+    textAlign: "right",
+  },
+  eqTotalLabel: {
+    flex: 3,
+    fontFamily: "Fraunces",
+    fontSize: 10,
+    color: COLORS.goldDeep,
+  },
+  eqTotalNum: {
+    flex: 1,
+    fontSize: 9,
+    color: COLORS.goldDeep,
+    textAlign: "right",
+    fontFamily: "Inter",
+  },
   // Notes
   notesBox: {
     backgroundColor: COLORS.sunken,
@@ -412,6 +478,11 @@ export interface PlanPdfData {
     full_name: string | null;
     email: string | null;
   };
+  equivalentes?: {
+    mode?: string;
+    kcalTarget?: number;
+    groups?: Equivalentes | null;
+  } | null;
 }
 
 const sexLabel: Record<string, string> = {
@@ -489,10 +560,22 @@ function groupMeals(meals: PlanPdfData["meals"]) {
     .sort((a, b) => a.order - b.order);
 }
 
+function eqMacros(groups: Equivalentes) {
+  let kcal = 0;
+  for (const key of GRUPO_KEYS) {
+    kcal += EQUIVALENTES_GRUPOS[key].kcal * (groups[key] ?? 0);
+  }
+  return Math.round(kcal);
+}
+
 export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
-  const { plan, patient, meals, practitioner } = data;
+  const { plan, patient, meals, practitioner, equivalentes } = data;
   const macros = aggregateMacros(meals);
   const grouped = groupMeals(meals);
+  const eqGroups = equivalentes?.groups ?? null;
+  const hasEquivalentes =
+    !!eqGroups && GRUPO_KEYS.some((k) => (eqGroups[k] ?? 0) > 0);
+  const eqTotalKcal = eqGroups ? eqMacros(eqGroups) : 0;
   const patientName = patient
     ? `${patient.first_name} ${patient.last_name}`
     : "Paciente";
@@ -625,6 +708,42 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
             </Text>
           </View>
         </View>
+
+        {/* Equivalentes distribution */}
+        {hasEquivalentes && eqGroups && (
+          <View wrap={false}>
+            <Text style={styles.eyebrow}>Distribución por equivalentes</Text>
+            <View style={styles.eqTable}>
+              <View style={styles.eqHeaderRow}>
+                <Text style={[styles.eqHeaderCell, { flex: 3 }]}>Grupo</Text>
+                <Text style={[styles.eqHeaderCell, { flex: 1, textAlign: "right" }]}>
+                  Equiv.
+                </Text>
+                <Text style={[styles.eqHeaderCell, { flex: 1, textAlign: "right" }]}>
+                  Kcal
+                </Text>
+              </View>
+              {GRUPO_KEYS.filter((k) => (eqGroups[k] ?? 0) > 0).map((k) => {
+                const g = EQUIVALENTES_GRUPOS[k];
+                const n = eqGroups[k] ?? 0;
+                return (
+                  <View key={k} style={styles.eqRow}>
+                    <Text style={styles.eqGroupCell}>{g.label.es}</Text>
+                    <Text style={styles.eqNumCell}>{n} eq</Text>
+                    <Text style={styles.eqNumCell}>{g.kcal * n} kcal</Text>
+                  </View>
+                );
+              })}
+              <View style={styles.eqTotalRow}>
+                <Text style={styles.eqTotalLabel}>Total</Text>
+                <Text style={styles.eqTotalNum} />
+                <Text style={styles.eqTotalNum}>
+                  {eqTotalKcal.toLocaleString("es-MX")} kcal
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Meals */}
         <Text style={styles.eyebrow}>Distribución por comida</Text>

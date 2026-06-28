@@ -315,6 +315,8 @@ create table if not exists public.plans (
   valid_from      date,
   valid_until     date,
   notes           text,
+  plan_mode       text not null default 'macros' check (plan_mode in ('macros', 'equivalentes')),
+  equivalentes    jsonb,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );

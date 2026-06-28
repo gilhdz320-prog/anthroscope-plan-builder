@@ -26,7 +26,7 @@ export async function GET(
     .from("plans")
     .select(
       `
-      id, title, status, valid_from, valid_until, notes, created_at,
+      id, title, status, valid_from, valid_until, notes, created_at, plan_mode, equivalentes,
       patient:patients (
         first_name, last_name, sex, birth_date, sport, goal, weight_kg, height_cm
       )
@@ -90,6 +90,9 @@ export async function GET(
       full_name: profile?.full_name ?? null,
       email: user.email ?? null,
     },
+    equivalentes:
+      (plan as { equivalentes?: PlanPdfData["equivalentes"] }).equivalentes ??
+      null,
   };
 
   try {

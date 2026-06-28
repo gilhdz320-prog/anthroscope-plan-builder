@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  EquivalentesEditor,
+  type PlanEquivalentesData,
+  type PlanMode,
+} from "@/components/EquivalentesEditor";
 
 const statusLabel: Record<string, string> = {
   draft: "Borrador",
@@ -55,7 +60,7 @@ export default async function PlanDetailPage({
     .from("plans")
     .select(
       `
-      id, title, status, valid_from, valid_until, notes, created_at,
+      id, title, status, valid_from, valid_until, notes, created_at, plan_mode, equivalentes,
       patient:patients (
         id, first_name, last_name, sex, birth_date, sport, goal, weight_kg, height_cm
       ),
@@ -149,6 +154,11 @@ export default async function PlanDetailPage({
   const template = Array.isArray(plan.template)
     ? plan.template[0]
     : plan.template;
+
+  const planMode = ((plan as { plan_mode?: string }).plan_mode ?? "macros") as PlanMode;
+  const planEquivalentes =
+    ((plan as { equivalentes?: PlanEquivalentesData | null }).equivalentes ??
+      null) as PlanEquivalentesData | null;
 
   return (
     <div className="space-y-8">
@@ -283,6 +293,13 @@ export default async function PlanDetailPage({
           </div>
         </div>
       )}
+
+      {/* Dual-mode planner: Macros / Equivalentes */}
+      <EquivalentesEditor
+        planId={plan.id}
+        initialMode={planMode}
+        initialData={planEquivalentes}
+      />
 
       {/* Macros */}
       <div className="rise rise-2">
