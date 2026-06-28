@@ -27,6 +27,12 @@ const formulaName: Record<string, string> = {
   mifflin_st_jeor: "Mifflin-St Jeor",
 };
 
+const goalAdjustLabel: Record<string, string> = {
+  lose_fat: "Pérdida de grasa",
+  maintain: "Mantenimiento",
+  gain_muscle: "Aumento muscular",
+};
+
 const formulaWhy: Record<string, string> = {
   katch_mcardle:
     "Se usó esta fórmula porque el cliente proporcionó su composición corporal (masa magra), lo que la hace la más precisa.",
@@ -129,6 +135,57 @@ export function IntakeResultClient({
         </div>
       </div>
 
+      {/* NEAT breakdown */}
+      <div
+        className="rounded-lg p-6"
+        style={{
+          background: "#0a0a0a",
+          border: "1px solid var(--gold)",
+        }}
+      >
+        <p
+          className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+          style={{ color: "var(--gold)" }}
+        >
+          Composición del gasto calórico
+        </p>
+        <div className="mt-4 font-mono-tabular text-[13px]">
+          <BreakdownRow
+            label="TMB (Metabolismo basal)"
+            value={`${fmt(result.bmr)} kcal`}
+            note={formulaName[result.formula_used]}
+          />
+          <BreakdownRow
+            label="Ejercicio estructurado"
+            value={`+${fmt(result.breakdown.exercise_kcal)} kcal`}
+            note={`Factor x${result.breakdown.base_multiplier}`}
+          />
+          <BreakdownRow
+            label="NEAT (Actividad diaria)"
+            value={`+${fmt(result.breakdown.neat_kcal)} kcal`}
+            note="Pasos + Trabajo + Casa"
+          />
+          <Divider />
+          <BreakdownRow
+            label="GET Total (TDEE)"
+            value={`${fmt(result.tdee)} kcal`}
+            strong
+          />
+          <BreakdownRow
+            label="Ajuste por objetivo"
+            value={`${result.breakdown.goal_adjustment >= 0 ? "+" : ""}${fmt(result.breakdown.goal_adjustment)} kcal`}
+            note={goalAdjustLabel[client.goal] ?? client.goal}
+          />
+          <Divider />
+          <BreakdownRow
+            label="Meta calórica"
+            value={`${fmt(result.target_kcal)} kcal`}
+            gold
+            strong
+          />
+        </div>
+      </div>
+
       {/* Editable target + macros */}
       <div className="card-luxe p-6">
         <p className="eyebrow" style={{ color: "var(--gold)" }}>
@@ -178,6 +235,67 @@ export function IntakeResultClient({
         <p className="text-xs" style={{ color: "var(--ink-subtle)" }}>
           El plan se creará a partir del intake de {clientName}.
         </p>
+      )}
+    </div>
+  );
+}
+
+function fmt(n: number): string {
+  return n.toLocaleString("es-MX");
+}
+
+function Divider() {
+  return (
+    <div
+      className="my-2 border-t border-dashed"
+      style={{ borderColor: "rgba(201,169,97,0.35)" }}
+    />
+  );
+}
+
+function BreakdownRow({
+  label,
+  value,
+  note,
+  gold,
+  strong,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  gold?: boolean;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline gap-2 py-1">
+      <span
+        style={{
+          color: gold ? "var(--gold)" : "var(--ink-muted)",
+          fontWeight: strong ? 600 : 400,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        className="flex-1 border-b border-dotted"
+        style={{ borderColor: "#2a2a2a", transform: "translateY(-3px)" }}
+      />
+      <span
+        className="whitespace-nowrap text-right"
+        style={{
+          color: gold ? "var(--gold)" : "var(--ink-strong)",
+          fontWeight: strong ? 700 : 500,
+        }}
+      >
+        {value}
+      </span>
+      {note && (
+        <span
+          className="whitespace-nowrap text-[11px]"
+          style={{ color: "var(--ink-subtle)" }}
+        >
+          [{note}]
+        </span>
       )}
     </div>
   );

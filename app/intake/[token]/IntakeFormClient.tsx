@@ -13,6 +13,65 @@ type ActivityLevel =
   | "active"
   | "very_active";
 type Goal = "lose_fat" | "maintain" | "gain_muscle";
+type StepsPerDay = "under_3k" | "steps_3k_7k" | "steps_7k_10k" | "over_10k";
+type JobType = "desk" | "driver" | "standing" | "physical";
+type DailyActivity = "low" | "moderate" | "active";
+type SessionDuration = "under_30" | "30_60" | "60_90" | "over_90";
+
+const SPORT_OPTIONS = [
+  "Gym/Pesas",
+  "Fútbol",
+  "Basketball",
+  "Natación",
+  "Ciclismo",
+  "Running",
+  "Artes marciales",
+  "Otro",
+];
+
+const SESSION_DURATION_OPTIONS: {
+  value: SessionDuration;
+  emoji: string;
+  title: string;
+}[] = [
+  { value: "under_30", emoji: "⏱", title: "Menos de 30 min" },
+  { value: "30_60", emoji: "⏱", title: "30–60 min" },
+  { value: "60_90", emoji: "⏱", title: "60–90 min" },
+  { value: "over_90", emoji: "⏱", title: "Más de 90 min" },
+];
+
+const STEPS_OPTIONS: {
+  value: StepsPerDay;
+  emoji: string;
+  title: string;
+  desc: string;
+}[] = [
+  { value: "under_3k", emoji: "🐢", title: "Menos de 3,000", desc: "Muy sedentario" },
+  { value: "steps_3k_7k", emoji: "🚶", title: "3,000–7,000", desc: "Poco activo" },
+  { value: "steps_7k_10k", emoji: "🏃", title: "7,000–10,000", desc: "Moderadamente activo" },
+  { value: "over_10k", emoji: "⚡", title: "Más de 10,000", desc: "Muy activo" },
+];
+
+const JOB_OPTIONS: {
+  value: JobType;
+  emoji: string;
+  title: string;
+}[] = [
+  { value: "desk", emoji: "💻", title: "Oficina / escritorio (sentado todo el día)" },
+  { value: "driver", emoji: "🚗", title: "Conductor / ventas (sentado + algo de movimiento)" },
+  { value: "standing", emoji: "🏫", title: "Docente / atención a clientes (de pie varias horas)" },
+  { value: "physical", emoji: "🔧", title: "Trabajo físico / manual (caminando o cargando peso)" },
+];
+
+const DAILY_ACTIVITY_OPTIONS: {
+  value: DailyActivity;
+  emoji: string;
+  title: string;
+}[] = [
+  { value: "low", emoji: "🛋️", title: "Muy poco — me siento al llegar a casa" },
+  { value: "moderate", emoji: "🏠", title: "Moderada — quehaceres, subo escaleras" },
+  { value: "active", emoji: "🌳", title: "Activa — paseo perro, jardín, compras caminando" },
+];
 
 const ACTIVITY_OPTIONS: {
   value: ActivityLevel;
@@ -66,7 +125,13 @@ export function IntakeFormClient({ token }: { token: string }) {
   const [sex, setSex] = useState<"male" | "female" | "">("");
   const [heightCm, setHeightCm] = useState("");
   const [weightKg, setWeightKg] = useState("");
+  const [sportType, setSportType] = useState<string[]>([]);
+  const [exerciseDays, setExerciseDays] = useState("");
+  const [sessionDuration, setSessionDuration] = useState<SessionDuration | "">("");
   const [activity, setActivity] = useState<ActivityLevel | "">("");
+  const [stepsPerDay, setStepsPerDay] = useState<StepsPerDay | "">("");
+  const [jobType, setJobType] = useState<JobType | "">("");
+  const [dailyActivity, setDailyActivity] = useState<DailyActivity | "">("");
   const [goal, setGoal] = useState<Goal | "">("");
   const [hasBodyComp, setHasBodyComp] = useState(false);
   const [bodyFat, setBodyFat] = useState("");
@@ -137,6 +202,12 @@ export function IntakeFormClient({ token }: { token: string }) {
           height_cm: Number(heightCm),
           weight_kg: Number(weightKg),
           activity_level: activity,
+          sport_type: sportType.length > 0 ? sportType : null,
+          exercise_days_per_week: exerciseDays !== "" ? Number(exerciseDays) : null,
+          exercise_session_duration: sessionDuration || null,
+          steps_per_day: stepsPerDay || null,
+          job_type: jobType || null,
+          daily_activity: dailyActivity || null,
           goal,
           has_body_comp: hasBodyComp,
           body_fat_pct: hasBodyComp ? Number(bodyFat) : null,
@@ -259,7 +330,77 @@ export function IntakeFormClient({ token }: { token: string }) {
 
       {/* Sección 2 */}
       <Section title="Actividad física" eyebrow="Sección 2">
+        {/* Parte A — Ejercicio estructurado */}
+        <SubHeading title="Ejercicio estructurado" label="Parte A" />
+
+        <Field label="Tipo de deporte/ejercicio (opcional)">
+          <div className="flex flex-wrap gap-2">
+            {SPORT_OPTIONS.map((sport) => {
+              const active = sportType.includes(sport);
+              return (
+                <button
+                  key={sport}
+                  type="button"
+                  onClick={() =>
+                    setSportType((prev) =>
+                      prev.includes(sport)
+                        ? prev.filter((s) => s !== sport)
+                        : [...prev, sport],
+                    )
+                  }
+                  className="rounded-full px-3 py-1.5 text-xs transition-colors"
+                  style={{
+                    background: active ? "var(--gold)" : "var(--surface-sunken)",
+                    color: active ? "#0a0a0a" : "var(--ink-muted)",
+                    border: `1px solid ${active ? "var(--gold)" : "#2a2a2a"}`,
+                    fontWeight: active ? 600 : 500,
+                  }}
+                >
+                  {sport}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        <Field label="Frecuencia semanal">
+          <div className="flex items-center gap-3">
+            <input
+              className="input flex-1"
+              type="number"
+              min={0}
+              max={7}
+              value={exerciseDays}
+              onChange={(e) => setExerciseDays(e.target.value)}
+            />
+            <span className="text-xs whitespace-nowrap" style={{ color: "var(--ink-subtle)" }}>
+              días por semana
+            </span>
+          </div>
+        </Field>
+
+        <Field label="Duración por sesión">
+          <div className="grid grid-cols-2 gap-2.5">
+            {SESSION_DURATION_OPTIONS.map((o) => {
+              const active = sessionDuration === o.value;
+              return (
+                <CardButton
+                  key={o.value}
+                  active={active}
+                  onClick={() => setSessionDuration(o.value)}
+                >
+                  <span className="text-lg">{o.emoji}</span>
+                  <span className="text-xs font-medium" style={{ color: active ? "var(--gold)" : "var(--ink-strong)" }}>
+                    {o.title}
+                  </span>
+                </CardButton>
+              );
+            })}
+          </div>
+        </Field>
+
         <div className="space-y-2.5">
+          <label className="label">Nivel de actividad</label>
           {ACTIVITY_OPTIONS.map((o) => {
             const active = activity === o.value;
             return (
@@ -286,6 +427,93 @@ export function IntakeFormClient({ token }: { token: string }) {
             );
           })}
         </div>
+
+        {/* Parte B — NEAT */}
+        <SubHeading title="Actividad del día a día" label="Parte B" />
+
+        <Field label="Pasos diarios estimados">
+          <div className="space-y-2.5">
+            {STEPS_OPTIONS.map((o) => {
+              const active = stepsPerDay === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setStepsPerDay(o.value)}
+                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors"
+                  style={{
+                    background: active ? "rgba(201,169,97,0.12)" : "var(--surface-sunken)",
+                    border: `1px solid ${active ? "var(--gold)" : "#2a2a2a"}`,
+                  }}
+                >
+                  <span className="text-2xl">{o.emoji}</span>
+                  <span>
+                    <span className="block text-sm font-semibold" style={{ color: active ? "var(--gold)" : "var(--ink-strong)" }}>
+                      {o.title}
+                    </span>
+                    <span className="block text-xs" style={{ color: "var(--ink-subtle)" }}>
+                      {o.desc}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        <Field label="Tipo de trabajo/ocupación">
+          <div className="space-y-2.5">
+            {JOB_OPTIONS.map((o) => {
+              const active = jobType === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setJobType(o.value)}
+                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors"
+                  style={{
+                    background: active ? "rgba(201,169,97,0.12)" : "var(--surface-sunken)",
+                    border: `1px solid ${active ? "var(--gold)" : "#2a2a2a"}`,
+                  }}
+                >
+                  <span className="text-2xl">{o.emoji}</span>
+                  <span className="text-sm font-medium" style={{ color: active ? "var(--gold)" : "var(--ink-strong)" }}>
+                    {o.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        <Field label="Actividad fuera del trabajo">
+          <div className="space-y-2.5">
+            {DAILY_ACTIVITY_OPTIONS.map((o) => {
+              const active = dailyActivity === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setDailyActivity(o.value)}
+                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors"
+                  style={{
+                    background: active ? "rgba(201,169,97,0.12)" : "var(--surface-sunken)",
+                    border: `1px solid ${active ? "var(--gold)" : "#2a2a2a"}`,
+                  }}
+                >
+                  <span className="text-2xl">{o.emoji}</span>
+                  <span className="text-sm font-medium" style={{ color: active ? "var(--gold)" : "var(--ink-strong)" }}>
+                    {o.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        <p className="text-xs" style={{ color: "var(--gold-soft)" }}>
+          Entre más preciso seas, mejor será tu plan nutricional 📊
+        </p>
       </Section>
 
       {/* Sección 3 */}
@@ -398,6 +626,43 @@ function Section({
       </div>
       {children}
     </div>
+  );
+}
+
+function SubHeading({ title, label }: { title: string; label: string }) {
+  return (
+    <div className="border-t pt-4" style={{ borderColor: "#2a2a2a" }}>
+      <p className="eyebrow" style={{ color: "var(--gold)" }}>
+        {label}
+      </p>
+      <h3 className="mt-0.5 text-sm font-semibold" style={{ color: "var(--ink-strong)" }}>
+        {title}
+      </h3>
+    </div>
+  );
+}
+
+function CardButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 rounded-lg p-3 text-center transition-colors"
+      style={{
+        background: active ? "rgba(201,169,97,0.12)" : "var(--surface-sunken)",
+        border: `1px solid ${active ? "var(--gold)" : "#2a2a2a"}`,
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

@@ -5,6 +5,9 @@ import {
   calculateCalories,
   type ActivityLevel,
   type Goal,
+  type StepsPerDay,
+  type JobType,
+  type DailyActivity,
 } from "@/lib/caloric-calculator";
 import { IntakeResultClient } from "./IntakeResultClient";
 
@@ -23,6 +26,12 @@ type IntakeForm = {
   has_body_comp: boolean | null;
   body_fat_pct: number | null;
   lean_mass_kg: number | null;
+  steps_per_day: StepsPerDay | null;
+  job_type: JobType | null;
+  daily_activity: DailyActivity | null;
+  sport_type: string[] | null;
+  exercise_days_per_week: number | null;
+  exercise_session_duration: string | null;
   client_notes: string | null;
   completed_at: string | null;
 };
@@ -38,7 +47,7 @@ export default async function IntakeDetailPage({
   const { data } = await supabase
     .from("intake_forms")
     .select(
-      "id, client_name, status, age, sex, height_cm, weight_kg, activity_level, goal, has_body_comp, body_fat_pct, lean_mass_kg, client_notes, completed_at",
+      "id, client_name, status, age, sex, height_cm, weight_kg, activity_level, goal, has_body_comp, body_fat_pct, lean_mass_kg, steps_per_day, job_type, daily_activity, sport_type, exercise_days_per_week, exercise_session_duration, client_notes, completed_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -66,6 +75,9 @@ export default async function IntakeDetailPage({
         has_body_comp: Boolean(form.has_body_comp),
         body_fat_pct: form.body_fat_pct ?? undefined,
         lean_mass_kg: form.lean_mass_kg ?? undefined,
+        steps_per_day: form.steps_per_day ?? undefined,
+        job_type: form.job_type ?? undefined,
+        daily_activity: form.daily_activity ?? undefined,
       })
     : null;
 
