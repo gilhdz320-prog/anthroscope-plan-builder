@@ -33,7 +33,9 @@ export function AvatarUpload({ userId }: { userId: string }) {
     setError(null);
 
     const ext = file.name.split(".").pop();
-    const path = `avatars/${userId}.${ext}`;
+    // First folder segment must be the userId to satisfy the storage RLS
+    // policy: auth.uid()::text = (storage.foldername(name))[1]
+    const path = `${userId}/avatar.${ext}`;
 
     const { error: upErr } = await supabase.storage
       .from("avatars")
@@ -42,6 +44,7 @@ export function AvatarUpload({ userId }: { userId: string }) {
     if (upErr) {
       setError(upErr.message);
       setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
       return;
     }
 
@@ -58,6 +61,7 @@ export function AvatarUpload({ userId }: { userId: string }) {
     if (profErr) setError(profErr.message);
 
     setUploading(false);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
