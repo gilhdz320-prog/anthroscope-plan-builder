@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
 
 const copy = {
   es: {
     eyebrow: "Acceso único — De por vida",
+    headerBrand: "Plan Builder",
+    haveAccount: "¿Ya tienes cuenta?",
+    signIn: "Iniciar sesión",
     brand: "Plan Builder",
     subtitle:
       "Tu plan nutricional personalizado, con alimentos USDA bilingües, equivalencias mexicanas y PDF descargable. Pago único, acceso de por vida.",
@@ -31,6 +36,9 @@ const copy = {
   },
   en: {
     eyebrow: "One-time access — Lifetime",
+    headerBrand: "Plan Builder",
+    haveAccount: "Already have an account?",
+    signIn: "Sign in",
     brand: "Plan Builder",
     subtitle:
       "Your personalized nutrition plan, with bilingual USDA foods, Mexican exchanges and a downloadable PDF. One-time payment, lifetime access.",
@@ -101,6 +109,38 @@ export default function ComprarPage({
       className="flex min-h-screen flex-col"
       style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
     >
+      <header
+        className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6"
+        style={{
+          background: "#0a0a0a",
+          borderBottom: "1px solid var(--border-soft)",
+        }}
+      >
+        <Link
+          href="/"
+          className="text-sm font-medium tracking-wide"
+          style={{ color: "var(--gold)" }}
+        >
+          {c.headerBrand}
+        </Link>
+
+        <div className="flex items-center gap-3">
+          <span className="hidden text-xs sm:inline" style={{ color: "var(--text-muted)" }}>
+            {c.haveAccount}
+          </span>
+          <Link
+            href="/login"
+            className="text-xs transition-colors"
+            style={{ color: "var(--text-muted)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--gold)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+          >
+            {c.signIn}
+          </Link>
+          <LanguageToggle />
+        </div>
+      </header>
+
       <div className="flex flex-1 items-center justify-center px-4 py-16">
         <div className="w-full max-w-xl">
           <div className="text-center">
