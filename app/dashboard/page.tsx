@@ -23,6 +23,7 @@ export default async function DashboardPage() {
       value: patientsCount ?? 0,
       description: "Pacientes en tu lista",
       href: "/dashboard/patients",
+      icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
     },
     {
       label: "Planes",
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
       value: plansCount ?? 0,
       description: "Planes de nutrición creados",
       href: "/dashboard/plans",
+      icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
     },
     {
       label: "Plantillas",
@@ -37,6 +39,7 @@ export default async function DashboardPage() {
       value: templatesCount ?? 0,
       description: "Plantillas reutilizables",
       href: "/dashboard/templates",
+      icon: "M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z",
     },
     {
       label: "Equivalentes",
@@ -44,6 +47,7 @@ export default async function DashboardPage() {
       value: equivalentsCount ?? 0,
       description: "Alimentos en catálogo",
       href: "/dashboard/equivalents",
+      icon: "M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2 M7 2v20 M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7",
     },
   ];
 
@@ -79,11 +83,12 @@ export default async function DashboardPage() {
       <div className="rise">
         <p className="eyebrow">Vista general</p>
         <h1
-          className="font-display mt-3"
+          className="mt-3"
           style={{
-            fontSize: "44px",
+            fontFamily: "var(--font-cormorant), ui-serif, Georgia, serif",
+            fontSize: "52px",
             color: "var(--ink-strong)",
-            letterSpacing: "-0.025em",
+            letterSpacing: "-0.02em",
             lineHeight: 1.02,
           }}
         >
@@ -114,12 +119,27 @@ export default async function DashboardPage() {
               href={stat.href}
               className="card-luxe group block p-6"
             >
-              <p
-                className="text-[10px] font-medium uppercase tracking-[0.18em]"
-                style={{ color: "var(--ink-subtle)" }}
-              >
-                {stat.label}
-              </p>
+              <div className="flex items-center justify-between">
+                <p
+                  className="text-[10px] font-medium uppercase tracking-[0.18em]"
+                  style={{ color: "var(--ink-subtle)" }}
+                >
+                  {stat.label}
+                </p>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--gold)"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d={stat.icon} />
+                </svg>
+              </div>
               <p className="stat-num mt-3">{stat.value}</p>
               <p
                 className="mt-2 text-xs"

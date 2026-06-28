@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/SidebarNav";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
+import { DashboardLangToggle } from "@/components/DashboardLangToggle";
 import { getLocale, tr } from "@/lib/i18n";
 
 export default async function DashboardLayout({
@@ -15,26 +16,41 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
   const locale = await getLocale();
 
+  let avatarUrl: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+    avatarUrl = (profile as { avatar_url?: string | null })?.avatar_url ?? null;
+  }
+
+  const initial = (user?.email?.[0] ?? "?").toUpperCase();
+
   return (
-    <div className="flex min-h-screen">
+    <div className="dashboard-dark flex min-h-screen">
       <aside
-        className="hidden w-60 shrink-0 flex-col border-r md:flex"
+        className="hidden w-60 shrink-0 flex-col md:flex"
         style={{
-          background: "var(--surface-raised)",
-          borderColor: "var(--border-subtle)",
+          background: "#111111",
+          borderRight: "1px solid #2a2a2a",
         }}
       >
         <div
-          className="px-5 pt-6 pb-5 border-b"
-          style={{ borderColor: "var(--border-subtle)" }}
+          className="px-5 pt-6 pb-5"
+          style={{ borderBottom: "1px solid #2a2a2a" }}
         >
           <Link href="/dashboard" className="block">
-            <p className="eyebrow">Plan Builder</p>
+            <p className="eyebrow" style={{ color: "var(--gold)" }}>
+              Plan Builder
+            </p>
             <h2
-              className="font-display mt-1.5"
+              className="mt-1.5"
               style={{
-                fontSize: "22px",
-                color: "var(--ink-strong)",
+                fontFamily: "var(--font-cormorant), ui-serif, Georgia, serif",
+                fontSize: "26px",
+                color: "var(--text-primary)",
                 letterSpacing: "-0.02em",
                 lineHeight: 1,
               }}
@@ -46,10 +62,7 @@ export default async function DashboardLayout({
 
         <SidebarNav />
 
-        <div
-          className="border-t px-3 pt-3 pb-4"
-          style={{ borderColor: "var(--border-subtle)" }}
-        >
+        <div className="px-3 pt-3 pb-4" style={{ borderTop: "1px solid #2a2a2a" }}>
           <Link
             href="https://app.anthroscope.pro"
             target="_blank"
@@ -57,25 +70,28 @@ export default async function DashboardLayout({
             className="block rounded-md p-3"
             style={{
               background:
-                "linear-gradient(135deg, var(--brand-900) 0%, #0a4736 100%)",
-              color: "var(--ink-inverse)",
+                "linear-gradient(135deg, #1a1a1a 0%, #0a4736 100%)",
+              border: "1px solid rgba(201,169,97,0.25)",
             }}
           >
             <p
               className="text-[10px] font-medium uppercase tracking-[0.18em]"
-              style={{ color: "var(--gold-300)" }}
+              style={{ color: "var(--gold)" }}
             >
               Edición completa
             </p>
             <p
-              className="font-display mt-1 text-base italic"
-              style={{ color: "var(--ink-inverse)" }}
+              className="mt-1 text-base italic"
+              style={{
+                fontFamily: "var(--font-cormorant), ui-serif, serif",
+                color: "var(--text-primary)",
+              }}
             >
               Descubre Anthroscope →
             </p>
             <p
               className="mt-1 text-[11px] leading-snug"
-              style={{ color: "rgba(248,245,238,0.7)" }}
+              style={{ color: "var(--text-muted)" }}
             >
               Antropometría, hidratación, periodización y AI coaching.
             </p>
@@ -83,44 +99,67 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col" style={{ background: "#0a0a0a" }}>
         <header
-          className="flex items-center justify-between border-b px-6 py-3"
+          className="flex items-center justify-between px-6 py-3"
           style={{
-            background: "var(--surface-raised)",
-            borderColor: "var(--border-subtle)",
+            background: "#111111",
+            borderBottom: "1px solid #2a2a2a",
           }}
         >
           <p
             className="text-xs uppercase tracking-[0.18em]"
-            style={{ color: "var(--ink-subtle)" }}
+            style={{ color: "var(--text-muted)" }}
           >
             {tr("panel", locale)}
           </p>
           <div className="flex items-center gap-3">
-            <span
-              className="text-xs"
-              style={{ color: "var(--ink-muted)" }}
-            >
+            <DashboardLangToggle />
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
               {user?.email}
             </span>
+            <Link
+              href="/dashboard/settings"
+              aria-label="Perfil"
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full"
+              style={{
+                border: "2px solid var(--gold)",
+                background: "#1a1a1a",
+                color: "var(--gold)",
+              }}
+            >
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-sm font-semibold">{initial}</span>
+              )}
+            </Link>
             <form action="/logout" method="post">
-              <button type="submit" className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: "12px" }}>
+              <button
+                type="submit"
+                className="btn btn-ghost"
+                style={{ padding: "6px 12px", fontSize: "12px" }}
+              >
                 {tr("signOut", locale)}
               </button>
             </form>
           </div>
         </header>
 
-        <main className="flex-1 px-6 py-8 md:px-10">
+        <main className="flex-1 px-6 py-8 md:px-10" style={{ background: "#0a0a0a" }}>
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
 
         <footer
-          className="border-t px-6 py-5"
+          className="px-6 py-5"
           style={{
-            background: "var(--surface-raised)",
-            borderColor: "var(--border-subtle)",
+            background: "#111111",
+            borderTop: "1px solid #2a2a2a",
           }}
         >
           <PoweredByAnthroscope variant="minimal" className="text-center" />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { AvatarUpload } from "@/components/AvatarUpload";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -41,6 +42,8 @@ export default async function SettingsPage() {
         <p className="mt-2 text-sm" style={{ color: "var(--ink-muted)" }}>
           Tu información de cuenta.
         </p>
+
+        {user && <AvatarUpload userId={user.id} />}
 
         <div className="mt-5 space-y-4">
           <div>
@@ -102,7 +105,7 @@ export default async function SettingsPage() {
               Sube tu logotipo
             </p>
             <p className="mt-1 text-xs" style={{ color: "var(--ink-muted)" }}>
-              PNG o SVG, fondo transparente recomendado. Disponible pronto.
+              PNG o SVG, fondo transparente recomendado.
             </p>
           </div>
           <button type="button" disabled className="btn btn-ghost" style={{ opacity: 0.5, cursor: "not-allowed" }}>
