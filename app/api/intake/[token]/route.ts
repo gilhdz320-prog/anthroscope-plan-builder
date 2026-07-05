@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // the client beyond the fields needed to render the form.
 
 const PUBLIC_FIELDS =
-  "client_name, status, age, sex, height_cm, weight_kg, activity_level, goal, has_body_comp, body_fat_pct, lean_mass_kg, client_notes, steps_per_day, job_type, daily_activity, sport_type, exercise_days_per_week, exercise_session_duration";
+  "client_name, status, age, sex, height_cm, weight_kg, activity_level, goal, has_body_comp, body_fat_pct, lean_mass_kg, client_notes, steps_per_day, job_type, daily_activity, sport_type, exercise_days_per_week, exercise_session_duration, allergies, diet_type, food_dislikes";
 
 type IntakePatch = {
   client_name?: string | null;
@@ -41,6 +41,9 @@ type IntakePatch = {
     | "60_90"
     | "over_90"
     | null;
+  allergies?: string[] | null;
+  diet_type?: string | null;
+  food_dislikes?: string | null;
 };
 
 const ACTIVITY = new Set([
@@ -173,6 +176,17 @@ export async function PATCH(
     client_notes:
       typeof body.client_notes === "string" && body.client_notes.trim() !== ""
         ? body.client_notes.trim()
+        : null,
+    allergies: Array.isArray(body.allergies)
+      ? body.allergies.filter((s): s is string => typeof s === "string")
+      : null,
+    diet_type:
+      typeof body.diet_type === "string" && body.diet_type.trim() !== ""
+        ? body.diet_type.trim()
+        : null,
+    food_dislikes:
+      typeof body.food_dislikes === "string" && body.food_dislikes.trim() !== ""
+        ? body.food_dislikes.trim()
         : null,
     status: "completed" as const,
     completed_at: new Date().toISOString(),

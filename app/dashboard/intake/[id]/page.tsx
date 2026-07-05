@@ -33,6 +33,9 @@ type IntakeForm = {
   exercise_days_per_week: number | null;
   exercise_session_duration: string | null;
   client_notes: string | null;
+  allergies: string[] | null;
+  diet_type: string | null;
+  food_dislikes: string | null;
   completed_at: string | null;
 };
 
@@ -47,7 +50,7 @@ export default async function IntakeDetailPage({
   const { data } = await supabase
     .from("intake_forms")
     .select(
-      "id, client_name, status, age, sex, height_cm, weight_kg, activity_level, goal, has_body_comp, body_fat_pct, lean_mass_kg, steps_per_day, job_type, daily_activity, sport_type, exercise_days_per_week, exercise_session_duration, client_notes, completed_at",
+      "id, client_name, status, age, sex, height_cm, weight_kg, activity_level, goal, has_body_comp, body_fat_pct, lean_mass_kg, steps_per_day, job_type, daily_activity, sport_type, exercise_days_per_week, exercise_session_duration, client_notes, allergies, diet_type, food_dislikes, completed_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -130,6 +133,11 @@ export default async function IntakeDetailPage({
             client_notes: form.client_notes,
           }}
           result={result}
+          dietaryPreferences={{
+            allergies: form.allergies,
+            diet_type: form.diet_type,
+            food_dislikes: form.food_dislikes,
+          }}
         />
       )}
     </div>
