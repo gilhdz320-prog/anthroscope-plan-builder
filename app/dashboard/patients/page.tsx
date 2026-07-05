@@ -118,11 +118,14 @@ export default async function PatientsPage() {
                   className="border-t transition-colors hover:bg-[var(--surface-sunken)]/50"
                   style={{ borderColor: "var(--border-subtle)" }}
                 >
-                  <td
-                    className="px-5 py-3.5 font-medium"
-                    style={{ color: "var(--ink-strong)" }}
-                  >
-                    {p.first_name} {p.last_name}
+                  <td className="px-5 py-3.5 font-medium">
+                    <Link
+                      href={`/dashboard/patients/${p.id}`}
+                      className="transition-colors hover:underline"
+                      style={{ color: "var(--ink-strong)" }}
+                    >
+                      {p.first_name} {p.last_name}
+                    </Link>
                   </td>
                   <td className="px-5 py-3.5" style={{ color: "var(--ink-muted)" }}>
                     {p.email ?? "—"}

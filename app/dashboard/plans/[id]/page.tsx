@@ -9,6 +9,9 @@ import {
 import { SharePlanButton } from "@/components/SharePlanButton";
 import { MealBuilder, type MealItem } from "@/components/MealBuilder";
 import type { FoodSearchItem } from "@/components/FoodSearch";
+import { ClinicToggle, type ClinicData, type ClinicFoodOption } from "./PlanClinicView";
+import { CLINICAL_TO_DB_GROUPS } from "@/lib/food-groups";
+import { GRUPO_KEYS, type GrupoKey } from "@/lib/equivalentes";
 
 const statusLabel: Record<string, string> = {
   draft: "Borrador",
@@ -65,7 +68,7 @@ export default async function PlanDetailPage({
       `
       id, title, status, valid_from, valid_until, notes, created_at, plan_mode, equivalentes,
       patient:patients (
-        id, first_name, last_name, sex, birth_date, sport, goal, weight_kg, height_cm
+        id, first_name, last_name, sex, birth_date, sport, goal, weight_kg, height_cm, body_fat_pct
       ),
       template:templates ( name )
     `,
@@ -194,9 +197,90 @@ export default async function PlanDetailPage({
     ((plan as { equivalentes?: PlanEquivalentesData | null }).equivalentes ??
       null) as PlanEquivalentesData | null;
 
+  // ── Clinical view data ────────────────────────────────────────────────
+  // Prefer the saved equivalentes distribution; otherwise fall back to the
+  // macro totals aggregated from the plan's meals.
+  const reqKcal = planEquivalentes?.kcalTarget ?? Math.round(totals.kcal);
+  const reqProteinG = planEquivalentes?.proteinG ?? Math.round(totals.protein);
+  const reqCarbsG = planEquivalentes?.carbsG ?? Math.round(totals.carbs);
+  const reqFatG = planEquivalentes?.fatG ?? Math.round(totals.fat);
+  const macroKcal = reqProteinG * 4 + reqCarbsG * 4 + reqFatG * 9 || 1;
+  const proteinPct =
+    planEquivalentes?.proteinPct ?? Math.round(((reqProteinG * 4) / macroKcal) * 100);
+  const carbsPct =
+    planEquivalentes?.carbsPct ?? Math.round(((reqCarbsG * 4) / macroKcal) * 100);
+  const fatPct =
+    planEquivalentes?.fatPct ?? Math.round(((reqFatG * 9) / macroKcal) * 100);
+
+  const weightNum = patient?.weight_kg != null ? Number(patient.weight_kg) : null;
+  const bodyFatNum =
+    (patient as { body_fat_pct?: number | null } | null)?.body_fat_pct != null
+      ? Number((patient as { body_fat_pct?: number | null }).body_fat_pct)
+      : null;
+  const leanMass =
+    weightNum != null && bodyFatNum != null
+      ? Math.round(weightNum * (1 - bodyFatNum / 100) * 10) / 10
+      : null;
+  const waterMl = weightNum != null ? Math.round(weightNum * 35) : reqKcal;
+
+  // Top 3 food options per clinical group from the catalog.
+  const foodsByGroup: Partial<Record<GrupoKey, ClinicFoodOption[]>> = {};
+  for (const g of GRUPO_KEYS) {
+    const dbKeys = CLINICAL_TO_DB_GROUPS[g] ?? [];
+    const opts: ClinicFoodOption[] = [];
+    for (const f of catalog ?? []) {
+      if (opts.length >= 3) break;
+      if (dbKeys.includes((f.group_key as string) ?? "")) {
+        opts.push({
+          es: (f.food_name_es as string) ?? (f.food_name_en as string) ?? "",
+          en: (f.food_name_en as string) ?? (f.food_name_es as string) ?? "",
+          serving_es: (f.serving_desc_es as string) ?? "",
+          serving_en: (f.serving_desc_en as string) ?? "",
+        });
+      }
+    }
+    if (opts.length > 0) foodsByGroup[g] = opts;
+  }
+
+  const dateLabel = new Date().toLocaleDateString("es-MX", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const clinicData: ClinicData = {
+    planTitle: plan.title,
+    dateLabel,
+    patient: {
+      first_name: patient?.first_name ?? "",
+      last_name: patient?.last_name ?? "",
+      sex: patient?.sex ?? null,
+      age: ageFrom(patient?.birth_date ?? null),
+      sport: patient?.sport ?? null,
+      goal: patient?.goal ?? null,
+      weight_kg: weightNum,
+      height_cm: patient?.height_cm != null ? Number(patient.height_cm) : null,
+      body_fat_pct: bodyFatNum,
+      lean_mass_kg: leanMass,
+    },
+    requirements: {
+      kcal: reqKcal,
+      proteinG: reqProteinG,
+      carbsG: reqCarbsG,
+      fatG: reqFatG,
+      proteinPct,
+      carbsPct,
+      fatPct,
+      waterMl,
+    },
+    groups: planEquivalentes?.groups ?? null,
+    foodsByGroup,
+    nutritionistName: null,
+  };
+
   return (
     <div className="space-y-8">
-      <div className="rise">
+      <div className="rise no-print">
         <Link
           href="/dashboard/plans"
           className="text-xs"
@@ -264,6 +348,8 @@ export default async function PlanDetailPage({
         </div>
       </div>
 
+      <ClinicToggle clinical={clinicData}>
+        <div className="space-y-8">
       {/* Patient strip */}
       {patient && (
         <div className="card-luxe p-6 rise rise-1">
@@ -409,6 +495,8 @@ export default async function PlanDetailPage({
           </p>
         </div>
       )}
+        </div>
+      </ClinicToggle>
     </div>
   );
 }
