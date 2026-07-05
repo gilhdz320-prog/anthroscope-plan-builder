@@ -48,7 +48,7 @@ export async function createPlan(formData: FormData) {
     )
   }
 
-  const { error } = await supabase.from('plans').insert({
+  const { data: newPlan, error } = await supabase.from('plans').insert({
     user_id: user.id,
     patient_id,
     template_id,
@@ -57,15 +57,36 @@ export async function createPlan(formData: FormData) {
     valid_until,
     notes: finalNotes,
     plan_mode,
-  })
+  }).select('id').single()
 
-  if (error) {
-    redirect('/dashboard/plans/new?error=' + encodeURIComponent(error.message))
+  if (error || !newPlan) {
+    redirect('/dashboard/plans/new?error=' + encodeURIComponent(error?.message ?? 'Error creando plan'))
+  }
+
+  // Clone template_meals into plan_meals if a template was selected
+  if (template_id && newPlan) {
+    const { data: tplMeals } = await supabase
+      .from('template_meals')
+      .select('meal_name, meal_order, equivalent_id, servings, notes')
+      .eq('template_id', template_id)
+      .order('meal_order', { ascending: true })
+
+    if (tplMeals && tplMeals.length > 0) {
+      const rows = tplMeals.map((m) => ({
+        plan_id: newPlan.id,
+        meal_name: m.meal_name,
+        meal_order: m.meal_order,
+        equivalent_id: m.equivalent_id ?? null,
+        servings: m.servings ?? 1,
+        notes: m.notes ?? null,
+      }))
+      await supabase.from('plan_meals').insert(rows)
+    }
   }
 
   revalidatePath('/dashboard/plans')
   revalidatePath('/dashboard')
-  redirect('/dashboard/plans')
+  redirect(`/dashboard/plans/${newPlan.id}`)
 }
 
 export async function createPlanViewToken(

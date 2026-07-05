@@ -915,8 +915,8 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
         <BrandHeader />
 
         <Text style={[styles.eyebrow, { color: accent }]}>Resumen</Text>
-        <Text style={styles.h1}>Plan · {plan.title}</Text>
-        <Text style={[styles.muted, { marginBottom: 22 }]}>
+        <Text style={styles.h1}>{plan.title}</Text>
+        <Text style={[styles.muted, { marginTop: 6, marginBottom: 22 }]}>
           Estado:{" "}
           {plan.status === "active"
             ? "Activo"
