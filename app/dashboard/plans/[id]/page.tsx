@@ -7,6 +7,7 @@ import {
   type PlanMode,
 } from "@/components/EquivalentesEditor";
 import { SharePlanButton } from "@/components/SharePlanButton";
+import { SaveAsTemplateButton } from "@/components/SaveAsTemplateButton";
 import { MealBuilder, type MealItem } from "@/components/MealBuilder";
 import type { FoodSearchItem } from "@/components/FoodSearch";
 import { ClinicToggle, type ClinicData, type ClinicFoodOption } from "./PlanClinicView";
@@ -322,6 +323,12 @@ export default async function PlanDetailPage({
             )}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <SaveAsTemplateButton
+              planId={plan.id}
+              planTitle={plan.title}
+              planKcal={planEquivalentes?.kcalTarget ?? null}
+              planNotes={plan.notes}
+            />
             <SharePlanButton planId={plan.id} />
             <a
               href={`/api/plans/${plan.id}/pdf`}

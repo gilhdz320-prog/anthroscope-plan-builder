@@ -26,6 +26,10 @@ function round(n: number): number {
 /**
  * Convert a kcal target + macro percentage distribution into a clinical
  * distribution of Mexican food equivalents per group.
+ *
+ * The algorithm accounts for cross-contributions (e.g. protein groups also
+ * contribute fat, dairy contributes protein + carbs + fat) and applies a
+ * normalization step to keep total kcal within ±5% of the target.
  */
 export function calcularEquivalentes(
   kcal: number,
@@ -37,28 +41,41 @@ export function calcularEquivalentes(
   const carbsG = (kcal * carbsPct) / 100 / 4;
   const fatG = (kcal * fatPct) / 100 / 9;
 
-  // Fixed clinical anchors
+  // Fixed clinical anchors (minimum servings for micronutrient adequacy)
   const verduras = 3;
   const frutas = 3;
   const lacteos = 2;
 
-  const proteinas_ao = round((proteinG * 0.7) / 7); // 70% animal protein
-  const proteinas_av = round((proteinG * 0.3) / 7); // 30% plant protein
-  const grasas = round(fatG / 5);
-  const leguminosas = round(proteinas_av / 2); // legumes count as both protein & carb
+  // Step 1: Protein — subtract contributions from fixed groups
+  const fixedProteinG = verduras * EQUIVALENTES_GRUPOS.verduras.protein +
+    lacteos * EQUIVALENTES_GRUPOS.lacteos.protein;
+  const remainingProteinG = Math.max(0, proteinG - fixedProteinG);
 
-  // Remaining carbohydrate kcal once fixed carb-bearing groups are accounted for.
-  const carbKcalTarget = carbsG * 4;
-  const fixedCarbKcal =
-    (verduras * EQUIVALENTES_GRUPOS.verduras.carbs +
-      frutas * EQUIVALENTES_GRUPOS.frutas.carbs +
-      lacteos * EQUIVALENTES_GRUPOS.lacteos.carbs +
-      leguminosas * EQUIVALENTES_GRUPOS.leguminosas.carbs) *
-    4;
-  const remainingCarbKcal = Math.max(0, carbKcalTarget - fixedCarbKcal);
-  const cereales = round(remainingCarbKcal / 70);
+  // Distribute remaining protein: 70% animal, 30% plant
+  let proteinas_ao = round((remainingProteinG * 0.7) / 7);
+  let proteinas_av = round((remainingProteinG * 0.3) / 7);
+  let leguminosas = round(proteinas_av * 0.4);
 
-  return {
+  // Step 2: Fat — subtract fat contributed by protein-bearing groups and dairy
+  const fatFromOther =
+    proteinas_ao * EQUIVALENTES_GRUPOS.proteinas_ao.fat +
+    proteinas_av * EQUIVALENTES_GRUPOS.proteinas_av.fat +
+    lacteos * EQUIVALENTES_GRUPOS.lacteos.fat +
+    leguminosas * EQUIVALENTES_GRUPOS.leguminosas.fat;
+  const remainingFatG = Math.max(0, fatG - fatFromOther);
+  let grasas = round(remainingFatG / 5);
+
+  // Step 3: Carbs — subtract carbs from all carb-bearing groups
+  const fixedCarbsG =
+    verduras * EQUIVALENTES_GRUPOS.verduras.carbs +
+    frutas * EQUIVALENTES_GRUPOS.frutas.carbs +
+    lacteos * EQUIVALENTES_GRUPOS.lacteos.carbs +
+    leguminosas * EQUIVALENTES_GRUPOS.leguminosas.carbs;
+  const remainingCarbsG = Math.max(0, carbsG - fixedCarbsG);
+  let cereales = round(remainingCarbsG / 15);
+
+  // Step 4: Normalization — scale adjustable groups if total overshoots target
+  let result: Equivalentes = {
     cereales,
     leguminosas,
     verduras,
@@ -67,8 +84,33 @@ export function calcularEquivalentes(
     proteinas_ao,
     proteinas_av,
     grasas,
-    azucares: 0, // nutritionist adjusts manually
+    azucares: 0,
   };
+
+  const { kcal: totalKcal } = equivalentesToMacros(result);
+  const tolerance = kcal * 0.05;
+
+  if (totalKcal > kcal + tolerance) {
+    const excess = totalKcal - kcal;
+    // Only scale the adjustable (non-fixed) groups
+    const adjustableKcal =
+      cereales * EQUIVALENTES_GRUPOS.cereales.kcal +
+      proteinas_ao * EQUIVALENTES_GRUPOS.proteinas_ao.kcal +
+      proteinas_av * EQUIVALENTES_GRUPOS.proteinas_av.kcal +
+      grasas * EQUIVALENTES_GRUPOS.grasas.kcal +
+      leguminosas * EQUIVALENTES_GRUPOS.leguminosas.kcal;
+
+    if (adjustableKcal > 0) {
+      const scale = Math.max(0, (adjustableKcal - excess) / adjustableKcal);
+      result.cereales = round(cereales * scale);
+      result.proteinas_ao = round(proteinas_ao * scale);
+      result.proteinas_av = round(proteinas_av * scale);
+      result.grasas = round(grasas * scale);
+      result.leguminosas = round(leguminosas * scale);
+    }
+  }
+
+  return result;
 }
 
 /**

@@ -183,6 +183,25 @@ export function EquivalentesEditor({
                 onClick={() => {
                   setMode(m);
                   setSavedMsg(null);
+                  // Auto-calculate equivalentes when switching from macros
+                  if (m === "equivalentes" && !groups && kcal > 0) {
+                    // Derive percentages from gram values if available
+                    const totalFromGrams = proteinG * 4 + carbsG * 4 + fatG * 9;
+                    let pPct = proteinPct;
+                    let cPct = carbsPct;
+                    let fPct = fatPct;
+                    if (totalFromGrams > 0 && mode === "macros") {
+                      pPct = Math.round((proteinG * 4 / totalFromGrams) * 100);
+                      fPct = Math.round((fatG * 9 / totalFromGrams) * 100);
+                      cPct = 100 - pPct - fPct;
+                      setProteinPct(pPct);
+                      setCarbsPct(cPct);
+                      setFatPct(fPct);
+                    }
+                    if (pPct + cPct + fPct === 100) {
+                      setGroups(calcularEquivalentes(kcal, pPct, cPct, fPct));
+                    }
+                  }
                 }}
                 className="rounded-full px-4 py-1.5 text-xs font-medium transition-colors"
                 style={{
