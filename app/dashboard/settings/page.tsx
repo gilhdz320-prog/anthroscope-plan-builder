@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { NutritionistProfileForm } from "@/components/NutritionistProfileForm";
+import { getProfile } from "./profile-actions";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const profile = user ? await getProfile(user.id) : null;
 
   return (
     <div className="space-y-10">
@@ -67,6 +71,24 @@ export default async function SettingsPage() {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Nutritionist branding profile — powers the PDF */}
+      <section className="card-luxe max-w-2xl p-7 rise rise-2">
+        <div className="flex items-baseline justify-between">
+          <p className="eyebrow">Perfil profesional</p>
+          <span
+            className="font-display italic text-xs"
+            style={{ color: "var(--ink-subtle)" }}
+          >
+            Practice profile
+          </span>
+        </div>
+        <p className="mt-2 text-sm" style={{ color: "var(--ink-muted)" }}>
+          Estos datos aparecen en el encabezado, pie y marca de tus PDFs.
+        </p>
+
+        <NutritionistProfileForm profile={profile} />
       </section>
 
       {/* Brand / logo upload */}

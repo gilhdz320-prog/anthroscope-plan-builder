@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
@@ -432,6 +433,169 @@ const styles = StyleSheet.create({
     color: COLORS.inkSubtle,
     fontFamily: "Inter",
   },
+  // ─── Branded header (nutritionist) ───
+  brandHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 6,
+  },
+  brandHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  brandLogo: {
+    width: 42,
+    height: 42,
+    objectFit: "contain",
+    marginRight: 12,
+  },
+  brandName: {
+    fontFamily: "Fraunces",
+    fontSize: 15,
+    color: COLORS.inkStrong,
+    letterSpacing: -0.3,
+  },
+  brandSub: {
+    fontSize: 8,
+    color: COLORS.inkMuted,
+    marginTop: 2,
+  },
+  brandHeaderRight: {
+    alignItems: "flex-end",
+    maxWidth: 220,
+  },
+  brandContact: {
+    fontSize: 8,
+    color: COLORS.inkMuted,
+    textAlign: "right",
+  },
+  accentBar: {
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 22,
+  },
+  // ─── Energy table ───
+  energyTable: {
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
+    borderRadius: 6,
+    marginBottom: 24,
+    overflow: "hidden",
+  },
+  energyRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: COLORS.borderSubtle,
+    backgroundColor: COLORS.paper,
+  },
+  energyRowFirst: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.paper,
+  },
+  energyLabel: {
+    fontSize: 9,
+    color: COLORS.inkMuted,
+  },
+  energyValue: {
+    fontSize: 9,
+    color: COLORS.inkStrong,
+    fontFamily: "Inter",
+  },
+  energyFinal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    backgroundColor: COLORS.sunken,
+  },
+  energyFinalLabel: {
+    fontFamily: "Fraunces",
+    fontSize: 11,
+    color: COLORS.inkStrong,
+  },
+  energyFinalValue: {
+    fontFamily: "Fraunces",
+    fontSize: 12,
+  },
+  // ─── Intercambios reference ───
+  interBlock: {
+    borderWidth: 0.5,
+    borderColor: COLORS.borderSubtle,
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: COLORS.paper,
+  },
+  interHead: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    marginBottom: 4,
+  },
+  interTitle: {
+    fontFamily: "Fraunces",
+    fontSize: 12,
+    color: COLORS.inkStrong,
+  },
+  interMacros: {
+    fontSize: 8,
+    color: COLORS.inkMuted,
+    marginBottom: 6,
+  },
+  interFoodRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 2,
+  },
+  interFoodName: {
+    flex: 3,
+    fontSize: 9,
+    color: COLORS.ink,
+  },
+  interFoodServing: {
+    flex: 2,
+    fontSize: 8,
+    color: COLORS.inkMuted,
+    textAlign: "right",
+  },
+  // ─── Signature footer ───
+  signBlock: {
+    marginTop: 32,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  signCol: {
+    width: 220,
+  },
+  signImage: {
+    height: 40,
+    objectFit: "contain",
+    marginBottom: 4,
+  },
+  signLine: {
+    borderTopWidth: 0.5,
+    borderTopColor: COLORS.ink,
+    marginTop: 40,
+    paddingTop: 4,
+  },
+  signLabel: {
+    fontSize: 8,
+    color: COLORS.inkMuted,
+  },
+  signName: {
+    fontFamily: "Fraunces",
+    fontSize: 11,
+    color: COLORS.inkStrong,
+  },
 });
 
 // ─── Types ───
@@ -454,6 +618,8 @@ export interface PlanPdfData {
     goal: string | null;
     weight_kg: number | null;
     height_cm: number | null;
+    body_fat_pct?: number | null;
+    lean_mass_kg?: number | null;
   } | null;
   meals: Array<{
     id: string;
@@ -483,6 +649,37 @@ export interface PlanPdfData {
     kcalTarget?: number;
     groups?: Equivalentes | null;
   } | null;
+  profile?: {
+    clinic_name: string | null;
+    professional_name: string | null;
+    license_number: string | null;
+    specialty: string | null;
+    phone: string | null;
+    address: string | null;
+    website: string | null;
+    accent_color: string | null;
+    logo_url: string | null;
+    signature_url: string | null;
+  } | null;
+  energy?: {
+    formula: "katch_mcardle" | "mifflin_st_jeor";
+    bmr: number;
+    activityFactor: number;
+    tdee: number;
+    goalAdjustment: number;
+    finalKcal: number;
+    waterMl: number;
+    protein: { g: number; pct: number };
+    carbs: { g: number; pct: number };
+    fat: { g: number; pct: number };
+  } | null;
+  intercambios?: Array<{
+    key: string;
+    label: string;
+    equivalents: number;
+    perEquiv: { kcal: number; protein: number; carbs: number; fat: number };
+    foods: Array<{ name: string; serving: string }>;
+  }> | null;
 }
 
 const sexLabel: Record<string, string> = {
@@ -518,6 +715,18 @@ function fmtDate(d: string | null): string {
     return d;
   }
 }
+
+function bmiOf(weight: number | null, height: number | null): string {
+  if (!weight || !height) return "—";
+  const m = height / 100;
+  if (m <= 0) return "—";
+  return (weight / (m * m)).toFixed(1);
+}
+
+const formulaLabel: Record<string, string> = {
+  katch_mcardle: "Katch-McArdle",
+  mifflin_st_jeor: "Mifflin-St Jeor",
+};
 
 // Aggregate macros across meals
 function aggregateMacros(meals: PlanPdfData["meals"]) {
@@ -569,7 +778,8 @@ function eqMacros(groups: Equivalentes) {
 }
 
 export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
-  const { plan, patient, meals, practitioner, equivalentes } = data;
+  const { plan, patient, meals, practitioner, equivalentes, profile, energy, intercambios } =
+    data;
   const macros = aggregateMacros(meals);
   const grouped = groupMeals(meals);
   const eqGroups = equivalentes?.groups ?? null;
@@ -579,6 +789,83 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
   const patientName = patient
     ? `${patient.first_name} ${patient.last_name}`
     : "Paciente";
+
+  const accent = profile?.accent_color || COLORS.gold;
+  const headerName =
+    profile?.professional_name ??
+    practitioner.full_name ??
+    practitioner.email ??
+    "Anthroscope";
+  const hasInter = !!intercambios && intercambios.length > 0;
+
+  // Branded header shown fixed at the top of every content page.
+  const BrandHeader = () => (
+    <View fixed>
+      <View style={styles.brandHeader}>
+        <View style={styles.brandHeaderLeft}>
+          {profile?.logo_url ? (
+            // eslint-disable-next-line jsx-a11y/alt-text
+            <Image src={profile.logo_url} style={styles.brandLogo} />
+          ) : null}
+          <View>
+            <Text style={styles.brandName}>
+              {profile?.clinic_name ?? headerName}
+            </Text>
+            {profile?.clinic_name && headerName !== profile.clinic_name ? (
+              <Text style={styles.brandSub}>{headerName}</Text>
+            ) : profile?.specialty ? (
+              <Text style={styles.brandSub}>{profile.specialty}</Text>
+            ) : null}
+          </View>
+        </View>
+        <View style={styles.brandHeaderRight}>
+          {profile?.specialty && profile?.clinic_name ? (
+            <Text style={styles.brandContact}>{profile.specialty}</Text>
+          ) : null}
+          {profile?.license_number ? (
+            <Text style={styles.brandContact}>Céd. {profile.license_number}</Text>
+          ) : null}
+          {profile?.phone ? (
+            <Text style={styles.brandContact}>{profile.phone}</Text>
+          ) : null}
+          {profile?.website ? (
+            <Text style={styles.brandContact}>{profile.website}</Text>
+          ) : null}
+        </View>
+      </View>
+      <View style={[styles.accentBar, { backgroundColor: accent }]} />
+    </View>
+  );
+
+  // Signature / next-appointment block for the end of the plan.
+  const SignatureBlock = () => (
+    <View style={styles.signBlock} wrap={false}>
+      <View style={styles.signCol}>
+        <Text style={styles.signLabel}>Próxima cita · Next appointment</Text>
+        <View style={styles.signLine}>
+          <Text style={styles.signLabel}> </Text>
+        </View>
+      </View>
+      <View style={[styles.signCol, { alignItems: "flex-end" }]}>
+        {profile?.signature_url ? (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <Image src={profile.signature_url} style={styles.signImage} />
+        ) : (
+          <View style={{ height: 40 }} />
+        )}
+        <View style={[styles.signLine, { marginTop: 0, width: "100%" }]}>
+          <Text style={[styles.signName, { textAlign: "right" }]}>
+            {headerName}
+          </Text>
+          {profile?.license_number ? (
+            <Text style={[styles.signLabel, { textAlign: "right" }]}>
+              Cédula profesional {profile.license_number}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <Document
@@ -625,12 +912,9 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
 
       {/* ─── Overview ─── */}
       <Page size="LETTER" style={styles.page}>
-        <View style={styles.pageHeader} fixed>
-          <Text style={styles.pageBrand}>Anthroscope</Text>
-          <Text style={styles.pageHeaderRight}>{patientName}</Text>
-        </View>
+        <BrandHeader />
 
-        <Text style={styles.eyebrow}>Resumen</Text>
+        <Text style={[styles.eyebrow, { color: accent }]}>Resumen</Text>
         <Text style={styles.h1}>Plan · {plan.title}</Text>
         <Text style={[styles.muted, { marginBottom: 22 }]}>
           Estado:{" "}
@@ -673,11 +957,107 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
                 </Text>
               </View>
             </View>
+            <View style={[styles.patientRow, { marginTop: 14 }]}>
+              <View style={styles.patientCell}>
+                <Text style={styles.patientLabel}>Deporte</Text>
+                <Text style={styles.patientValue}>{patient.sport ?? "—"}</Text>
+              </View>
+              <View style={styles.patientCell}>
+                <Text style={styles.patientLabel}>IMC · BMI</Text>
+                <Text style={styles.patientValue}>
+                  {bmiOf(patient.weight_kg, patient.height_cm)}
+                </Text>
+              </View>
+              <View style={styles.patientCell}>
+                <Text style={styles.patientLabel}>% Grasa · Masa magra</Text>
+                <Text style={styles.patientValue}>
+                  {patient.body_fat_pct != null
+                    ? `${patient.body_fat_pct}%`
+                    : "—"}{" "}
+                  ·{" "}
+                  {patient.lean_mass_kg != null
+                    ? `${patient.lean_mass_kg} kg`
+                    : "—"}
+                </Text>
+              </View>
+              <View style={styles.patientCell}>
+                <Text style={styles.patientLabel}>Fórmula</Text>
+                <Text style={styles.patientValue}>
+                  {energy ? formulaLabel[energy.formula] ?? energy.formula : "—"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Energy requirements */}
+        {energy && (
+          <View wrap={false}>
+            <Text style={[styles.eyebrow, { color: accent }]}>
+              Requerimiento energético
+            </Text>
+            <View style={styles.energyTable}>
+              <View style={styles.energyRowFirst}>
+                <Text style={styles.energyLabel}>
+                  Metabolismo basal (BMR) · {formulaLabel[energy.formula] ?? energy.formula}
+                </Text>
+                <Text style={styles.energyValue}>{energy.bmr} kcal</Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Factor de actividad</Text>
+                <Text style={styles.energyValue}>
+                  × {energy.activityFactor.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Gasto total (TDEE)</Text>
+                <Text style={styles.energyValue}>{energy.tdee} kcal</Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Ajuste por objetivo</Text>
+                <Text style={styles.energyValue}>
+                  {energy.goalAdjustment >= 0 ? "+" : ""}
+                  {energy.goalAdjustment} kcal
+                </Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Proteína</Text>
+                <Text style={styles.energyValue}>
+                  {energy.protein.g} g · {energy.protein.pct}%
+                </Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Carbohidratos</Text>
+                <Text style={styles.energyValue}>
+                  {energy.carbs.g} g · {energy.carbs.pct}%
+                </Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Lípidos</Text>
+                <Text style={styles.energyValue}>
+                  {energy.fat.g} g · {energy.fat.pct}%
+                </Text>
+              </View>
+              <View style={styles.energyRow}>
+                <Text style={styles.energyLabel}>Agua recomendada</Text>
+                <Text style={styles.energyValue}>
+                  {(energy.waterMl / 1000).toFixed(1)} L
+                </Text>
+              </View>
+              <View style={[styles.energyFinal, { borderTopColor: accent }]}>
+                <Text style={styles.energyFinalLabel}>
+                  Calorías objetivo · Final
+                </Text>
+                <Text style={[styles.energyFinalValue, { color: accent }]}>
+                  {energy.finalKcal.toLocaleString("es-MX")} kcal
+                </Text>
+              </View>
+            </View>
           </View>
         )}
 
         {/* Macros */}
-        <Text style={styles.eyebrow}>Totales del día</Text>
+        <Text style={[styles.eyebrow, { color: accent }]}>Totales del día</Text>
         <View style={styles.macrosCard}>
           <View style={styles.macroCell}>
             <Text style={styles.macroLabel}>Energía</Text>
@@ -712,9 +1092,11 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
         {/* Equivalentes distribution */}
         {hasEquivalentes && eqGroups && (
           <View wrap={false}>
-            <Text style={styles.eyebrow}>Distribución por equivalentes</Text>
+            <Text style={[styles.eyebrow, { color: accent }]}>
+              Distribución por equivalentes
+            </Text>
             <View style={styles.eqTable}>
-              <View style={styles.eqHeaderRow}>
+              <View style={[styles.eqHeaderRow, { backgroundColor: accent }]}>
                 <Text style={[styles.eqHeaderCell, { flex: 3 }]}>Grupo</Text>
                 <Text style={[styles.eqHeaderCell, { flex: 1, textAlign: "right" }]}>
                   Equiv.
@@ -746,7 +1128,9 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
         )}
 
         {/* Meals */}
-        <Text style={styles.eyebrow}>Distribución por comida</Text>
+        <Text style={[styles.eyebrow, { color: accent }]}>
+          Distribución por comida
+        </Text>
 
         {grouped.length === 0 ? (
           <Text style={[styles.muted, { marginTop: 14 }]}>
@@ -805,14 +1189,19 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
 
         {plan.notes && (
           <View style={styles.notesBox}>
-            <Text style={styles.eyebrow}>Notas del plan</Text>
+            <Text style={[styles.eyebrow, { color: accent }]}>
+              Notas del plan
+            </Text>
             <Text style={styles.body}>{plan.notes}</Text>
           </View>
         )}
 
+        {/* Signature only lives on the last page when there is no reference page */}
+        {!hasInter && <SignatureBlock />}
+
         <View style={styles.footer} fixed>
           <Text style={styles.footerBrand}>
-            Powered by Anthroscope · planbuilder.anthroscope.pro
+            Generado con Anthroscope Plan Builder · planbuilder.anthroscope.pro
           </Text>
           <Text
             style={styles.pageNum}
@@ -822,6 +1211,53 @@ export const PlanPdf: React.FC<{ data: PlanPdfData }> = ({ data }) => {
           />
         </View>
       </Page>
+
+      {/* ─── Intercambios reference ─── */}
+      {hasInter && (
+        <Page size="LETTER" style={styles.page}>
+          <BrandHeader />
+
+          <Text style={[styles.eyebrow, { color: accent }]}>Referencia</Text>
+          <Text style={styles.h1}>Sistema de intercambios</Text>
+          <Text style={[styles.muted, { marginBottom: 22 }]}>
+            Cada grupo aporta los mismos macros por equivalente. Elige entre las
+            opciones para mantener tu plan variado.
+          </Text>
+
+          {intercambios!.map((grp) => (
+            <View key={grp.key} style={styles.interBlock} wrap={false}>
+              <View style={styles.interHead}>
+                <Text style={styles.interTitle}>{grp.label}</Text>
+                <Text style={styles.muted}>{grp.equivalents} eq/día</Text>
+              </View>
+              <Text style={styles.interMacros}>
+                1 equivalente = {grp.perEquiv.kcal} kcal · {grp.perEquiv.protein}g
+                proteína · {grp.perEquiv.carbs}g carb · {grp.perEquiv.fat}g grasa
+              </Text>
+              {grp.foods.map((f, i) => (
+                <View key={i} style={styles.interFoodRow}>
+                  <Text style={styles.interFoodName}>{f.name}</Text>
+                  <Text style={styles.interFoodServing}>{f.serving}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+
+          <SignatureBlock />
+
+          <View style={styles.footer} fixed>
+            <Text style={styles.footerBrand}>
+              Generado con Anthroscope Plan Builder · planbuilder.anthroscope.pro
+            </Text>
+            <Text
+              style={styles.pageNum}
+              render={({ pageNumber, totalPages }) =>
+                `${pageNumber} / ${totalPages}`
+              }
+            />
+          </View>
+        </Page>
+      )}
     </Document>
   );
 };
