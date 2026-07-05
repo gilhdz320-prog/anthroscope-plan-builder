@@ -68,6 +68,108 @@ export async function createPlan(formData: FormData) {
   redirect('/dashboard/plans')
 }
 
+export async function createPlanViewToken(
+  planId: string,
+): Promise<{ token?: string; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autorizado' }
+
+  // Confirm the plan belongs to the requesting nutritionist (RLS also enforces).
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('id', planId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (!plan) return { error: 'Plan no encontrado' }
+
+  // Reuse an existing, unexpired token if one already exists.
+  const { data: existing } = await supabase
+    .from('plan_view_tokens')
+    .select('token, expires_at')
+    .eq('plan_id', planId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existing && (!existing.expires_at || new Date(existing.expires_at) > new Date())) {
+    return { token: existing.token as string }
+  }
+
+  const { data, error } = await supabase
+    .from('plan_view_tokens')
+    .insert({ plan_id: planId })
+    .select('token')
+    .single()
+
+  if (error) return { error: error.message }
+  return { token: data.token as string }
+}
+
+async function assertPlanOwner(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  planId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('id', planId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  return !!data
+}
+
+export async function addPlanMeal(
+  planId: string,
+  mealName: string,
+  mealOrder: number,
+  equivalentId: string,
+  servings = 1,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autorizado' }
+  if (!(await assertPlanOwner(supabase, user.id, planId)))
+    return { error: 'Plan no encontrado' }
+
+  const { error } = await supabase.from('plan_meals').insert({
+    plan_id: planId,
+    meal_name: mealName,
+    meal_order: mealOrder,
+    equivalent_id: equivalentId,
+    servings,
+  })
+  if (error) return { error: error.message }
+
+  revalidatePath(`/dashboard/plans/${planId}`)
+  return {}
+}
+
+export async function removePlanMeal(
+  planId: string,
+  mealId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autorizado' }
+  if (!(await assertPlanOwner(supabase, user.id, planId)))
+    return { error: 'Plan no encontrado' }
+
+  const { error } = await supabase.from('plan_meals').delete().eq('id', mealId)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/dashboard/plans/${planId}`)
+  return {}
+}
+
 export async function deletePlan(formData: FormData) {
   const supabase = await createClient()
   const {

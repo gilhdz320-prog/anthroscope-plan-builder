@@ -6,6 +6,9 @@ import {
   type PlanEquivalentesData,
   type PlanMode,
 } from "@/components/EquivalentesEditor";
+import { SharePlanButton } from "@/components/SharePlanButton";
+import { MealBuilder, type MealItem } from "@/components/MealBuilder";
+import type { FoodSearchItem } from "@/components/FoodSearch";
 
 const statusLabel: Record<string, string> = {
   draft: "Borrador",
@@ -78,7 +81,7 @@ export default async function PlanDetailPage({
     .from("plan_meals")
     .select(
       `
-      id, meal_name, meal_order, servings, notes,
+      id, meal_name, meal_order, servings, notes, equivalent_id,
       equivalent:equivalents (
         food_name, food_name_es, food_name_en,
         serving_desc, serving_desc_es, serving_desc_en,
@@ -89,12 +92,35 @@ export default async function PlanDetailPage({
     .eq("plan_id", id)
     .order("meal_order", { ascending: true });
 
+  // Food catalog (system foods + this nutritionist's own) for the meal builder.
+  const { data: catalog } = await supabase
+    .from("equivalents")
+    .select(
+      "id, group_key, food_name_es, food_name_en, serving_desc_es, serving_desc_en, kcal, protein_g, carbs_g, fat_g",
+    )
+    .order("group_key", { ascending: true })
+    .order("food_name_es", { ascending: true });
+
+  const foods: FoodSearchItem[] = (catalog ?? []).map((f) => ({
+    id: f.id as string,
+    es: (f.food_name_es as string) ?? (f.food_name_en as string) ?? "",
+    en: (f.food_name_en as string) ?? (f.food_name_es as string) ?? "",
+    group: (f.group_key as string) ?? "otros",
+    serving:
+      (f.serving_desc_es as string) ?? (f.serving_desc_en as string) ?? "",
+    kcal: Number(f.kcal ?? 0),
+    protein: Number(f.protein_g ?? 0),
+    carbs: Number(f.carbs_g ?? 0),
+    fat: Number(f.fat_g ?? 0),
+  }));
+
   type MealRow = {
     id: string;
     meal_name: string;
     meal_order: number;
     servings: number;
     notes: string | null;
+    equivalent_id: string | null;
     equivalent:
       | {
           food_name: string | null;
@@ -117,7 +143,30 @@ export default async function PlanDetailPage({
     meal_order: m.meal_order,
     servings: Number(m.servings ?? 1),
     notes: m.notes,
+    equivalent_id: (m as { equivalent_id: string | null }).equivalent_id,
     equivalent: Array.isArray(m.equivalent) ? m.equivalent[0] : m.equivalent,
+  }));
+
+  const mealItems: MealItem[] = rows.map((m) => ({
+    id: m.id,
+    meal_name: m.meal_name,
+    meal_order: m.meal_order,
+    servings: m.servings,
+    food_es:
+      m.equivalent?.food_name_es ??
+      m.equivalent?.food_name_en ??
+      m.equivalent?.food_name ??
+      "Alimento",
+    food_en:
+      m.equivalent?.food_name_en ??
+      m.equivalent?.food_name_es ??
+      m.equivalent?.food_name ??
+      "Food",
+    serving_es:
+      m.equivalent?.serving_desc_es ?? m.equivalent?.serving_desc ?? "—",
+    serving_en:
+      m.equivalent?.serving_desc_en ?? m.equivalent?.serving_desc ?? "—",
+    kcal: Number(m.equivalent?.kcal ?? 0),
   }));
 
   // Aggregate macros
@@ -134,21 +183,6 @@ export default async function PlanDetailPage({
     },
     { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   );
-
-  // Group meals
-  const groups: Record<
-    string,
-    { order: number; items: MealRow[]; notes: string | null }
-  > = {};
-  for (const m of rows) {
-    const key = m.meal_name || "Comida";
-    if (!groups[key])
-      groups[key] = { order: m.meal_order, items: [], notes: m.notes };
-    groups[key].items.push(m);
-  }
-  const grouped = Object.entries(groups)
-    .map(([name, g]) => ({ name, ...g }))
-    .sort((a, b) => a.order - b.order);
 
   const patient = Array.isArray(plan.patient) ? plan.patient[0] : plan.patient;
   const template = Array.isArray(plan.template)
@@ -203,27 +237,30 @@ export default async function PlanDetailPage({
               </p>
             )}
           </div>
-          <a
-            href={`/api/plans/${plan.id}/pdf`}
-            download
-            className="btn btn-brand"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <SharePlanButton planId={plan.id} />
+            <a
+              href={`/api/plans/${plan.id}/pdf`}
+              download
+              className="btn btn-brand"
             >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Descargar PDF
-          </a>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Descargar PDF
+            </a>
+          </div>
         </div>
       </div>
 
@@ -361,113 +398,8 @@ export default async function PlanDetailPage({
         </div>
       </div>
 
-      {/* Meals */}
-      <div className="rise rise-3">
-        <p className="eyebrow mb-4">Distribución por comida</p>
-
-        {grouped.length === 0 ? (
-          <div
-            className="card-luxe px-6 py-16 text-center"
-            style={{ borderStyle: "dashed" }}
-          >
-            <p
-              className="font-display"
-              style={{ fontSize: "20px", color: "var(--ink-strong)" }}
-            >
-              Aún no hay comidas en este plan.
-            </p>
-            <p
-              className="mt-2 text-sm"
-              style={{ color: "var(--ink-muted)" }}
-            >
-              La edición de comidas estará disponible pronto. Por ahora puedes
-              exportar la estructura del plan.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {grouped.map((g) => {
-              const mealKcal = g.items.reduce(
-                (a, i) => a + (i.equivalent?.kcal ?? 0) * (i.servings || 1),
-                0,
-              );
-              return (
-                <div key={g.name} className="card-luxe p-6">
-                  <div className="flex items-baseline justify-between border-b pb-3" style={{ borderColor: "var(--border-subtle)" }}>
-                    <h3
-                      className="font-display italic"
-                      style={{
-                        fontSize: "22px",
-                        color: "var(--brand-900)",
-                        letterSpacing: "-0.015em",
-                      }}
-                    >
-                      {g.name}
-                    </h3>
-                    <p
-                      className="font-mono-tabular text-xs"
-                      style={{ color: "var(--ink-muted)" }}
-                    >
-                      {Math.round(mealKcal)} kcal
-                    </p>
-                  </div>
-                  <ul className="mt-3 space-y-2">
-                    {g.items.map((it) => {
-                      const e = it.equivalent;
-                      const name =
-                        e?.food_name_es ??
-                        e?.food_name_en ??
-                        e?.food_name ??
-                        "Alimento";
-                      const serving =
-                        e?.serving_desc_es ??
-                        e?.serving_desc_en ??
-                        e?.serving_desc ??
-                        "—";
-                      const k = (e?.kcal ?? 0) * (it.servings || 1);
-                      return (
-                        <li
-                          key={it.id}
-                          className="flex items-center justify-between gap-4 text-sm"
-                        >
-                          <span style={{ color: "var(--ink-strong)" }}>
-                            {name}
-                            {it.servings !== 1 && (
-                              <span
-                                className="ml-2 font-mono-tabular text-xs"
-                                style={{ color: "var(--ink-subtle)" }}
-                              >
-                                {it.servings}×
-                              </span>
-                            )}
-                          </span>
-                          <span
-                            className="flex items-center gap-4"
-                            style={{ color: "var(--ink-muted)" }}
-                          >
-                            <span className="text-xs">{serving}</span>
-                            <span className="font-mono-tabular text-xs">
-                              {Math.round(k)} kcal
-                            </span>
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {g.notes && (
-                    <p
-                      className="mt-3 text-xs italic"
-                      style={{ color: "var(--ink-subtle)" }}
-                    >
-                      {g.notes}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {/* Meals — interactive builder */}
+      <MealBuilder planId={plan.id} foods={foods} items={mealItems} />
 
       {plan.notes && (
         <div className="card-luxe p-6 rise rise-4">

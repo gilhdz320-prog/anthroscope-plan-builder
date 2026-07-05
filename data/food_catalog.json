@@ -1,286 +1,3111 @@
 {
   "_meta": {
     "description": "Curated bilingual food catalog. Each entry: english query for USDA + spanish translation + canonical group. Script resolves USDA macros and computes exchange portion.",
-    "version": 1,
+    "version": 2,
     "exchange_system": "Sistema Mexicano de Equivalentes + ADA Exchange Lists"
   },
   "cereales": [
-    { "es": "Arroz blanco cocido", "en": "White rice, cooked", "query": "rice white cooked" },
-    { "es": "Arroz integral cocido", "en": "Brown rice, cooked", "query": "rice brown cooked" },
-    { "es": "Pasta cocida", "en": "Pasta, cooked", "query": "pasta cooked" },
-    { "es": "Pasta integral cocida", "en": "Whole wheat pasta, cooked", "query": "whole wheat pasta cooked" },
-    { "es": "Avena en hojuelas seca", "en": "Rolled oats, dry", "query": "oats rolled dry" },
-    { "es": "Quinoa cocida", "en": "Quinoa, cooked", "query": "quinoa cooked" },
-    { "es": "Cebada cocida", "en": "Barley, cooked", "query": "barley cooked" },
-    { "es": "Cuscús cocido", "en": "Couscous, cooked", "query": "couscous cooked" },
-    { "es": "Bulgur cocido", "en": "Bulgur, cooked", "query": "bulgur cooked" },
-    { "es": "Pan blanco", "en": "White bread", "query": "bread white" },
-    { "es": "Pan integral", "en": "Whole wheat bread", "query": "bread whole wheat" },
-    { "es": "Pan de centeno", "en": "Rye bread", "query": "bread rye" },
-    { "es": "Pan pita integral", "en": "Whole wheat pita", "query": "pita whole wheat" },
-    { "es": "Tortilla de maíz", "en": "Corn tortilla", "query": "tortilla corn" },
-    { "es": "Tortilla de harina", "en": "Flour tortilla", "query": "tortilla flour" },
-    { "es": "Bolillo", "en": "Mexican bread roll", "query": "bolillo bread" },
-    { "es": "Bagel simple", "en": "Plain bagel", "query": "bagel plain" },
-    { "es": "Tostada de maíz", "en": "Corn tostada", "query": "tostada corn" },
-    { "es": "Galleta María", "en": "Maria cookie", "query": "marie biscuit" },
-    { "es": "Galletas saladas", "en": "Saltine crackers", "query": "crackers saltine" },
-    { "es": "Hot cake simple", "en": "Pancake plain", "query": "pancake plain" },
-    { "es": "Waffle simple", "en": "Waffle plain", "query": "waffle plain" },
-    { "es": "Cereal corn flakes", "en": "Corn flakes cereal", "query": "corn flakes cereal" },
-    { "es": "Cereal de salvado", "en": "Bran flakes cereal", "query": "bran flakes" },
-    { "es": "Granola sin azúcar", "en": "Granola no sugar added", "query": "granola unsweetened" },
-    { "es": "Papa cocida", "en": "Potato, boiled", "query": "potato boiled" },
-    { "es": "Papa horneada", "en": "Potato, baked", "query": "potato baked" },
-    { "es": "Camote cocido", "en": "Sweet potato, cooked", "query": "sweet potato cooked" },
-    { "es": "Yuca cocida", "en": "Cassava, cooked", "query": "cassava cooked" },
-    { "es": "Plátano macho cocido", "en": "Plantain, cooked", "query": "plantain cooked" },
-    { "es": "Elote desgranado", "en": "Corn kernels", "query": "corn kernels yellow" },
-    { "es": "Elote en mazorca", "en": "Corn on the cob", "query": "corn on the cob" },
-    { "es": "Maíz pozolero", "en": "Hominy", "query": "hominy" },
-    { "es": "Calabaza de Castilla cocida", "en": "Winter squash, cooked", "query": "winter squash cooked" },
-    { "es": "Chícharos cocidos", "en": "Green peas, cooked", "query": "green peas cooked" },
-    { "es": "Harina de maíz", "en": "Cornmeal", "query": "cornmeal yellow" },
-    { "es": "Harina de avena", "en": "Oat flour", "query": "oat flour" },
-    { "es": "Tapioca cocida", "en": "Tapioca, cooked", "query": "tapioca pearls cooked" },
-    { "es": "Polenta cocida", "en": "Polenta, cooked", "query": "polenta cooked" },
-    { "es": "Arroz salvaje cocido", "en": "Wild rice, cooked", "query": "wild rice cooked" }
+    {
+      "es": "Arroz blanco cocido",
+      "en": "White rice, cooked",
+      "query": "rice white cooked"
+    },
+    {
+      "es": "Arroz integral cocido",
+      "en": "Brown rice, cooked",
+      "query": "rice brown cooked"
+    },
+    {
+      "es": "Pasta cocida",
+      "en": "Pasta, cooked",
+      "query": "pasta cooked"
+    },
+    {
+      "es": "Pasta integral cocida",
+      "en": "Whole wheat pasta, cooked",
+      "query": "whole wheat pasta cooked"
+    },
+    {
+      "es": "Avena en hojuelas seca",
+      "en": "Rolled oats, dry",
+      "query": "oats rolled dry"
+    },
+    {
+      "es": "Quinoa cocida",
+      "en": "Quinoa, cooked",
+      "query": "quinoa cooked"
+    },
+    {
+      "es": "Cebada cocida",
+      "en": "Barley, cooked",
+      "query": "barley cooked"
+    },
+    {
+      "es": "Cuscús cocido",
+      "en": "Couscous, cooked",
+      "query": "couscous cooked"
+    },
+    {
+      "es": "Bulgur cocido",
+      "en": "Bulgur, cooked",
+      "query": "bulgur cooked"
+    },
+    {
+      "es": "Pan blanco",
+      "en": "White bread",
+      "query": "bread white"
+    },
+    {
+      "es": "Pan integral",
+      "en": "Whole wheat bread",
+      "query": "bread whole wheat"
+    },
+    {
+      "es": "Pan de centeno",
+      "en": "Rye bread",
+      "query": "bread rye"
+    },
+    {
+      "es": "Pan pita integral",
+      "en": "Whole wheat pita",
+      "query": "pita whole wheat"
+    },
+    {
+      "es": "Tortilla de maíz",
+      "en": "Corn tortilla",
+      "query": "tortilla corn"
+    },
+    {
+      "es": "Tortilla de harina",
+      "en": "Flour tortilla",
+      "query": "tortilla flour"
+    },
+    {
+      "es": "Bolillo",
+      "en": "Mexican bread roll",
+      "query": "bolillo bread"
+    },
+    {
+      "es": "Bagel simple",
+      "en": "Plain bagel",
+      "query": "bagel plain"
+    },
+    {
+      "es": "Tostada de maíz",
+      "en": "Corn tostada",
+      "query": "tostada corn"
+    },
+    {
+      "es": "Galleta María",
+      "en": "Maria cookie",
+      "query": "marie biscuit"
+    },
+    {
+      "es": "Galletas saladas",
+      "en": "Saltine crackers",
+      "query": "crackers saltine"
+    },
+    {
+      "es": "Hot cake simple",
+      "en": "Pancake plain",
+      "query": "pancake plain"
+    },
+    {
+      "es": "Waffle simple",
+      "en": "Waffle plain",
+      "query": "waffle plain"
+    },
+    {
+      "es": "Cereal corn flakes",
+      "en": "Corn flakes cereal",
+      "query": "corn flakes cereal"
+    },
+    {
+      "es": "Cereal de salvado",
+      "en": "Bran flakes cereal",
+      "query": "bran flakes"
+    },
+    {
+      "es": "Granola sin azúcar",
+      "en": "Granola no sugar added",
+      "query": "granola unsweetened"
+    },
+    {
+      "es": "Papa cocida",
+      "en": "Potato, boiled",
+      "query": "potato boiled"
+    },
+    {
+      "es": "Papa horneada",
+      "en": "Potato, baked",
+      "query": "potato baked"
+    },
+    {
+      "es": "Camote cocido",
+      "en": "Sweet potato, cooked",
+      "query": "sweet potato cooked"
+    },
+    {
+      "es": "Yuca cocida",
+      "en": "Cassava, cooked",
+      "query": "cassava cooked"
+    },
+    {
+      "es": "Plátano macho cocido",
+      "en": "Plantain, cooked",
+      "query": "plantain cooked"
+    },
+    {
+      "es": "Elote desgranado",
+      "en": "Corn kernels",
+      "query": "corn kernels yellow"
+    },
+    {
+      "es": "Elote en mazorca",
+      "en": "Corn on the cob",
+      "query": "corn on the cob"
+    },
+    {
+      "es": "Maíz pozolero",
+      "en": "Hominy",
+      "query": "hominy"
+    },
+    {
+      "es": "Calabaza de Castilla cocida",
+      "en": "Winter squash, cooked",
+      "query": "winter squash cooked"
+    },
+    {
+      "es": "Chícharos cocidos",
+      "en": "Green peas, cooked",
+      "query": "green peas cooked"
+    },
+    {
+      "es": "Harina de maíz",
+      "en": "Cornmeal",
+      "query": "cornmeal yellow"
+    },
+    {
+      "es": "Harina de avena",
+      "en": "Oat flour",
+      "query": "oat flour"
+    },
+    {
+      "es": "Tapioca cocida",
+      "en": "Tapioca, cooked",
+      "query": "tapioca pearls cooked"
+    },
+    {
+      "es": "Polenta cocida",
+      "en": "Polenta, cooked",
+      "query": "polenta cooked"
+    },
+    {
+      "es": "Arroz salvaje cocido",
+      "en": "Wild rice, cooked",
+      "query": "wild rice cooked"
+    },
+    {
+      "es": "Tortilla de nopal",
+      "en": "Nopal tortilla",
+      "query": "tortilla nopal"
+    },
+    {
+      "es": "Tostada horneada",
+      "en": "Baked tostada",
+      "query": "tostada baked corn"
+    },
+    {
+      "es": "Tlayuda",
+      "en": "Tlayuda",
+      "query": "tlayuda corn tortilla large"
+    },
+    {
+      "es": "Sope",
+      "en": "Sope",
+      "query": "sope corn masa"
+    },
+    {
+      "es": "Gordita de maíz",
+      "en": "Corn gordita",
+      "query": "gordita corn masa"
+    },
+    {
+      "es": "Tamal de elote",
+      "en": "Corn tamale",
+      "query": "tamale corn sweet"
+    },
+    {
+      "es": "Elote cocido en mazorca",
+      "en": "Corn on the cob, cooked",
+      "query": "corn on the cob cooked"
+    },
+    {
+      "es": "Pozol",
+      "en": "Pozol",
+      "query": "pozol corn cacao drink"
+    },
+    {
+      "es": "Atole sin azúcar",
+      "en": "Atole, no sugar",
+      "query": "atole corn masa"
+    },
+    {
+      "es": "Pinole",
+      "en": "Pinole",
+      "query": "pinole toasted corn"
+    },
+    {
+      "es": "Totopos",
+      "en": "Corn totopos",
+      "query": "corn tortilla chips baked"
+    },
+    {
+      "es": "Quesadilla de maíz",
+      "en": "Corn quesadilla",
+      "query": "corn quesadilla"
+    },
+    {
+      "es": "Pan blanco artesanal",
+      "en": "Artisan white bread",
+      "query": "artisan white bread"
+    },
+    {
+      "es": "Pan integral artesanal",
+      "en": "Artisan whole wheat bread",
+      "query": "artisan whole wheat bread"
+    },
+    {
+      "es": "Telera",
+      "en": "Telera roll",
+      "query": "telera bread mexican"
+    },
+    {
+      "es": "Concha sin relleno",
+      "en": "Concha (plain)",
+      "query": "concha pan dulce"
+    },
+    {
+      "es": "Cereal de maíz natural",
+      "en": "Plain corn cereal",
+      "query": "corn cereal unsweetened"
+    },
+    {
+      "es": "Avena instantánea",
+      "en": "Instant oatmeal",
+      "query": "instant oatmeal plain"
+    },
+    {
+      "es": "Galleta de avena",
+      "en": "Oatmeal cookie",
+      "query": "oatmeal cookie"
+    },
+    {
+      "es": "Galleta integral",
+      "en": "Whole grain cracker",
+      "query": "whole grain crackers"
+    },
+    {
+      "es": "Fideos cocidos",
+      "en": "Cooked noodles",
+      "query": "noodles cooked"
+    },
+    {
+      "es": "Amaranto reventado",
+      "en": "Popped amaranth",
+      "query": "amaranth popped"
+    },
+    {
+      "es": "Chía seca",
+      "en": "Chia seeds, dry",
+      "query": "chia seeds dry"
+    },
+    {
+      "es": "Pan árabe",
+      "en": "Pita flatbread",
+      "query": "arabic flatbread pita"
+    },
+    {
+      "es": "Galleta Wasa",
+      "en": "Wasa crispbread",
+      "query": "wasa crispbread rye"
+    },
+    {
+      "es": "Arroz rojo a la mexicana",
+      "en": "Mexican red rice",
+      "query": "mexican rice tomato"
+    },
+    {
+      "es": "Espagueti integral cocido",
+      "en": "Whole wheat spaghetti, cooked",
+      "query": "whole wheat spaghetti cooked"
+    },
+    {
+      "es": "Macarrón cocido",
+      "en": "Macaroni, cooked",
+      "query": "macaroni cooked"
+    },
+    {
+      "es": "Hojuelas de trigo",
+      "en": "Wheat flakes",
+      "query": "wheat flakes cereal"
+    },
+    {
+      "es": "Arepa de maíz",
+      "en": "Corn arepa",
+      "query": "arepa corn"
+    },
+    {
+      "es": "Malanga cocida",
+      "en": "Malanga, cooked",
+      "query": "malanga cooked"
+    },
+    {
+      "es": "Ñame cocido",
+      "en": "Yam, cooked",
+      "query": "yam cooked"
+    },
+    {
+      "es": "Plátano macho horneado",
+      "en": "Baked plantain",
+      "query": "plantain baked"
+    },
+    {
+      "es": "Palomitas naturales",
+      "en": "Air-popped popcorn",
+      "query": "popcorn air popped"
+    },
+    {
+      "es": "Germen de trigo",
+      "en": "Wheat germ",
+      "query": "wheat germ"
+    },
+    {
+      "es": "Salvado de avena",
+      "en": "Oat bran",
+      "query": "oat bran"
+    },
+    {
+      "es": "Tortilla de nixtamal",
+      "en": "Nixtamal corn tortilla",
+      "query": "nixtamal corn tortilla"
+    },
+    {
+      "es": "Migas de maíz",
+      "en": "Corn migas",
+      "query": "corn migas"
+    },
+    {
+      "es": "Chilaquiles horneados sin crema",
+      "en": "Baked chilaquiles, no cream",
+      "query": "baked chilaquiles corn"
+    },
+    {
+      "es": "Tamal blanco",
+      "en": "Plain white tamale",
+      "query": "tamale masa plain"
+    },
+    {
+      "es": "Arroz basmati cocido",
+      "en": "Basmati rice, cooked",
+      "query": "basmati rice cooked"
+    },
+    {
+      "es": "Arroz jazmín cocido",
+      "en": "Jasmine rice, cooked",
+      "query": "jasmine rice cooked"
+    },
+    {
+      "es": "Trigo sarraceno cocido",
+      "en": "Buckwheat, cooked",
+      "query": "buckwheat cooked"
+    },
+    {
+      "es": "Mijo cocido",
+      "en": "Millet, cooked",
+      "query": "millet cooked"
+    },
+    {
+      "es": "Farro cocido",
+      "en": "Farro, cooked",
+      "query": "farro cooked"
+    },
+    {
+      "es": "Espelta cocida",
+      "en": "Spelt, cooked",
+      "query": "spelt cooked"
+    },
+    {
+      "es": "Fécula de maíz",
+      "en": "Cornstarch",
+      "query": "cornstarch"
+    },
+    {
+      "es": "Harina de trigo",
+      "en": "Wheat flour",
+      "query": "wheat flour all purpose"
+    },
+    {
+      "es": "Harina integral",
+      "en": "Whole wheat flour",
+      "query": "whole wheat flour"
+    },
+    {
+      "es": "Pan de caja integral",
+      "en": "Whole wheat sandwich bread",
+      "query": "whole wheat bread"
+    },
+    {
+      "es": "Pan multigrano",
+      "en": "Multigrain bread",
+      "query": "multigrain bread"
+    },
+    {
+      "es": "Bagel integral",
+      "en": "Whole wheat bagel",
+      "query": "bagel whole wheat"
+    },
+    {
+      "es": "English muffin",
+      "en": "English muffin",
+      "query": "english muffin"
+    },
+    {
+      "es": "Tortilla integral",
+      "en": "Whole wheat tortilla",
+      "query": "tortilla whole wheat"
+    },
+    {
+      "es": "Crotones",
+      "en": "Croutons",
+      "query": "croutons plain"
+    },
+    {
+      "es": "Pan molido",
+      "en": "Bread crumbs",
+      "query": "bread crumbs plain"
+    },
+    {
+      "es": "Hot cake integral",
+      "en": "Whole wheat pancake",
+      "query": "pancake whole wheat"
+    },
+    {
+      "es": "Waffle integral",
+      "en": "Whole wheat waffle",
+      "query": "waffle whole wheat"
+    },
+    {
+      "es": "Barra de granola",
+      "en": "Granola bar",
+      "query": "granola bar"
+    },
+    {
+      "es": "Tortilla de maíz azul",
+      "en": "Blue corn tortilla",
+      "query": "blue corn tortilla"
+    },
+    {
+      "es": "Chapata integral",
+      "en": "Whole wheat ciabatta",
+      "query": "ciabatta whole wheat"
+    },
+    {
+      "es": "Baguette",
+      "en": "Baguette",
+      "query": "baguette bread"
+    },
+    {
+      "es": "Pan de elote",
+      "en": "Cornbread",
+      "query": "cornbread"
+    },
+    {
+      "es": "Panqué integral",
+      "en": "Whole wheat pound cake",
+      "query": "whole wheat cake"
+    },
+    {
+      "es": "Sémola cocida",
+      "en": "Semolina, cooked",
+      "query": "semolina cooked"
+    },
+    {
+      "es": "Tabule",
+      "en": "Tabbouleh",
+      "query": "tabbouleh bulgur"
+    },
+    {
+      "es": "Risotto de arroz",
+      "en": "Rice risotto",
+      "query": "risotto rice"
+    },
+    {
+      "es": "Cebada perlada cocida",
+      "en": "Pearl barley, cooked",
+      "query": "pearl barley cooked"
+    },
+    {
+      "es": "Kamut cocido",
+      "en": "Kamut, cooked",
+      "query": "kamut cooked"
+    }
   ],
   "cereales_grasa": [
-    { "es": "Donut glaseada", "en": "Glazed donut", "query": "donut glazed" },
-    { "es": "Croissant", "en": "Croissant", "query": "croissant butter" },
-    { "es": "Pan dulce", "en": "Sweet bread", "query": "pan dulce" },
-    { "es": "Muffin de arándano", "en": "Blueberry muffin", "query": "muffin blueberry" },
-    { "es": "Pan tostado con mantequilla", "en": "Toast with butter", "query": "toast buttered" },
-    { "es": "Galletas con chispas de chocolate", "en": "Chocolate chip cookies", "query": "cookies chocolate chip" },
-    { "es": "Papas a la francesa", "en": "French fries", "query": "french fries" },
-    { "es": "Totopos de maíz", "en": "Corn tortilla chips", "query": "tortilla chips" },
-    { "es": "Palomitas con mantequilla", "en": "Buttered popcorn", "query": "popcorn buttered" },
-    { "es": "Pastel de zanahoria", "en": "Carrot cake", "query": "carrot cake" }
+    {
+      "es": "Donut glaseada",
+      "en": "Glazed donut",
+      "query": "donut glazed"
+    },
+    {
+      "es": "Croissant",
+      "en": "Croissant",
+      "query": "croissant butter"
+    },
+    {
+      "es": "Pan dulce",
+      "en": "Sweet bread",
+      "query": "pan dulce"
+    },
+    {
+      "es": "Muffin de arándano",
+      "en": "Blueberry muffin",
+      "query": "muffin blueberry"
+    },
+    {
+      "es": "Pan tostado con mantequilla",
+      "en": "Toast with butter",
+      "query": "toast buttered"
+    },
+    {
+      "es": "Galletas con chispas de chocolate",
+      "en": "Chocolate chip cookies",
+      "query": "cookies chocolate chip"
+    },
+    {
+      "es": "Papas a la francesa",
+      "en": "French fries",
+      "query": "french fries"
+    },
+    {
+      "es": "Totopos de maíz",
+      "en": "Corn tortilla chips",
+      "query": "tortilla chips"
+    },
+    {
+      "es": "Palomitas con mantequilla",
+      "en": "Buttered popcorn",
+      "query": "popcorn buttered"
+    },
+    {
+      "es": "Pastel de zanahoria",
+      "en": "Carrot cake",
+      "query": "carrot cake"
+    },
+    {
+      "es": "Churros",
+      "en": "Churros",
+      "query": "churros fried dough"
+    },
+    {
+      "es": "Buñuelo",
+      "en": "Buñuelo",
+      "query": "bunuelo fried dough"
+    },
+    {
+      "es": "Empanada de horno",
+      "en": "Baked empanada",
+      "query": "baked empanada"
+    },
+    {
+      "es": "Bizcocho",
+      "en": "Sponge cake",
+      "query": "sponge cake"
+    },
+    {
+      "es": "Polvorón",
+      "en": "Polvorón cookie",
+      "query": "polvoron shortbread cookie"
+    },
+    {
+      "es": "Pan de muerto",
+      "en": "Pan de muerto",
+      "query": "pan de muerto sweet bread"
+    },
+    {
+      "es": "Rosca de reyes",
+      "en": "Rosca de reyes",
+      "query": "rosca de reyes sweet bread"
+    },
+    {
+      "es": "Cuernito relleno",
+      "en": "Filled croissant",
+      "query": "filled croissant"
+    },
+    {
+      "es": "Galleta rellena de crema",
+      "en": "Cream-filled cookie",
+      "query": "cream filled sandwich cookie"
+    },
+    {
+      "es": "Papas fritas de bolsa",
+      "en": "Potato chips",
+      "query": "potato chips"
+    }
   ],
   "leguminosas": [
-    { "es": "Frijol negro cocido", "en": "Black beans, cooked", "query": "black beans cooked" },
-    { "es": "Frijol pinto cocido", "en": "Pinto beans, cooked", "query": "pinto beans cooked" },
-    { "es": "Frijol bayo cocido", "en": "Bayo beans, cooked", "query": "kidney beans cooked" },
-    { "es": "Lenteja cocida", "en": "Lentils, cooked", "query": "lentils cooked" },
-    { "es": "Garbanzo cocido", "en": "Chickpeas, cooked", "query": "chickpeas cooked" },
-    { "es": "Haba cocida", "en": "Fava beans, cooked", "query": "fava beans cooked" },
-    { "es": "Alubia cocida", "en": "White beans, cooked", "query": "white beans cooked" },
-    { "es": "Frijol de soya cocido", "en": "Soybeans, cooked", "query": "soybeans cooked" },
-    { "es": "Edamame", "en": "Edamame", "query": "edamame cooked" },
-    { "es": "Frijoles refritos", "en": "Refried beans", "query": "refried beans" },
-    { "es": "Hummus", "en": "Hummus", "query": "hummus commercial" },
-    { "es": "Tofu firme", "en": "Tofu, firm", "query": "tofu firm" },
-    { "es": "Tofu suave", "en": "Tofu, soft", "query": "tofu soft" },
-    { "es": "Tempeh", "en": "Tempeh", "query": "tempeh" },
-    { "es": "Leche de soya sin azúcar", "en": "Soymilk, unsweetened", "query": "soymilk unsweetened" }
+    {
+      "es": "Frijol negro cocido",
+      "en": "Black beans, cooked",
+      "query": "black beans cooked"
+    },
+    {
+      "es": "Frijol pinto cocido",
+      "en": "Pinto beans, cooked",
+      "query": "pinto beans cooked"
+    },
+    {
+      "es": "Frijol bayo cocido",
+      "en": "Bayo beans, cooked",
+      "query": "kidney beans cooked"
+    },
+    {
+      "es": "Lenteja cocida",
+      "en": "Lentils, cooked",
+      "query": "lentils cooked"
+    },
+    {
+      "es": "Garbanzo cocido",
+      "en": "Chickpeas, cooked",
+      "query": "chickpeas cooked"
+    },
+    {
+      "es": "Haba cocida",
+      "en": "Fava beans, cooked",
+      "query": "fava beans cooked"
+    },
+    {
+      "es": "Alubia cocida",
+      "en": "White beans, cooked",
+      "query": "white beans cooked"
+    },
+    {
+      "es": "Frijol de soya cocido",
+      "en": "Soybeans, cooked",
+      "query": "soybeans cooked"
+    },
+    {
+      "es": "Edamame",
+      "en": "Edamame",
+      "query": "edamame cooked"
+    },
+    {
+      "es": "Frijoles refritos",
+      "en": "Refried beans",
+      "query": "refried beans"
+    },
+    {
+      "es": "Hummus",
+      "en": "Hummus",
+      "query": "hummus commercial"
+    },
+    {
+      "es": "Tofu firme",
+      "en": "Tofu, firm",
+      "query": "tofu firm"
+    },
+    {
+      "es": "Tofu suave",
+      "en": "Tofu, soft",
+      "query": "tofu soft"
+    },
+    {
+      "es": "Tempeh",
+      "en": "Tempeh",
+      "query": "tempeh"
+    },
+    {
+      "es": "Leche de soya sin azúcar",
+      "en": "Soymilk, unsweetened",
+      "query": "soymilk unsweetened"
+    },
+    {
+      "es": "Frijol mayocoba cocido",
+      "en": "Mayocoba beans, cooked",
+      "query": "mayocoba beans cooked"
+    },
+    {
+      "es": "Frijol peruano cocido",
+      "en": "Peruano beans, cooked",
+      "query": "peruano beans cooked"
+    },
+    {
+      "es": "Frijol de olla",
+      "en": "Frijol de olla",
+      "query": "pot beans cooked"
+    },
+    {
+      "es": "Frijoles refritos sin grasa",
+      "en": "Fat-free refried beans",
+      "query": "refried beans fat free"
+    },
+    {
+      "es": "Haba seca cocida",
+      "en": "Dry fava beans, cooked",
+      "query": "dry fava beans cooked"
+    },
+    {
+      "es": "Haba verde cocida",
+      "en": "Green fava beans, cooked",
+      "query": "green fava beans cooked"
+    },
+    {
+      "es": "Alverjón cocido",
+      "en": "Split peas, cooked",
+      "query": "split peas cooked"
+    },
+    {
+      "es": "Soya texturizada cocida",
+      "en": "Textured soy protein, cooked",
+      "query": "textured soy protein cooked"
+    },
+    {
+      "es": "Frijol flor de mayo cocido",
+      "en": "Flor de mayo beans, cooked",
+      "query": "pinto beans cooked"
+    },
+    {
+      "es": "Frijol negro refrito sin grasa",
+      "en": "Fat-free refried black beans",
+      "query": "refried black beans fat free"
+    },
+    {
+      "es": "Chícharo seco cocido",
+      "en": "Dry green peas, cooked",
+      "query": "dried green peas cooked"
+    },
+    {
+      "es": "Lenteja roja cocida",
+      "en": "Red lentils, cooked",
+      "query": "red lentils cooked"
+    },
+    {
+      "es": "Frijol blanco navy cocido",
+      "en": "Navy beans, cooked",
+      "query": "navy beans cooked"
+    },
+    {
+      "es": "Frijol adzuki cocido",
+      "en": "Adzuki beans, cooked",
+      "query": "adzuki beans cooked"
+    },
+    {
+      "es": "Cacahuate natural",
+      "en": "Raw peanuts",
+      "query": "peanuts raw"
+    },
+    {
+      "es": "Frijol rojo cocido",
+      "en": "Red kidney beans, cooked",
+      "query": "kidney beans red cooked"
+    },
+    {
+      "es": "Frijol cannellini cocido",
+      "en": "Cannellini beans, cooked",
+      "query": "cannellini beans cooked"
+    },
+    {
+      "es": "Frijol lima cocido",
+      "en": "Lima beans, cooked",
+      "query": "lima beans cooked"
+    },
+    {
+      "es": "Garbanzo tostado",
+      "en": "Roasted chickpeas",
+      "query": "chickpeas roasted"
+    },
+    {
+      "es": "Lenteja pardina cocida",
+      "en": "Brown lentils, cooked",
+      "query": "brown lentils cooked"
+    },
+    {
+      "es": "Miso",
+      "en": "Miso paste",
+      "query": "miso"
+    },
+    {
+      "es": "Frijol carita cocido",
+      "en": "Black-eyed peas, cooked",
+      "query": "black eyed peas cooked"
+    },
+    {
+      "es": "Frijol mungo cocido",
+      "en": "Mung beans, cooked",
+      "query": "mung beans cooked"
+    },
+    {
+      "es": "Frijol pallar cocido",
+      "en": "Butter beans, cooked",
+      "query": "butter beans cooked"
+    },
+    {
+      "es": "Tempeh de garbanzo",
+      "en": "Chickpea tempeh",
+      "query": "tempeh"
+    },
+    {
+      "es": "Falafel horneado",
+      "en": "Baked falafel",
+      "query": "falafel baked"
+    }
   ],
   "verduras": [
-    { "es": "Brócoli cocido", "en": "Broccoli, cooked", "query": "broccoli cooked" },
-    { "es": "Brócoli crudo", "en": "Broccoli, raw", "query": "broccoli raw" },
-    { "es": "Coliflor cocida", "en": "Cauliflower, cooked", "query": "cauliflower cooked" },
-    { "es": "Espinaca cruda", "en": "Spinach, raw", "query": "spinach raw" },
-    { "es": "Espinaca cocida", "en": "Spinach, cooked", "query": "spinach cooked" },
-    { "es": "Kale crudo", "en": "Kale, raw", "query": "kale raw" },
-    { "es": "Acelga cocida", "en": "Swiss chard, cooked", "query": "swiss chard cooked" },
-    { "es": "Lechuga romana", "en": "Romaine lettuce", "query": "lettuce romaine" },
-    { "es": "Lechuga iceberg", "en": "Iceberg lettuce", "query": "lettuce iceberg" },
-    { "es": "Arugula", "en": "Arugula", "query": "arugula raw" },
-    { "es": "Jitomate", "en": "Tomato", "query": "tomato red raw" },
-    { "es": "Jitomate cherry", "en": "Cherry tomato", "query": "cherry tomato" },
-    { "es": "Pepino", "en": "Cucumber", "query": "cucumber raw" },
-    { "es": "Zanahoria cruda", "en": "Carrot, raw", "query": "carrot raw" },
-    { "es": "Zanahoria cocida", "en": "Carrot, cooked", "query": "carrot cooked" },
-    { "es": "Apio crudo", "en": "Celery, raw", "query": "celery raw" },
-    { "es": "Pimiento rojo", "en": "Red bell pepper", "query": "bell pepper red" },
-    { "es": "Pimiento verde", "en": "Green bell pepper", "query": "bell pepper green" },
-    { "es": "Pimiento amarillo", "en": "Yellow bell pepper", "query": "bell pepper yellow" },
-    { "es": "Cebolla cruda", "en": "Onion, raw", "query": "onion raw" },
-    { "es": "Cebolla morada", "en": "Red onion", "query": "red onion" },
-    { "es": "Ajo crudo", "en": "Garlic, raw", "query": "garlic raw" },
-    { "es": "Champiñones crudos", "en": "Mushrooms, raw", "query": "mushrooms white raw" },
-    { "es": "Champiñones cocidos", "en": "Mushrooms, cooked", "query": "mushrooms cooked" },
-    { "es": "Calabacita cocida", "en": "Zucchini, cooked", "query": "zucchini cooked" },
-    { "es": "Berenjena cocida", "en": "Eggplant, cooked", "query": "eggplant cooked" },
-    { "es": "Ejotes cocidos", "en": "Green beans, cooked", "query": "green beans cooked" },
-    { "es": "Espárragos cocidos", "en": "Asparagus, cooked", "query": "asparagus cooked" },
-    { "es": "Alcachofa cocida", "en": "Artichoke, cooked", "query": "artichoke cooked" },
-    { "es": "Betabel cocido", "en": "Beets, cooked", "query": "beets cooked" },
-    { "es": "Col cocida", "en": "Cabbage, cooked", "query": "cabbage cooked" },
-    { "es": "Col morada cruda", "en": "Red cabbage, raw", "query": "red cabbage raw" },
-    { "es": "Coles de Bruselas cocidas", "en": "Brussels sprouts, cooked", "query": "brussels sprouts cooked" },
-    { "es": "Nopales cocidos", "en": "Nopales, cooked", "query": "nopales cooked" },
-    { "es": "Chayote cocido", "en": "Chayote, cooked", "query": "chayote cooked" },
-    { "es": "Rábano crudo", "en": "Radish, raw", "query": "radish raw" },
-    { "es": "Jícama cruda", "en": "Jicama, raw", "query": "jicama raw" },
-    { "es": "Poro cocido", "en": "Leek, cooked", "query": "leek cooked" },
-    { "es": "Chile jalapeño", "en": "Jalapeño pepper", "query": "jalapeno raw" },
-    { "es": "Chile poblano", "en": "Poblano pepper", "query": "poblano pepper" }
+    {
+      "es": "Brócoli cocido",
+      "en": "Broccoli, cooked",
+      "query": "broccoli cooked"
+    },
+    {
+      "es": "Brócoli crudo",
+      "en": "Broccoli, raw",
+      "query": "broccoli raw"
+    },
+    {
+      "es": "Coliflor cocida",
+      "en": "Cauliflower, cooked",
+      "query": "cauliflower cooked"
+    },
+    {
+      "es": "Espinaca cruda",
+      "en": "Spinach, raw",
+      "query": "spinach raw"
+    },
+    {
+      "es": "Espinaca cocida",
+      "en": "Spinach, cooked",
+      "query": "spinach cooked"
+    },
+    {
+      "es": "Kale crudo",
+      "en": "Kale, raw",
+      "query": "kale raw"
+    },
+    {
+      "es": "Acelga cocida",
+      "en": "Swiss chard, cooked",
+      "query": "swiss chard cooked"
+    },
+    {
+      "es": "Lechuga romana",
+      "en": "Romaine lettuce",
+      "query": "lettuce romaine"
+    },
+    {
+      "es": "Lechuga iceberg",
+      "en": "Iceberg lettuce",
+      "query": "lettuce iceberg"
+    },
+    {
+      "es": "Arugula",
+      "en": "Arugula",
+      "query": "arugula raw"
+    },
+    {
+      "es": "Jitomate",
+      "en": "Tomato",
+      "query": "tomato red raw"
+    },
+    {
+      "es": "Jitomate cherry",
+      "en": "Cherry tomato",
+      "query": "cherry tomato"
+    },
+    {
+      "es": "Pepino",
+      "en": "Cucumber",
+      "query": "cucumber raw"
+    },
+    {
+      "es": "Zanahoria cruda",
+      "en": "Carrot, raw",
+      "query": "carrot raw"
+    },
+    {
+      "es": "Zanahoria cocida",
+      "en": "Carrot, cooked",
+      "query": "carrot cooked"
+    },
+    {
+      "es": "Apio crudo",
+      "en": "Celery, raw",
+      "query": "celery raw"
+    },
+    {
+      "es": "Pimiento rojo",
+      "en": "Red bell pepper",
+      "query": "bell pepper red"
+    },
+    {
+      "es": "Pimiento verde",
+      "en": "Green bell pepper",
+      "query": "bell pepper green"
+    },
+    {
+      "es": "Pimiento amarillo",
+      "en": "Yellow bell pepper",
+      "query": "bell pepper yellow"
+    },
+    {
+      "es": "Cebolla cruda",
+      "en": "Onion, raw",
+      "query": "onion raw"
+    },
+    {
+      "es": "Cebolla morada",
+      "en": "Red onion",
+      "query": "red onion"
+    },
+    {
+      "es": "Ajo crudo",
+      "en": "Garlic, raw",
+      "query": "garlic raw"
+    },
+    {
+      "es": "Champiñones crudos",
+      "en": "Mushrooms, raw",
+      "query": "mushrooms white raw"
+    },
+    {
+      "es": "Champiñones cocidos",
+      "en": "Mushrooms, cooked",
+      "query": "mushrooms cooked"
+    },
+    {
+      "es": "Calabacita cocida",
+      "en": "Zucchini, cooked",
+      "query": "zucchini cooked"
+    },
+    {
+      "es": "Berenjena cocida",
+      "en": "Eggplant, cooked",
+      "query": "eggplant cooked"
+    },
+    {
+      "es": "Ejotes cocidos",
+      "en": "Green beans, cooked",
+      "query": "green beans cooked"
+    },
+    {
+      "es": "Espárragos cocidos",
+      "en": "Asparagus, cooked",
+      "query": "asparagus cooked"
+    },
+    {
+      "es": "Alcachofa cocida",
+      "en": "Artichoke, cooked",
+      "query": "artichoke cooked"
+    },
+    {
+      "es": "Betabel cocido",
+      "en": "Beets, cooked",
+      "query": "beets cooked"
+    },
+    {
+      "es": "Col cocida",
+      "en": "Cabbage, cooked",
+      "query": "cabbage cooked"
+    },
+    {
+      "es": "Col morada cruda",
+      "en": "Red cabbage, raw",
+      "query": "red cabbage raw"
+    },
+    {
+      "es": "Coles de Bruselas cocidas",
+      "en": "Brussels sprouts, cooked",
+      "query": "brussels sprouts cooked"
+    },
+    {
+      "es": "Nopales cocidos",
+      "en": "Nopales, cooked",
+      "query": "nopales cooked"
+    },
+    {
+      "es": "Chayote cocido",
+      "en": "Chayote, cooked",
+      "query": "chayote cooked"
+    },
+    {
+      "es": "Rábano crudo",
+      "en": "Radish, raw",
+      "query": "radish raw"
+    },
+    {
+      "es": "Jícama cruda",
+      "en": "Jicama, raw",
+      "query": "jicama raw"
+    },
+    {
+      "es": "Poro cocido",
+      "en": "Leek, cooked",
+      "query": "leek cooked"
+    },
+    {
+      "es": "Chile jalapeño",
+      "en": "Jalapeño pepper",
+      "query": "jalapeno raw"
+    },
+    {
+      "es": "Chile poblano",
+      "en": "Poblano pepper",
+      "query": "poblano pepper"
+    },
+    {
+      "es": "Nopal crudo",
+      "en": "Raw nopal",
+      "query": "nopal raw"
+    },
+    {
+      "es": "Verdolagas",
+      "en": "Purslane",
+      "query": "purslane raw"
+    },
+    {
+      "es": "Quelites",
+      "en": "Quelites (lamb's quarters)",
+      "query": "lambsquarters greens"
+    },
+    {
+      "es": "Flor de calabaza",
+      "en": "Squash blossom",
+      "query": "squash blossom"
+    },
+    {
+      "es": "Huauzontle",
+      "en": "Huauzontle",
+      "query": "huauzontle greens"
+    },
+    {
+      "es": "Epazote",
+      "en": "Epazote",
+      "query": "epazote herb"
+    },
+    {
+      "es": "Hierba santa",
+      "en": "Hoja santa",
+      "query": "hoja santa herb"
+    },
+    {
+      "es": "Chile de agua",
+      "en": "Chile de agua",
+      "query": "chile de agua pepper"
+    },
+    {
+      "es": "Chile cuaresmeño",
+      "en": "Cuaresmeño pepper",
+      "query": "jalapeno raw"
+    },
+    {
+      "es": "Chile serrano",
+      "en": "Serrano pepper",
+      "query": "serrano pepper raw"
+    },
+    {
+      "es": "Jitomate bola",
+      "en": "Beefsteak tomato",
+      "query": "tomato red raw"
+    },
+    {
+      "es": "Tomatillo verde",
+      "en": "Tomatillo",
+      "query": "tomatillo raw"
+    },
+    {
+      "es": "Xoconostle",
+      "en": "Xoconostle",
+      "query": "xoconostle cactus fruit"
+    },
+    {
+      "es": "Chícharo cocido",
+      "en": "Green peas, cooked",
+      "query": "green peas cooked"
+    },
+    {
+      "es": "Germinado de soya",
+      "en": "Soybean sprouts",
+      "query": "soybean sprouts raw"
+    },
+    {
+      "es": "Acelgas cocidas",
+      "en": "Swiss chard, cooked",
+      "query": "swiss chard cooked"
+    },
+    {
+      "es": "Calabacita cruda",
+      "en": "Zucchini, raw",
+      "query": "zucchini raw"
+    },
+    {
+      "es": "Cilantro fresco",
+      "en": "Fresh cilantro",
+      "query": "cilantro raw"
+    },
+    {
+      "es": "Perejil fresco",
+      "en": "Fresh parsley",
+      "query": "parsley raw"
+    },
+    {
+      "es": "Espinaca baby",
+      "en": "Baby spinach",
+      "query": "spinach raw"
+    },
+    {
+      "es": "Berros",
+      "en": "Watercress",
+      "query": "watercress raw"
+    },
+    {
+      "es": "Endivia",
+      "en": "Endive",
+      "query": "endive raw"
+    },
+    {
+      "es": "Hongo seta",
+      "en": "Oyster mushroom",
+      "query": "oyster mushroom raw"
+    },
+    {
+      "es": "Hongo portobello",
+      "en": "Portobello mushroom",
+      "query": "portobello mushroom raw"
+    },
+    {
+      "es": "Palmito",
+      "en": "Hearts of palm",
+      "query": "hearts of palm canned"
+    },
+    {
+      "es": "Chile habanero",
+      "en": "Habanero pepper",
+      "query": "habanero pepper raw"
+    },
+    {
+      "es": "Chile morrón amarillo",
+      "en": "Yellow bell pepper",
+      "query": "bell pepper yellow"
+    },
+    {
+      "es": "Cebollín",
+      "en": "Chives",
+      "query": "chives raw"
+    },
+    {
+      "es": "Cebolla de cambray",
+      "en": "Green onion",
+      "query": "green onion raw"
+    },
+    {
+      "es": "Colinabo",
+      "en": "Kohlrabi",
+      "query": "kohlrabi raw"
+    },
+    {
+      "es": "Okra cocida",
+      "en": "Okra, cooked",
+      "query": "okra cooked"
+    },
+    {
+      "es": "Nabo cocido",
+      "en": "Turnip, cooked",
+      "query": "turnip cooked"
+    },
+    {
+      "es": "Espárrago blanco cocido",
+      "en": "White asparagus, cooked",
+      "query": "white asparagus cooked"
+    },
+    {
+      "es": "Coliflor morada",
+      "en": "Purple cauliflower",
+      "query": "cauliflower raw"
+    },
+    {
+      "es": "Brócoli rabe",
+      "en": "Broccoli rabe",
+      "query": "broccoli rabe cooked"
+    },
+    {
+      "es": "Bok choy cocido",
+      "en": "Bok choy, cooked",
+      "query": "bok choy cooked"
+    },
+    {
+      "es": "Acelga arcoíris",
+      "en": "Rainbow chard",
+      "query": "swiss chard raw"
+    },
+    {
+      "es": "Hoja de mostaza",
+      "en": "Mustard greens",
+      "query": "mustard greens cooked"
+    },
+    {
+      "es": "Achicoria",
+      "en": "Chicory greens",
+      "query": "chicory greens raw"
+    },
+    {
+      "es": "Radicchio",
+      "en": "Radicchio",
+      "query": "radicchio raw"
+    },
+    {
+      "es": "Hinojo crudo",
+      "en": "Fennel, raw",
+      "query": "fennel raw"
+    },
+    {
+      "es": "Jengibre fresco",
+      "en": "Fresh ginger",
+      "query": "ginger root raw"
+    },
+    {
+      "es": "Chile ancho seco",
+      "en": "Dried ancho chile",
+      "query": "ancho chile dried"
+    },
+    {
+      "es": "Chile guajillo seco",
+      "en": "Dried guajillo chile",
+      "query": "guajillo chile dried"
+    },
+    {
+      "es": "Chile chipotle",
+      "en": "Chipotle chile",
+      "query": "chipotle pepper"
+    },
+    {
+      "es": "Calabaza espagueti cocida",
+      "en": "Spaghetti squash, cooked",
+      "query": "spaghetti squash cooked"
+    },
+    {
+      "es": "Camote crudo rallado",
+      "en": "Grated raw sweet potato",
+      "query": "sweet potato raw"
+    },
+    {
+      "es": "Colirrábano",
+      "en": "Rutabaga, cooked",
+      "query": "rutabaga cooked"
+    },
+    {
+      "es": "Pimiento morrón asado",
+      "en": "Roasted bell pepper",
+      "query": "roasted red pepper"
+    },
+    {
+      "es": "Zanahoria baby",
+      "en": "Baby carrots",
+      "query": "baby carrots raw"
+    },
+    {
+      "es": "Tomate deshidratado",
+      "en": "Sun-dried tomato",
+      "query": "sun dried tomato"
+    },
+    {
+      "es": "Elote baby",
+      "en": "Baby corn",
+      "query": "baby corn canned"
+    },
+    {
+      "es": "Chile piquín",
+      "en": "Piquin pepper",
+      "query": "chile piquin"
+    },
+    {
+      "es": "Chile morita",
+      "en": "Morita chile",
+      "query": "morita chile"
+    },
+    {
+      "es": "Chile pasilla",
+      "en": "Pasilla chile",
+      "query": "pasilla chile dried"
+    },
+    {
+      "es": "Flor de jamaica",
+      "en": "Hibiscus flower",
+      "query": "hibiscus flower dried"
+    },
+    {
+      "es": "Chilacayote",
+      "en": "Fig-leaf gourd",
+      "query": "chilacayote squash"
+    },
+    {
+      "es": "Calabaza kabocha cocida",
+      "en": "Kabocha squash, cooked",
+      "query": "kabocha squash cooked"
+    },
+    {
+      "es": "Alga nori",
+      "en": "Nori seaweed",
+      "query": "nori seaweed dried"
+    },
+    {
+      "es": "Alga wakame",
+      "en": "Wakame seaweed",
+      "query": "wakame seaweed"
+    },
+    {
+      "es": "Espárrago verde crudo",
+      "en": "Raw green asparagus",
+      "query": "asparagus raw"
+    },
+    {
+      "es": "Pepino persa",
+      "en": "Persian cucumber",
+      "query": "cucumber raw"
+    }
   ],
   "frutas": [
-    { "es": "Manzana", "en": "Apple", "query": "apple raw with skin" },
-    { "es": "Manzana verde", "en": "Green apple", "query": "green apple" },
-    { "es": "Plátano", "en": "Banana", "query": "banana raw" },
-    { "es": "Naranja", "en": "Orange", "query": "orange raw" },
-    { "es": "Mandarina", "en": "Tangerine", "query": "tangerine raw" },
-    { "es": "Toronja", "en": "Grapefruit", "query": "grapefruit raw" },
-    { "es": "Limón", "en": "Lime", "query": "lime raw" },
-    { "es": "Pera", "en": "Pear", "query": "pear raw" },
-    { "es": "Durazno", "en": "Peach", "query": "peach raw" },
-    { "es": "Nectarina", "en": "Nectarine", "query": "nectarine raw" },
-    { "es": "Ciruela", "en": "Plum", "query": "plum raw" },
-    { "es": "Chabacano", "en": "Apricot", "query": "apricot raw" },
-    { "es": "Cereza", "en": "Cherries", "query": "cherries sweet raw" },
-    { "es": "Uva", "en": "Grapes", "query": "grapes red raw" },
-    { "es": "Uva verde", "en": "Green grapes", "query": "grapes green" },
-    { "es": "Fresa", "en": "Strawberries", "query": "strawberries raw" },
-    { "es": "Frambuesa", "en": "Raspberries", "query": "raspberries raw" },
-    { "es": "Zarzamora", "en": "Blackberries", "query": "blackberries raw" },
-    { "es": "Arándano azul", "en": "Blueberries", "query": "blueberries raw" },
-    { "es": "Sandía", "en": "Watermelon", "query": "watermelon raw" },
-    { "es": "Melón", "en": "Cantaloupe", "query": "cantaloupe raw" },
-    { "es": "Melón verde", "en": "Honeydew", "query": "honeydew raw" },
-    { "es": "Piña", "en": "Pineapple", "query": "pineapple raw" },
-    { "es": "Mango", "en": "Mango", "query": "mango raw" },
-    { "es": "Papaya", "en": "Papaya", "query": "papaya raw" },
-    { "es": "Kiwi", "en": "Kiwi", "query": "kiwi raw" },
-    { "es": "Guayaba", "en": "Guava", "query": "guava raw" },
-    { "es": "Maracuyá", "en": "Passion fruit", "query": "passion fruit raw" },
-    { "es": "Tuna", "en": "Prickly pear", "query": "prickly pear raw" },
-    { "es": "Granada", "en": "Pomegranate", "query": "pomegranate raw" },
-    { "es": "Higo", "en": "Fig", "query": "figs raw" },
-    { "es": "Dátil seco", "en": "Dates, dried", "query": "dates dried" },
-    { "es": "Pasas", "en": "Raisins", "query": "raisins" },
-    { "es": "Ciruela pasa", "en": "Prunes", "query": "prunes dried" },
-    { "es": "Coco rallado fresco", "en": "Coconut, fresh", "query": "coconut raw" },
-    { "es": "Aguacate", "en": "Avocado", "query": "avocado raw" },
-    { "es": "Caqui", "en": "Persimmon", "query": "persimmon raw" },
-    { "es": "Lichi", "en": "Lychee", "query": "lychee raw" },
-    { "es": "Carambola", "en": "Starfruit", "query": "starfruit raw" },
-    { "es": "Mamey", "en": "Mamey sapote", "query": "mamey sapote" }
+    {
+      "es": "Manzana",
+      "en": "Apple",
+      "query": "apple raw with skin"
+    },
+    {
+      "es": "Manzana verde",
+      "en": "Green apple",
+      "query": "green apple"
+    },
+    {
+      "es": "Plátano",
+      "en": "Banana",
+      "query": "banana raw"
+    },
+    {
+      "es": "Naranja",
+      "en": "Orange",
+      "query": "orange raw"
+    },
+    {
+      "es": "Mandarina",
+      "en": "Tangerine",
+      "query": "tangerine raw"
+    },
+    {
+      "es": "Toronja",
+      "en": "Grapefruit",
+      "query": "grapefruit raw"
+    },
+    {
+      "es": "Limón",
+      "en": "Lime",
+      "query": "lime raw"
+    },
+    {
+      "es": "Pera",
+      "en": "Pear",
+      "query": "pear raw"
+    },
+    {
+      "es": "Durazno",
+      "en": "Peach",
+      "query": "peach raw"
+    },
+    {
+      "es": "Nectarina",
+      "en": "Nectarine",
+      "query": "nectarine raw"
+    },
+    {
+      "es": "Ciruela",
+      "en": "Plum",
+      "query": "plum raw"
+    },
+    {
+      "es": "Chabacano",
+      "en": "Apricot",
+      "query": "apricot raw"
+    },
+    {
+      "es": "Cereza",
+      "en": "Cherries",
+      "query": "cherries sweet raw"
+    },
+    {
+      "es": "Uva",
+      "en": "Grapes",
+      "query": "grapes red raw"
+    },
+    {
+      "es": "Uva verde",
+      "en": "Green grapes",
+      "query": "grapes green"
+    },
+    {
+      "es": "Fresa",
+      "en": "Strawberries",
+      "query": "strawberries raw"
+    },
+    {
+      "es": "Frambuesa",
+      "en": "Raspberries",
+      "query": "raspberries raw"
+    },
+    {
+      "es": "Zarzamora",
+      "en": "Blackberries",
+      "query": "blackberries raw"
+    },
+    {
+      "es": "Arándano azul",
+      "en": "Blueberries",
+      "query": "blueberries raw"
+    },
+    {
+      "es": "Sandía",
+      "en": "Watermelon",
+      "query": "watermelon raw"
+    },
+    {
+      "es": "Melón",
+      "en": "Cantaloupe",
+      "query": "cantaloupe raw"
+    },
+    {
+      "es": "Melón verde",
+      "en": "Honeydew",
+      "query": "honeydew raw"
+    },
+    {
+      "es": "Piña",
+      "en": "Pineapple",
+      "query": "pineapple raw"
+    },
+    {
+      "es": "Mango",
+      "en": "Mango",
+      "query": "mango raw"
+    },
+    {
+      "es": "Papaya",
+      "en": "Papaya",
+      "query": "papaya raw"
+    },
+    {
+      "es": "Kiwi",
+      "en": "Kiwi",
+      "query": "kiwi raw"
+    },
+    {
+      "es": "Guayaba",
+      "en": "Guava",
+      "query": "guava raw"
+    },
+    {
+      "es": "Maracuyá",
+      "en": "Passion fruit",
+      "query": "passion fruit raw"
+    },
+    {
+      "es": "Tuna",
+      "en": "Prickly pear",
+      "query": "prickly pear raw"
+    },
+    {
+      "es": "Granada",
+      "en": "Pomegranate",
+      "query": "pomegranate raw"
+    },
+    {
+      "es": "Higo",
+      "en": "Fig",
+      "query": "figs raw"
+    },
+    {
+      "es": "Dátil seco",
+      "en": "Dates, dried",
+      "query": "dates dried"
+    },
+    {
+      "es": "Pasas",
+      "en": "Raisins",
+      "query": "raisins"
+    },
+    {
+      "es": "Ciruela pasa",
+      "en": "Prunes",
+      "query": "prunes dried"
+    },
+    {
+      "es": "Coco rallado fresco",
+      "en": "Coconut, fresh",
+      "query": "coconut raw"
+    },
+    {
+      "es": "Aguacate",
+      "en": "Avocado",
+      "query": "avocado raw"
+    },
+    {
+      "es": "Caqui",
+      "en": "Persimmon",
+      "query": "persimmon raw"
+    },
+    {
+      "es": "Lichi",
+      "en": "Lychee",
+      "query": "lychee raw"
+    },
+    {
+      "es": "Carambola",
+      "en": "Starfruit",
+      "query": "starfruit raw"
+    },
+    {
+      "es": "Mamey",
+      "en": "Mamey sapote",
+      "query": "mamey sapote"
+    },
+    {
+      "es": "Tuna roja",
+      "en": "Red prickly pear",
+      "query": "prickly pear raw"
+    },
+    {
+      "es": "Tuna blanca",
+      "en": "White prickly pear",
+      "query": "prickly pear raw"
+    },
+    {
+      "es": "Pitahaya",
+      "en": "Dragon fruit",
+      "query": "dragon fruit raw"
+    },
+    {
+      "es": "Guanábana",
+      "en": "Soursop",
+      "query": "soursop raw"
+    },
+    {
+      "es": "Zapote negro",
+      "en": "Black sapote",
+      "query": "black sapote"
+    },
+    {
+      "es": "Zapote blanco",
+      "en": "White sapote",
+      "query": "white sapote"
+    },
+    {
+      "es": "Chicozapote",
+      "en": "Sapodilla",
+      "query": "sapodilla raw"
+    },
+    {
+      "es": "Tejocote",
+      "en": "Mexican hawthorn",
+      "query": "hawthorn fruit"
+    },
+    {
+      "es": "Capulín",
+      "en": "Capulin cherry",
+      "query": "capulin cherry"
+    },
+    {
+      "es": "Nanche",
+      "en": "Nance",
+      "query": "nance fruit"
+    },
+    {
+      "es": "Ciruela mexicana",
+      "en": "Mexican plum",
+      "query": "plum raw"
+    },
+    {
+      "es": "Ciruelas pasas",
+      "en": "Prunes",
+      "query": "prunes dried"
+    },
+    {
+      "es": "Higo fresco",
+      "en": "Fresh fig",
+      "query": "figs raw"
+    },
+    {
+      "es": "Tamarindo",
+      "en": "Tamarind",
+      "query": "tamarind raw"
+    },
+    {
+      "es": "Rambután",
+      "en": "Rambutan",
+      "query": "rambutan raw"
+    },
+    {
+      "es": "Maracuyá pulpa",
+      "en": "Passion fruit pulp",
+      "query": "passion fruit raw"
+    },
+    {
+      "es": "Plátano tabasco",
+      "en": "Tabasco banana",
+      "query": "banana raw"
+    },
+    {
+      "es": "Plátano dominico",
+      "en": "Baby banana",
+      "query": "banana raw"
+    },
+    {
+      "es": "Plátano manzano",
+      "en": "Apple banana",
+      "query": "banana raw"
+    },
+    {
+      "es": "Melón cantaloupe",
+      "en": "Cantaloupe melon",
+      "query": "cantaloupe raw"
+    },
+    {
+      "es": "Uva pasa",
+      "en": "Raisins",
+      "query": "raisins seedless"
+    },
+    {
+      "es": "Dátil",
+      "en": "Date",
+      "query": "dates medjool"
+    },
+    {
+      "es": "Arándano rojo seco",
+      "en": "Dried cranberries",
+      "query": "cranberries dried"
+    },
+    {
+      "es": "Coco fresco rallado",
+      "en": "Fresh grated coconut",
+      "query": "coconut meat raw"
+    },
+    {
+      "es": "Membrillo",
+      "en": "Quince",
+      "query": "quince raw"
+    },
+    {
+      "es": "Grosella",
+      "en": "Currant",
+      "query": "currants raw"
+    },
+    {
+      "es": "Physalis",
+      "en": "Cape gooseberry",
+      "query": "cape gooseberry"
+    },
+    {
+      "es": "Níspero",
+      "en": "Loquat",
+      "query": "loquat raw"
+    },
+    {
+      "es": "Frambuesa negra",
+      "en": "Black raspberry",
+      "query": "black raspberries raw"
+    },
+    {
+      "es": "Grosella espinosa",
+      "en": "Gooseberry",
+      "query": "gooseberries raw"
+    },
+    {
+      "es": "Mora azul silvestre",
+      "en": "Wild blueberry",
+      "query": "wild blueberries raw"
+    },
+    {
+      "es": "Chirimoya",
+      "en": "Cherimoya",
+      "query": "cherimoya raw"
+    },
+    {
+      "es": "Jaca",
+      "en": "Jackfruit",
+      "query": "jackfruit raw"
+    },
+    {
+      "es": "Fruta del dragón amarilla",
+      "en": "Yellow dragon fruit",
+      "query": "dragon fruit raw"
+    },
+    {
+      "es": "Guayaba rosa",
+      "en": "Pink guava",
+      "query": "guava raw"
+    },
+    {
+      "es": "Mango ataulfo",
+      "en": "Ataulfo mango",
+      "query": "mango raw"
+    },
+    {
+      "es": "Mango manila",
+      "en": "Manila mango",
+      "query": "mango raw"
+    },
+    {
+      "es": "Papaya maradol",
+      "en": "Maradol papaya",
+      "query": "papaya raw"
+    },
+    {
+      "es": "Toronja rosa",
+      "en": "Pink grapefruit",
+      "query": "grapefruit pink raw"
+    },
+    {
+      "es": "Naranja sangría",
+      "en": "Blood orange",
+      "query": "blood orange raw"
+    },
+    {
+      "es": "Lima persa",
+      "en": "Persian lime",
+      "query": "lime raw"
+    },
+    {
+      "es": "Uva morada sin semilla",
+      "en": "Seedless purple grapes",
+      "query": "grapes red seedless"
+    },
+    {
+      "es": "Fresa silvestre",
+      "en": "Wild strawberry",
+      "query": "strawberries raw"
+    },
+    {
+      "es": "Melón galia",
+      "en": "Galia melon",
+      "query": "melon raw"
+    },
+    {
+      "es": "Piña miel",
+      "en": "Honey pineapple",
+      "query": "pineapple raw"
+    },
+    {
+      "es": "Manzana Gala",
+      "en": "Gala apple",
+      "query": "apple raw with skin"
+    },
+    {
+      "es": "Manzana Fuji",
+      "en": "Fuji apple",
+      "query": "apple raw with skin"
+    },
+    {
+      "es": "Ciruela pasa deshuesada",
+      "en": "Pitted prune",
+      "query": "prunes dried"
+    },
+    {
+      "es": "Orejón de durazno",
+      "en": "Dried peach",
+      "query": "dried peaches"
+    },
+    {
+      "es": "Orejón de chabacano",
+      "en": "Dried apricot",
+      "query": "dried apricots"
+    },
+    {
+      "es": "Plátano deshidratado",
+      "en": "Dried banana",
+      "query": "banana dried"
+    },
+    {
+      "es": "Manzana deshidratada",
+      "en": "Dried apple",
+      "query": "dried apple"
+    },
+    {
+      "es": "Mango deshidratado",
+      "en": "Dried mango",
+      "query": "dried mango"
+    },
+    {
+      "es": "Arándano azul deshidratado",
+      "en": "Dried blueberries",
+      "query": "dried blueberries"
+    },
+    {
+      "es": "Coco deshidratado",
+      "en": "Dried coconut",
+      "query": "coconut dried"
+    },
+    {
+      "es": "Higo seco",
+      "en": "Dried fig",
+      "query": "figs dried"
+    },
+    {
+      "es": "Pasas doradas",
+      "en": "Golden raisins",
+      "query": "golden raisins"
+    }
   ],
   "lacteos_descremados": [
-    { "es": "Leche descremada", "en": "Skim milk", "query": "milk nonfat" },
-    { "es": "Leche deslactosada light", "en": "Lactose-free skim milk", "query": "lactose free skim milk" },
-    { "es": "Yogur natural sin grasa", "en": "Nonfat plain yogurt", "query": "yogurt plain nonfat" },
-    { "es": "Yogur griego sin grasa", "en": "Nonfat Greek yogurt", "query": "greek yogurt nonfat" },
-    { "es": "Queso cottage bajo en grasa", "en": "Low-fat cottage cheese", "query": "cottage cheese lowfat 1%" },
-    { "es": "Queso panela", "en": "Panela cheese", "query": "panela cheese" },
-    { "es": "Queso ricotta parcialmente descremado", "en": "Part-skim ricotta", "query": "ricotta part skim" },
-    { "es": "Leche evaporada descremada", "en": "Evaporated skim milk", "query": "evaporated milk nonfat" }
+    {
+      "es": "Leche descremada",
+      "en": "Skim milk",
+      "query": "milk nonfat"
+    },
+    {
+      "es": "Leche deslactosada light",
+      "en": "Lactose-free skim milk",
+      "query": "lactose free skim milk"
+    },
+    {
+      "es": "Yogur natural sin grasa",
+      "en": "Nonfat plain yogurt",
+      "query": "yogurt plain nonfat"
+    },
+    {
+      "es": "Yogur griego sin grasa",
+      "en": "Nonfat Greek yogurt",
+      "query": "greek yogurt nonfat"
+    },
+    {
+      "es": "Queso cottage bajo en grasa",
+      "en": "Low-fat cottage cheese",
+      "query": "cottage cheese lowfat 1%"
+    },
+    {
+      "es": "Queso panela",
+      "en": "Panela cheese",
+      "query": "panela cheese"
+    },
+    {
+      "es": "Queso ricotta parcialmente descremado",
+      "en": "Part-skim ricotta",
+      "query": "ricotta part skim"
+    },
+    {
+      "es": "Leche evaporada descremada",
+      "en": "Evaporated skim milk",
+      "query": "evaporated milk nonfat"
+    },
+    {
+      "es": "Leche descremada en polvo",
+      "en": "Nonfat dry milk",
+      "query": "milk nonfat dry"
+    },
+    {
+      "es": "Yogur bebible sin grasa",
+      "en": "Nonfat drinkable yogurt",
+      "query": "yogurt drink nonfat"
+    },
+    {
+      "es": "Requesón bajo en grasa",
+      "en": "Low-fat ricotta-style cheese",
+      "query": "ricotta part skim"
+    },
+    {
+      "es": "Búlgaros de leche descremada",
+      "en": "Nonfat milk kefir",
+      "query": "kefir nonfat"
+    },
+    {
+      "es": "Queso fresco light",
+      "en": "Light queso fresco",
+      "query": "queso fresco lowfat"
+    },
+    {
+      "es": "Leche de cabra descremada",
+      "en": "Nonfat goat milk",
+      "query": "goat milk"
+    },
+    {
+      "es": "Yogur griego sin grasa vainilla",
+      "en": "Nonfat vanilla Greek yogurt",
+      "query": "greek yogurt nonfat vanilla"
+    },
+    {
+      "es": "Leche de arroz sin grasa",
+      "en": "Nonfat rice milk",
+      "query": "rice milk"
+    }
   ],
   "lacteos_semi": [
-    { "es": "Leche semidescremada (2%)", "en": "2% milk", "query": "milk 2% fat" },
-    { "es": "Yogur natural 2%", "en": "2% plain yogurt", "query": "yogurt plain lowfat" },
-    { "es": "Yogur griego 2%", "en": "2% Greek yogurt", "query": "greek yogurt lowfat" },
-    { "es": "Queso mozzarella semidescremado", "en": "Part-skim mozzarella", "query": "mozzarella part skim" },
-    { "es": "Queso fresco", "en": "Queso fresco", "query": "queso fresco" },
-    { "es": "Queso Oaxaca", "en": "Oaxaca cheese", "query": "oaxaca cheese" },
-    { "es": "Queso feta", "en": "Feta cheese", "query": "feta cheese" }
+    {
+      "es": "Leche semidescremada (2%)",
+      "en": "2% milk",
+      "query": "milk 2% fat"
+    },
+    {
+      "es": "Yogur natural 2%",
+      "en": "2% plain yogurt",
+      "query": "yogurt plain lowfat"
+    },
+    {
+      "es": "Yogur griego 2%",
+      "en": "2% Greek yogurt",
+      "query": "greek yogurt lowfat"
+    },
+    {
+      "es": "Queso mozzarella semidescremado",
+      "en": "Part-skim mozzarella",
+      "query": "mozzarella part skim"
+    },
+    {
+      "es": "Queso fresco",
+      "en": "Queso fresco",
+      "query": "queso fresco"
+    },
+    {
+      "es": "Queso Oaxaca",
+      "en": "Oaxaca cheese",
+      "query": "oaxaca cheese"
+    },
+    {
+      "es": "Queso feta",
+      "en": "Feta cheese",
+      "query": "feta cheese"
+    },
+    {
+      "es": "Leche deslactosada 2%",
+      "en": "2% lactose-free milk",
+      "query": "lactose free milk 2%"
+    },
+    {
+      "es": "Queso de canasta",
+      "en": "Basket cheese",
+      "query": "basket cheese"
+    },
+    {
+      "es": "Queso doble crema light",
+      "en": "Light double cream cheese",
+      "query": "farmers cheese lowfat"
+    },
+    {
+      "es": "Kéfir natural",
+      "en": "Plain kefir",
+      "query": "kefir plain lowfat"
+    },
+    {
+      "es": "Yogur griego 2% natural",
+      "en": "2% plain Greek yogurt",
+      "query": "greek yogurt lowfat plain"
+    },
+    {
+      "es": "Queso provolone",
+      "en": "Provolone cheese",
+      "query": "provolone cheese"
+    },
+    {
+      "es": "Queso edam",
+      "en": "Edam cheese",
+      "query": "edam cheese"
+    }
   ],
   "lacteos_enteros": [
-    { "es": "Leche entera", "en": "Whole milk", "query": "milk whole 3.25%" },
-    { "es": "Yogur natural entero", "en": "Whole plain yogurt", "query": "yogurt plain whole milk" },
-    { "es": "Queso cheddar", "en": "Cheddar cheese", "query": "cheddar cheese" },
-    { "es": "Queso manchego", "en": "Manchego cheese", "query": "manchego cheese" },
-    { "es": "Queso brie", "en": "Brie cheese", "query": "brie cheese" }
+    {
+      "es": "Leche entera",
+      "en": "Whole milk",
+      "query": "milk whole 3.25%"
+    },
+    {
+      "es": "Yogur natural entero",
+      "en": "Whole plain yogurt",
+      "query": "yogurt plain whole milk"
+    },
+    {
+      "es": "Queso cheddar",
+      "en": "Cheddar cheese",
+      "query": "cheddar cheese"
+    },
+    {
+      "es": "Queso manchego",
+      "en": "Manchego cheese",
+      "query": "manchego cheese"
+    },
+    {
+      "es": "Queso brie",
+      "en": "Brie cheese",
+      "query": "brie cheese"
+    },
+    {
+      "es": "Leche entera de cabra",
+      "en": "Whole goat milk",
+      "query": "goat milk whole"
+    },
+    {
+      "es": "Queso cotija",
+      "en": "Cotija cheese",
+      "query": "cotija cheese"
+    },
+    {
+      "es": "Queso chihuahua",
+      "en": "Chihuahua cheese",
+      "query": "chihuahua cheese"
+    },
+    {
+      "es": "Queso gouda",
+      "en": "Gouda cheese",
+      "query": "gouda cheese"
+    },
+    {
+      "es": "Crema entera para café",
+      "en": "Whole coffee cream",
+      "query": "cream light coffee"
+    }
   ],
   "proteina_muy_baja": [
-    { "es": "Clara de huevo", "en": "Egg white", "query": "egg white raw" },
-    { "es": "Pechuga de pollo sin piel cocida", "en": "Chicken breast skinless, cooked", "query": "chicken breast skinless roasted" },
-    { "es": "Pechuga de pavo sin piel cocida", "en": "Turkey breast skinless, cooked", "query": "turkey breast roasted" },
-    { "es": "Atún en agua", "en": "Tuna canned in water", "query": "tuna canned water" },
-    { "es": "Bacalao cocido", "en": "Cod, cooked", "query": "cod cooked" },
-    { "es": "Tilapia cocida", "en": "Tilapia, cooked", "query": "tilapia cooked" },
-    { "es": "Mojarra cocida", "en": "Sea bream, cooked", "query": "sea bass cooked" },
-    { "es": "Camarón cocido", "en": "Shrimp, cooked", "query": "shrimp cooked" },
-    { "es": "Langosta cocida", "en": "Lobster, cooked", "query": "lobster cooked" },
-    { "es": "Pulpo cocido", "en": "Octopus, cooked", "query": "octopus cooked" }
+    {
+      "es": "Clara de huevo",
+      "en": "Egg white",
+      "query": "egg white raw"
+    },
+    {
+      "es": "Pechuga de pollo sin piel cocida",
+      "en": "Chicken breast skinless, cooked",
+      "query": "chicken breast skinless roasted"
+    },
+    {
+      "es": "Pechuga de pavo sin piel cocida",
+      "en": "Turkey breast skinless, cooked",
+      "query": "turkey breast roasted"
+    },
+    {
+      "es": "Atún en agua",
+      "en": "Tuna canned in water",
+      "query": "tuna canned water"
+    },
+    {
+      "es": "Bacalao cocido",
+      "en": "Cod, cooked",
+      "query": "cod cooked"
+    },
+    {
+      "es": "Tilapia cocida",
+      "en": "Tilapia, cooked",
+      "query": "tilapia cooked"
+    },
+    {
+      "es": "Mojarra cocida",
+      "en": "Sea bream, cooked",
+      "query": "sea bass cooked"
+    },
+    {
+      "es": "Camarón cocido",
+      "en": "Shrimp, cooked",
+      "query": "shrimp cooked"
+    },
+    {
+      "es": "Langosta cocida",
+      "en": "Lobster, cooked",
+      "query": "lobster cooked"
+    },
+    {
+      "es": "Pulpo cocido",
+      "en": "Octopus, cooked",
+      "query": "octopus cooked"
+    },
+    {
+      "es": "Filete de robalo cocido",
+      "en": "Sea bass fillet, cooked",
+      "query": "sea bass cooked"
+    },
+    {
+      "es": "Huachinango cocido",
+      "en": "Red snapper, cooked",
+      "query": "red snapper cooked"
+    },
+    {
+      "es": "Filete de merluza",
+      "en": "Hake fillet",
+      "query": "hake cooked"
+    },
+    {
+      "es": "Calamar cocido",
+      "en": "Squid, cooked",
+      "query": "squid cooked"
+    },
+    {
+      "es": "Almeja cocida",
+      "en": "Clams, cooked",
+      "query": "clams cooked"
+    },
+    {
+      "es": "Cangrejo cocido",
+      "en": "Crab, cooked",
+      "query": "crab cooked"
+    },
+    {
+      "es": "Mejillón cocido",
+      "en": "Mussels, cooked",
+      "query": "mussels cooked"
+    },
+    {
+      "es": "Pechuga de pavo molida magra",
+      "en": "Lean ground turkey breast",
+      "query": "ground turkey breast lean"
+    },
+    {
+      "es": "Surimi",
+      "en": "Surimi",
+      "query": "surimi imitation crab"
+    },
+    {
+      "es": "Filete de basa",
+      "en": "Basa fillet, cooked",
+      "query": "basa fish cooked"
+    },
+    {
+      "es": "Pechuga de pavo molida 99% magra",
+      "en": "99% lean ground turkey breast",
+      "query": "ground turkey breast lean"
+    },
+    {
+      "es": "Filete de lenguado",
+      "en": "Sole fillet, cooked",
+      "query": "sole cooked"
+    },
+    {
+      "es": "Filete de trucha al vapor",
+      "en": "Steamed trout fillet",
+      "query": "trout cooked"
+    },
+    {
+      "es": "Ostiones crudos",
+      "en": "Raw oysters",
+      "query": "oysters raw"
+    },
+    {
+      "es": "Vieira cocida",
+      "en": "Scallops, cooked",
+      "query": "scallops cooked"
+    },
+    {
+      "es": "Clara de huevo líquida",
+      "en": "Liquid egg whites",
+      "query": "egg white raw"
+    },
+    {
+      "es": "Bacalao fresco cocido",
+      "en": "Fresh cod, cooked",
+      "query": "cod cooked"
+    },
+    {
+      "es": "Rape cocido",
+      "en": "Monkfish, cooked",
+      "query": "monkfish cooked"
+    },
+    {
+      "es": "Abulón cocido",
+      "en": "Abalone, cooked",
+      "query": "abalone cooked"
+    },
+    {
+      "es": "Caracol de mar cocido",
+      "en": "Sea snail, cooked",
+      "query": "conch cooked"
+    }
   ],
   "proteina_baja": [
-    { "es": "Pechuga de pollo con piel cocida", "en": "Chicken breast with skin", "query": "chicken breast with skin roasted" },
-    { "es": "Muslo de pollo sin piel", "en": "Chicken thigh skinless", "query": "chicken thigh skinless roasted" },
-    { "es": "Carne molida de res 95% magra", "en": "95% lean ground beef", "query": "ground beef 95% lean cooked" },
-    { "es": "Bistec de res magro", "en": "Lean beef steak", "query": "beef top round cooked" },
-    { "es": "Lomo de cerdo magro", "en": "Lean pork loin", "query": "pork loin lean cooked" },
-    { "es": "Jamón de pavo bajo en grasa", "en": "Low-fat turkey ham", "query": "turkey ham" },
-    { "es": "Atún fresco cocido", "en": "Fresh tuna, cooked", "query": "tuna fresh cooked" },
-    { "es": "Salmón ahumado", "en": "Smoked salmon", "query": "salmon smoked" },
-    { "es": "Trucha cocida", "en": "Trout, cooked", "query": "trout cooked" },
-    { "es": "Atún en aceite escurrido", "en": "Tuna canned in oil, drained", "query": "tuna canned oil drained" },
-    { "es": "Huevo entero", "en": "Whole egg", "query": "egg whole raw" }
+    {
+      "es": "Pechuga de pollo con piel cocida",
+      "en": "Chicken breast with skin",
+      "query": "chicken breast with skin roasted"
+    },
+    {
+      "es": "Muslo de pollo sin piel",
+      "en": "Chicken thigh skinless",
+      "query": "chicken thigh skinless roasted"
+    },
+    {
+      "es": "Carne molida de res 95% magra",
+      "en": "95% lean ground beef",
+      "query": "ground beef 95% lean cooked"
+    },
+    {
+      "es": "Bistec de res magro",
+      "en": "Lean beef steak",
+      "query": "beef top round cooked"
+    },
+    {
+      "es": "Lomo de cerdo magro",
+      "en": "Lean pork loin",
+      "query": "pork loin lean cooked"
+    },
+    {
+      "es": "Jamón de pavo bajo en grasa",
+      "en": "Low-fat turkey ham",
+      "query": "turkey ham"
+    },
+    {
+      "es": "Atún fresco cocido",
+      "en": "Fresh tuna, cooked",
+      "query": "tuna fresh cooked"
+    },
+    {
+      "es": "Salmón ahumado",
+      "en": "Smoked salmon",
+      "query": "salmon smoked"
+    },
+    {
+      "es": "Trucha cocida",
+      "en": "Trout, cooked",
+      "query": "trout cooked"
+    },
+    {
+      "es": "Atún en aceite escurrido",
+      "en": "Tuna canned in oil, drained",
+      "query": "tuna canned oil drained"
+    },
+    {
+      "es": "Huevo entero",
+      "en": "Whole egg",
+      "query": "egg whole raw"
+    },
+    {
+      "es": "Milanesa de pollo horneada",
+      "en": "Baked chicken cutlet",
+      "query": "chicken cutlet baked"
+    },
+    {
+      "es": "Arrachera sin grasa visible",
+      "en": "Trimmed flank steak",
+      "query": "beef flank cooked"
+    },
+    {
+      "es": "Cecina de res",
+      "en": "Beef cecina",
+      "query": "beef cecina dried"
+    },
+    {
+      "es": "Machaca",
+      "en": "Machaca (dried beef)",
+      "query": "dried beef machaca"
+    },
+    {
+      "es": "Chorizo de pavo",
+      "en": "Turkey chorizo",
+      "query": "turkey chorizo"
+    },
+    {
+      "es": "Hígado de pollo",
+      "en": "Chicken liver",
+      "query": "chicken liver cooked"
+    },
+    {
+      "es": "Jamón de pavo",
+      "en": "Turkey ham",
+      "query": "turkey ham"
+    },
+    {
+      "es": "Pavo rostizado",
+      "en": "Roast turkey",
+      "query": "turkey roasted"
+    },
+    {
+      "es": "Filete de tilapia empapelado",
+      "en": "Steamed tilapia fillet",
+      "query": "tilapia cooked"
+    },
+    {
+      "es": "Conejo cocido",
+      "en": "Rabbit, cooked",
+      "query": "rabbit cooked"
+    },
+    {
+      "es": "Venado magro",
+      "en": "Lean venison",
+      "query": "venison cooked"
+    },
+    {
+      "es": "Lomo de res magro",
+      "en": "Lean beef tenderloin",
+      "query": "beef tenderloin lean cooked"
+    },
+    {
+      "es": "Filete de cerdo magro",
+      "en": "Lean pork fillet",
+      "query": "pork tenderloin cooked"
+    },
+    {
+      "es": "Pechuga de pato sin piel",
+      "en": "Skinless duck breast",
+      "query": "duck breast skinless"
+    },
+    {
+      "es": "Jamón serrano magro",
+      "en": "Lean serrano ham",
+      "query": "serrano ham"
+    },
+    {
+      "es": "Bresaola",
+      "en": "Bresaola",
+      "query": "bresaola cured beef"
+    },
+    {
+      "es": "Queso panela reducido en grasa",
+      "en": "Reduced-fat panela",
+      "query": "panela cheese"
+    },
+    {
+      "es": "Solomillo de cerdo",
+      "en": "Pork sirloin",
+      "query": "pork sirloin cooked"
+    },
+    {
+      "es": "Falda de res magra",
+      "en": "Lean beef skirt",
+      "query": "beef skirt cooked"
+    },
+    {
+      "es": "Pechuga de codorniz",
+      "en": "Quail breast",
+      "query": "quail cooked"
+    },
+    {
+      "es": "Búfalo magro",
+      "en": "Lean bison",
+      "query": "bison cooked"
+    }
   ],
   "proteina_media": [
-    { "es": "Carne molida de res 85% magra", "en": "85% lean ground beef", "query": "ground beef 85% lean cooked" },
-    { "es": "Pierna de cordero", "en": "Lamb leg", "query": "lamb leg cooked" },
-    { "es": "Salmón cocido", "en": "Salmon, cooked", "query": "salmon atlantic cooked" },
-    { "es": "Sardinas en aceite", "en": "Sardines in oil", "query": "sardines canned oil" },
-    { "es": "Costilla de cerdo magra", "en": "Pork ribs lean", "query": "pork ribs lean" },
-    { "es": "Hígado de res", "en": "Beef liver", "query": "beef liver cooked" },
-    { "es": "Pierna de cerdo asada", "en": "Roast pork leg", "query": "pork leg roasted" }
+    {
+      "es": "Carne molida de res 85% magra",
+      "en": "85% lean ground beef",
+      "query": "ground beef 85% lean cooked"
+    },
+    {
+      "es": "Pierna de cordero",
+      "en": "Lamb leg",
+      "query": "lamb leg cooked"
+    },
+    {
+      "es": "Salmón cocido",
+      "en": "Salmon, cooked",
+      "query": "salmon atlantic cooked"
+    },
+    {
+      "es": "Sardinas en aceite",
+      "en": "Sardines in oil",
+      "query": "sardines canned oil"
+    },
+    {
+      "es": "Costilla de cerdo magra",
+      "en": "Pork ribs lean",
+      "query": "pork ribs lean"
+    },
+    {
+      "es": "Hígado de res",
+      "en": "Beef liver",
+      "query": "beef liver cooked"
+    },
+    {
+      "es": "Pierna de cerdo asada",
+      "en": "Roast pork leg",
+      "query": "pork leg roasted"
+    },
+    {
+      "es": "Muslo de pollo con piel",
+      "en": "Chicken thigh with skin",
+      "query": "chicken thigh with skin roasted"
+    },
+    {
+      "es": "Bistec de res con grasa",
+      "en": "Beef steak with fat",
+      "query": "beef steak cooked"
+    },
+    {
+      "es": "Chuleta de cerdo con grasa",
+      "en": "Pork chop with fat",
+      "query": "pork chop cooked"
+    },
+    {
+      "es": "Sardina en aceite escurrida",
+      "en": "Drained sardines in oil",
+      "query": "sardines canned oil"
+    },
+    {
+      "es": "Queso panela dorada",
+      "en": "Grilled panela cheese",
+      "query": "panela cheese"
+    },
+    {
+      "es": "Queso manchego ligero",
+      "en": "Light Manchego cheese",
+      "query": "manchego cheese"
+    },
+    {
+      "es": "Huevo entero grande",
+      "en": "Large whole egg",
+      "query": "egg whole raw"
+    },
+    {
+      "es": "Costilla de cordero",
+      "en": "Lamb chop",
+      "query": "lamb chop cooked"
+    },
+    {
+      "es": "Salmón ahumado grasoso",
+      "en": "Fatty smoked salmon",
+      "query": "salmon smoked"
+    },
+    {
+      "es": "Muslo de pavo con piel",
+      "en": "Turkey thigh with skin",
+      "query": "turkey thigh roasted"
+    },
+    {
+      "es": "Carne molida de cerdo",
+      "en": "Ground pork",
+      "query": "ground pork cooked"
+    },
+    {
+      "es": "Trucha arcoíris entera",
+      "en": "Whole rainbow trout",
+      "query": "trout cooked"
+    }
   ],
   "proteina_alta": [
-    { "es": "Tocino", "en": "Bacon", "query": "bacon cooked" },
-    { "es": "Salchicha de cerdo", "en": "Pork sausage", "query": "pork sausage cooked" },
-    { "es": "Chorizo", "en": "Chorizo", "query": "chorizo pork" },
-    { "es": "Costilla de res", "en": "Beef ribs", "query": "beef ribs cooked" },
-    { "es": "Chuleta de cerdo", "en": "Pork chop", "query": "pork chop cooked" },
-    { "es": "Queso americano", "en": "American cheese", "query": "american cheese" },
-    { "es": "Salami", "en": "Salami", "query": "salami pork" }
+    {
+      "es": "Tocino",
+      "en": "Bacon",
+      "query": "bacon cooked"
+    },
+    {
+      "es": "Salchicha de cerdo",
+      "en": "Pork sausage",
+      "query": "pork sausage cooked"
+    },
+    {
+      "es": "Chorizo",
+      "en": "Chorizo",
+      "query": "chorizo pork"
+    },
+    {
+      "es": "Costilla de res",
+      "en": "Beef ribs",
+      "query": "beef ribs cooked"
+    },
+    {
+      "es": "Chuleta de cerdo",
+      "en": "Pork chop",
+      "query": "pork chop cooked"
+    },
+    {
+      "es": "Queso americano",
+      "en": "American cheese",
+      "query": "american cheese"
+    },
+    {
+      "es": "Salami",
+      "en": "Salami",
+      "query": "salami pork"
+    },
+    {
+      "es": "Costilla de res sin grasa",
+      "en": "Trimmed beef short rib",
+      "query": "beef short rib cooked"
+    },
+    {
+      "es": "Chicharrón horneado",
+      "en": "Baked pork rind",
+      "query": "pork rinds"
+    },
+    {
+      "es": "Longaniza",
+      "en": "Longaniza sausage",
+      "query": "longaniza pork sausage"
+    },
+    {
+      "es": "Salchicha de pavo",
+      "en": "Turkey sausage",
+      "query": "turkey sausage cooked"
+    },
+    {
+      "es": "Anchoas",
+      "en": "Anchovies",
+      "query": "anchovies canned"
+    },
+    {
+      "es": "Pastrami de res",
+      "en": "Beef pastrami",
+      "query": "beef pastrami"
+    }
   ],
   "grasas_mono": [
-    { "es": "Aceite de oliva", "en": "Olive oil", "query": "olive oil" },
-    { "es": "Aceite de canola", "en": "Canola oil", "query": "canola oil" },
-    { "es": "Aceite de aguacate", "en": "Avocado oil", "query": "avocado oil" },
-    { "es": "Aceitunas verdes", "en": "Green olives", "query": "olives green" },
-    { "es": "Aceitunas negras", "en": "Black olives", "query": "olives black" },
-    { "es": "Almendras", "en": "Almonds", "query": "almonds raw" },
-    { "es": "Nueces de la India", "en": "Cashews", "query": "cashews raw" },
-    { "es": "Avellanas", "en": "Hazelnuts", "query": "hazelnuts raw" },
-    { "es": "Cacahuates", "en": "Peanuts", "query": "peanuts raw" },
-    { "es": "Crema de cacahuate natural", "en": "Natural peanut butter", "query": "peanut butter natural" },
-    { "es": "Crema de almendra", "en": "Almond butter", "query": "almond butter" }
+    {
+      "es": "Aceite de oliva",
+      "en": "Olive oil",
+      "query": "olive oil"
+    },
+    {
+      "es": "Aceite de canola",
+      "en": "Canola oil",
+      "query": "canola oil"
+    },
+    {
+      "es": "Aceite de aguacate",
+      "en": "Avocado oil",
+      "query": "avocado oil"
+    },
+    {
+      "es": "Aceitunas verdes",
+      "en": "Green olives",
+      "query": "olives green"
+    },
+    {
+      "es": "Aceitunas negras",
+      "en": "Black olives",
+      "query": "olives black"
+    },
+    {
+      "es": "Almendras",
+      "en": "Almonds",
+      "query": "almonds raw"
+    },
+    {
+      "es": "Nueces de la India",
+      "en": "Cashews",
+      "query": "cashews raw"
+    },
+    {
+      "es": "Avellanas",
+      "en": "Hazelnuts",
+      "query": "hazelnuts raw"
+    },
+    {
+      "es": "Cacahuates",
+      "en": "Peanuts",
+      "query": "peanuts raw"
+    },
+    {
+      "es": "Crema de cacahuate natural",
+      "en": "Natural peanut butter",
+      "query": "peanut butter natural"
+    },
+    {
+      "es": "Crema de almendra",
+      "en": "Almond butter",
+      "query": "almond butter"
+    },
+    {
+      "es": "Aguacate Hass",
+      "en": "Hass avocado",
+      "query": "avocado raw"
+    },
+    {
+      "es": "Guacamole",
+      "en": "Guacamole",
+      "query": "guacamole"
+    },
+    {
+      "es": "Aceite de cártamo alto oleico",
+      "en": "High-oleic safflower oil",
+      "query": "safflower oil high oleic"
+    },
+    {
+      "es": "Pistaches",
+      "en": "Pistachios",
+      "query": "pistachios raw"
+    },
+    {
+      "es": "Nuez de macadamia",
+      "en": "Macadamia nuts",
+      "query": "macadamia nuts raw"
+    },
+    {
+      "es": "Piñones",
+      "en": "Pine nuts",
+      "query": "pine nuts"
+    },
+    {
+      "es": "Ajonjolí tostado",
+      "en": "Toasted sesame",
+      "query": "sesame seeds toasted"
+    },
+    {
+      "es": "Crema de cacahuate sin azúcar",
+      "en": "Unsweetened peanut butter",
+      "query": "peanut butter natural"
+    },
+    {
+      "es": "Aceitunas kalamata",
+      "en": "Kalamata olives",
+      "query": "kalamata olives"
+    },
+    {
+      "es": "Pepitas de calabaza tostadas",
+      "en": "Toasted pumpkin seeds",
+      "query": "pumpkin seeds roasted"
+    },
+    {
+      "es": "Nuez pecana",
+      "en": "Pecans",
+      "query": "pecans raw"
+    },
+    {
+      "es": "Cacahuate japonés",
+      "en": "Japanese peanuts",
+      "query": "peanuts roasted"
+    },
+    {
+      "es": "Mantequilla de macadamia",
+      "en": "Macadamia butter",
+      "query": "macadamia nut butter"
+    },
+    {
+      "es": "Aceite de oliva virgen extra",
+      "en": "Extra virgin olive oil",
+      "query": "olive oil extra virgin"
+    },
+    {
+      "es": "Aceituna manzanilla",
+      "en": "Manzanilla olives",
+      "query": "olives green"
+    },
+    {
+      "es": "Avellana tostada",
+      "en": "Roasted hazelnuts",
+      "query": "hazelnuts roasted"
+    },
+    {
+      "es": "Almendra fileteada",
+      "en": "Sliced almonds",
+      "query": "almonds sliced"
+    },
+    {
+      "es": "Mantequilla de anacardo",
+      "en": "Cashew butter",
+      "query": "cashew butter"
+    }
   ],
   "grasas_poli": [
-    { "es": "Aceite de maíz", "en": "Corn oil", "query": "corn oil" },
-    { "es": "Aceite de soya", "en": "Soybean oil", "query": "soybean oil" },
-    { "es": "Aceite de cártamo", "en": "Safflower oil", "query": "safflower oil" },
-    { "es": "Aceite de girasol", "en": "Sunflower oil", "query": "sunflower oil" },
-    { "es": "Semillas de chía", "en": "Chia seeds", "query": "chia seeds" },
-    { "es": "Semillas de linaza", "en": "Flax seeds", "query": "flaxseed" },
-    { "es": "Semillas de girasol", "en": "Sunflower seeds", "query": "sunflower seeds" },
-    { "es": "Semillas de calabaza", "en": "Pumpkin seeds", "query": "pumpkin seeds" },
-    { "es": "Semillas de ajonjolí", "en": "Sesame seeds", "query": "sesame seeds" },
-    { "es": "Nueces de Castilla", "en": "Walnuts", "query": "walnuts raw" },
-    { "es": "Nueces pecanas", "en": "Pecans", "query": "pecans raw" },
-    { "es": "Mayonesa", "en": "Mayonnaise", "query": "mayonnaise regular" },
-    { "es": "Aderezo italiano", "en": "Italian dressing", "query": "italian dressing" }
+    {
+      "es": "Aceite de maíz",
+      "en": "Corn oil",
+      "query": "corn oil"
+    },
+    {
+      "es": "Aceite de soya",
+      "en": "Soybean oil",
+      "query": "soybean oil"
+    },
+    {
+      "es": "Aceite de cártamo",
+      "en": "Safflower oil",
+      "query": "safflower oil"
+    },
+    {
+      "es": "Aceite de girasol",
+      "en": "Sunflower oil",
+      "query": "sunflower oil"
+    },
+    {
+      "es": "Semillas de chía",
+      "en": "Chia seeds",
+      "query": "chia seeds"
+    },
+    {
+      "es": "Semillas de linaza",
+      "en": "Flax seeds",
+      "query": "flaxseed"
+    },
+    {
+      "es": "Semillas de girasol",
+      "en": "Sunflower seeds",
+      "query": "sunflower seeds"
+    },
+    {
+      "es": "Semillas de calabaza",
+      "en": "Pumpkin seeds",
+      "query": "pumpkin seeds"
+    },
+    {
+      "es": "Semillas de ajonjolí",
+      "en": "Sesame seeds",
+      "query": "sesame seeds"
+    },
+    {
+      "es": "Nueces de Castilla",
+      "en": "Walnuts",
+      "query": "walnuts raw"
+    },
+    {
+      "es": "Nueces pecanas",
+      "en": "Pecans",
+      "query": "pecans raw"
+    },
+    {
+      "es": "Mayonesa",
+      "en": "Mayonnaise",
+      "query": "mayonnaise regular"
+    },
+    {
+      "es": "Aderezo italiano",
+      "en": "Italian dressing",
+      "query": "italian dressing"
+    },
+    {
+      "es": "Aceite de linaza",
+      "en": "Flaxseed oil",
+      "query": "flaxseed oil"
+    },
+    {
+      "es": "Aceite de nuez",
+      "en": "Walnut oil",
+      "query": "walnut oil"
+    },
+    {
+      "es": "Aderezo ranch",
+      "en": "Ranch dressing",
+      "query": "ranch dressing"
+    },
+    {
+      "es": "Aderezo césar",
+      "en": "Caesar dressing",
+      "query": "caesar dressing"
+    },
+    {
+      "es": "Semilla de cáñamo",
+      "en": "Hemp seeds",
+      "query": "hemp seeds"
+    },
+    {
+      "es": "Nuez de Brasil",
+      "en": "Brazil nuts",
+      "query": "brazil nuts"
+    },
+    {
+      "es": "Tahini",
+      "en": "Tahini",
+      "query": "tahini sesame paste"
+    },
+    {
+      "es": "Mayonesa light",
+      "en": "Light mayonnaise",
+      "query": "mayonnaise light"
+    },
+    {
+      "es": "Nuez de nogal",
+      "en": "English walnuts",
+      "query": "walnuts english"
+    },
+    {
+      "es": "Semilla de amapola",
+      "en": "Poppy seeds",
+      "query": "poppy seeds"
+    },
+    {
+      "es": "Aceite de semilla de uva",
+      "en": "Grapeseed oil",
+      "query": "grapeseed oil"
+    }
   ],
   "grasas_saturadas": [
-    { "es": "Mantequilla", "en": "Butter", "query": "butter salted" },
-    { "es": "Manteca de cerdo", "en": "Lard", "query": "lard pork" },
-    { "es": "Crema espesa", "en": "Heavy cream", "query": "heavy whipping cream" },
-    { "es": "Crema ácida", "en": "Sour cream", "query": "sour cream" },
-    { "es": "Aceite de coco", "en": "Coconut oil", "query": "coconut oil" },
-    { "es": "Queso crema", "en": "Cream cheese", "query": "cream cheese" }
+    {
+      "es": "Mantequilla",
+      "en": "Butter",
+      "query": "butter salted"
+    },
+    {
+      "es": "Manteca de cerdo",
+      "en": "Lard",
+      "query": "lard pork"
+    },
+    {
+      "es": "Crema espesa",
+      "en": "Heavy cream",
+      "query": "heavy whipping cream"
+    },
+    {
+      "es": "Crema ácida",
+      "en": "Sour cream",
+      "query": "sour cream"
+    },
+    {
+      "es": "Aceite de coco",
+      "en": "Coconut oil",
+      "query": "coconut oil"
+    },
+    {
+      "es": "Queso crema",
+      "en": "Cream cheese",
+      "query": "cream cheese"
+    },
+    {
+      "es": "Manteca vegetal",
+      "en": "Vegetable shortening",
+      "query": "vegetable shortening"
+    },
+    {
+      "es": "Crema ácida entera",
+      "en": "Whole sour cream",
+      "query": "sour cream"
+    },
+    {
+      "es": "Tocino de pavo",
+      "en": "Turkey bacon",
+      "query": "turkey bacon cooked"
+    },
+    {
+      "es": "Leche de coco",
+      "en": "Coconut milk",
+      "query": "coconut milk canned"
+    },
+    {
+      "es": "Queso doble crema",
+      "en": "Double cream cheese",
+      "query": "cream cheese"
+    },
+    {
+      "es": "Mantequilla clarificada",
+      "en": "Ghee",
+      "query": "ghee butter"
+    }
   ],
   "azucares": [
-    { "es": "Azúcar blanca", "en": "White sugar", "query": "sugar granulated" },
-    { "es": "Azúcar morena", "en": "Brown sugar", "query": "brown sugar" },
-    { "es": "Miel de abeja", "en": "Honey", "query": "honey" },
-    { "es": "Miel de maple", "en": "Maple syrup", "query": "maple syrup" },
-    { "es": "Mermelada", "en": "Jam", "query": "jam strawberry" },
-    { "es": "Cajeta", "en": "Cajeta", "query": "dulce de leche" },
-    { "es": "Piloncillo", "en": "Piloncillo", "query": "piloncillo" },
-    { "es": "Chocolate de mesa", "en": "Mexican chocolate", "query": "mexican chocolate" },
-    { "es": "Helado de vainilla", "en": "Vanilla ice cream", "query": "ice cream vanilla" },
-    { "es": "Refresco de cola", "en": "Cola soda", "query": "cola soda" }
+    {
+      "es": "Azúcar blanca",
+      "en": "White sugar",
+      "query": "sugar granulated"
+    },
+    {
+      "es": "Azúcar morena",
+      "en": "Brown sugar",
+      "query": "brown sugar"
+    },
+    {
+      "es": "Miel de abeja",
+      "en": "Honey",
+      "query": "honey"
+    },
+    {
+      "es": "Miel de maple",
+      "en": "Maple syrup",
+      "query": "maple syrup"
+    },
+    {
+      "es": "Mermelada",
+      "en": "Jam",
+      "query": "jam strawberry"
+    },
+    {
+      "es": "Cajeta",
+      "en": "Cajeta",
+      "query": "dulce de leche"
+    },
+    {
+      "es": "Piloncillo",
+      "en": "Piloncillo",
+      "query": "piloncillo"
+    },
+    {
+      "es": "Chocolate de mesa",
+      "en": "Mexican chocolate",
+      "query": "mexican chocolate"
+    },
+    {
+      "es": "Helado de vainilla",
+      "en": "Vanilla ice cream",
+      "query": "ice cream vanilla"
+    },
+    {
+      "es": "Refresco de cola",
+      "en": "Cola soda",
+      "query": "cola soda"
+    },
+    {
+      "es": "Miel de agave",
+      "en": "Agave syrup",
+      "query": "agave syrup"
+    },
+    {
+      "es": "Mermelada light",
+      "en": "Light jam",
+      "query": "jam reduced sugar"
+    },
+    {
+      "es": "Ate de membrillo",
+      "en": "Quince paste",
+      "query": "quince paste"
+    },
+    {
+      "es": "Chocolate obscuro 70%",
+      "en": "70% dark chocolate",
+      "query": "dark chocolate 70"
+    },
+    {
+      "es": "Jarabe de maple light",
+      "en": "Light maple syrup",
+      "query": "maple syrup reduced calorie"
+    },
+    {
+      "es": "Dulce de tamarindo",
+      "en": "Tamarind candy",
+      "query": "tamarind candy"
+    },
+    {
+      "es": "Cajeta de leche",
+      "en": "Milk cajeta",
+      "query": "dulce de leche"
+    },
+    {
+      "es": "Jalea de guayaba",
+      "en": "Guava jelly",
+      "query": "guava paste"
+    },
+    {
+      "es": "Azúcar glass",
+      "en": "Powdered sugar",
+      "query": "powdered sugar"
+    },
+    {
+      "es": "Miel de maguey",
+      "en": "Maguey honey",
+      "query": "agave syrup"
+    },
+    {
+      "es": "Melaza",
+      "en": "Molasses",
+      "query": "molasses"
+    },
+    {
+      "es": "Jarabe de maíz",
+      "en": "Corn syrup",
+      "query": "corn syrup"
+    },
+    {
+      "es": "Mermelada de fresa",
+      "en": "Strawberry jam",
+      "query": "jam strawberry"
+    },
+    {
+      "es": "Malvavisco",
+      "en": "Marshmallow",
+      "query": "marshmallows"
+    },
+    {
+      "es": "Caramelo macizo",
+      "en": "Hard candy",
+      "query": "hard candy"
+    },
+    {
+      "es": "Nieve de agua",
+      "en": "Water ice / sorbet",
+      "query": "sorbet fruit"
+    }
   ],
   "bebidas_deporte": [
-    { "es": "Gatorade clásico", "en": "Gatorade classic", "query": "gatorade thirst quencher" },
-    { "es": "Powerade", "en": "Powerade", "query": "powerade" },
-    { "es": "Bebida isotónica", "en": "Isotonic sports drink", "query": "sports drink isotonic" },
-    { "es": "Bebida de electrolitos sin azúcar", "en": "Sugar-free electrolyte drink", "query": "electrolyte drink zero sugar" },
-    { "es": "Agua de coco natural", "en": "Coconut water", "query": "coconut water raw" }
+    {
+      "es": "Gatorade clásico",
+      "en": "Gatorade classic",
+      "query": "gatorade thirst quencher"
+    },
+    {
+      "es": "Powerade",
+      "en": "Powerade",
+      "query": "powerade"
+    },
+    {
+      "es": "Bebida isotónica",
+      "en": "Isotonic sports drink",
+      "query": "sports drink isotonic"
+    },
+    {
+      "es": "Bebida de electrolitos sin azúcar",
+      "en": "Sugar-free electrolyte drink",
+      "query": "electrolyte drink zero sugar"
+    },
+    {
+      "es": "Agua de coco natural",
+      "en": "Coconut water",
+      "query": "coconut water raw"
+    },
+    {
+      "es": "Agua de jamaica sin azúcar",
+      "en": "Unsweetened hibiscus water",
+      "query": "hibiscus tea unsweetened"
+    },
+    {
+      "es": "Agua de tamarindo sin azúcar",
+      "en": "Unsweetened tamarind water",
+      "query": "tamarind drink unsweetened"
+    },
+    {
+      "es": "Agua de chía",
+      "en": "Chia water",
+      "query": "chia fresca water"
+    },
+    {
+      "es": "Tepache sin alcohol",
+      "en": "Non-alcoholic tepache",
+      "query": "tepache pineapple drink"
+    },
+    {
+      "es": "Leche de almendra sin azúcar",
+      "en": "Unsweetened almond milk",
+      "query": "almond milk unsweetened"
+    },
+    {
+      "es": "Bebida de avena sin azúcar",
+      "en": "Unsweetened oat milk",
+      "query": "oat milk unsweetened"
+    },
+    {
+      "es": "Suero de leche",
+      "en": "Buttermilk",
+      "query": "buttermilk lowfat"
+    },
+    {
+      "es": "Agua mineral natural",
+      "en": "Plain mineral water",
+      "query": "mineral water"
+    },
+    {
+      "es": "Bebida electrolítica casera",
+      "en": "Homemade electrolyte drink",
+      "query": "electrolyte drink"
+    },
+    {
+      "es": "Agua de horchata sin azúcar",
+      "en": "Unsweetened horchata",
+      "query": "horchata rice drink"
+    },
+    {
+      "es": "Kombucha natural",
+      "en": "Plain kombucha",
+      "query": "kombucha"
+    },
+    {
+      "es": "Bebida proteica sin azúcar",
+      "en": "Sugar-free protein drink",
+      "query": "protein shake"
+    },
+    {
+      "es": "Agua de pepino sin azúcar",
+      "en": "Unsweetened cucumber water",
+      "query": "cucumber water"
+    },
+    {
+      "es": "Agua de limón sin azúcar",
+      "en": "Unsweetened lime water",
+      "query": "lime water unsweetened"
+    },
+    {
+      "es": "Bebida de coco sin azúcar",
+      "en": "Unsweetened coconut drink",
+      "query": "coconut water raw"
+    }
   ]
 }
