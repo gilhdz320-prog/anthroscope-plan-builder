@@ -359,8 +359,9 @@ h1, h2, h3 {
 }
 
 .chip-gold {
-  background: linear-gradient(135deg, #F4E5B7 0%, #E2C77E 100%);
-  color: var(--gold-700);
+  background: rgba(201, 169, 97, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(201, 169, 97, 0.35);
 }
 
 /* Buttons */
