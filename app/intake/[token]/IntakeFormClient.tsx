@@ -92,6 +92,26 @@ const GOAL_OPTIONS: { value: Goal; emoji: string; title: string }[] = [
   { value: "gain_muscle", emoji: "⬆️", title: "Ganar músculo" },
 ];
 
+const DIET_OPTIONS: { value: string; emoji: string; title: string }[] = [
+  { value: "omnivore", emoji: "🍖", title: "Omnívoro" },
+  { value: "vegetarian", emoji: "🥦", title: "Vegetariano" },
+  { value: "vegan", emoji: "🌱", title: "Vegano" },
+  { value: "pescatarian", emoji: "🐟", title: "Pescetariano" },
+  { value: "keto", emoji: "🧀", title: "Keto / Low-carb" },
+  { value: "gluten_free", emoji: "🌾", title: "Sin gluten" },
+];
+
+const ALLERGY_OPTIONS: { value: string; emoji: string; title: string }[] = [
+  { value: "lactose", emoji: "🥛", title: "Lácteos" },
+  { value: "gluten", emoji: "🍞", title: "Gluten" },
+  { value: "nuts", emoji: "🥜", title: "Frutos secos" },
+  { value: "shellfish", emoji: "🦐", title: "Mariscos" },
+  { value: "eggs", emoji: "🥚", title: "Huevo" },
+  { value: "soy", emoji: "🌿", title: "Soya" },
+  { value: "fish", emoji: "🐟", title: "Pescado" },
+  { value: "pork", emoji: "🐷", title: "Cerdo" },
+];
+
 function Logo() {
   return (
     <div className="text-center">
@@ -137,6 +157,10 @@ export function IntakeFormClient({ token }: { token: string }) {
   const [bodyFat, setBodyFat] = useState("");
   const [leanMass, setLeanMass] = useState("");
   const [notes, setNotes] = useState("");
+  // Dietary preferences
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [dietType, setDietType] = useState("");
+  const [foodDislikes, setFoodDislikes] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -213,6 +237,9 @@ export function IntakeFormClient({ token }: { token: string }) {
           body_fat_pct: hasBodyComp ? Number(bodyFat) : null,
           lean_mass_kg: hasBodyComp ? Number(leanMass) : null,
           client_notes: notes || null,
+          allergies: allergies.length > 0 ? allergies : null,
+          diet_type: dietType || null,
+          food_dislikes: foodDislikes || null,
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -567,12 +594,73 @@ export function IntakeFormClient({ token }: { token: string }) {
         )}
       </Section>
 
-      {/* Sección 5 */}
-      <Section title="Notas adicionales" eyebrow="Sección 5 · opcional">
+      {/* Sección 5 — Preferencias alimentarias */}
+      <Section title="Preferencias alimentarias" eyebrow="Sección 5">
+        <Field label="Tipo de dieta">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {DIET_OPTIONS.map((o) => {
+              const active = dietType === o.value;
+              return (
+                <CardButton key={o.value} active={active} onClick={() => setDietType(o.value)}>
+                  <span className="text-lg">{o.emoji}</span>
+                  <span className="text-xs font-medium" style={{ color: active ? "var(--gold)" : "var(--ink-strong)" }}>
+                    {o.title}
+                  </span>
+                </CardButton>
+              );
+            })}
+          </div>
+        </Field>
+        <Field label="Alergias o intolerancias">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {ALLERGY_OPTIONS.map((o) => {
+              const active = allergies.includes(o.value);
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() =>
+                    setAllergies((prev) =>
+                      prev.includes(o.value)
+                        ? prev.filter((a) => a !== o.value)
+                        : [...prev, o.value],
+                    )
+                  }
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors"
+                  style={{
+                    background: active ? "rgba(201,169,97,0.12)" : "var(--surface-sunken)",
+                    border: `1px solid ${active ? "var(--gold)" : "#2a2a2a"}`,
+                  }}
+                >
+                  <span className="text-base">{o.emoji}</span>
+                  <span className="text-xs font-medium" style={{ color: active ? "var(--gold)" : "var(--ink-strong)" }}>
+                    {o.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+            Selecciona todas las que apliquen. Si no tienes ninguna, déjalo vacío.
+          </p>
+        </Field>
+        <Field label="Alimentos que no te gustan">
+          <textarea
+            className="input resize-none"
+            rows={2}
+            placeholder="Ej: brócoli, hígado, mariscos…"
+            value={foodDislikes}
+            onChange={(e) => setFoodDislikes(e.target.value)}
+          />
+        </Field>
+      </Section>
+
+      {/* Sección 6 */}
+      <Section title="Notas adicionales" eyebrow="Sección 6 · opcional">
         <textarea
           className="input resize-none"
           rows={3}
-          placeholder="Alergias, preferencias, lesiones, contexto…"
+          placeholder="Lesiones, condiciones médicas, contexto adicional…"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />

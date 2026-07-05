@@ -53,16 +53,44 @@ type ClientInfo = {
   client_notes: string | null;
 };
 
+type DietaryPreferences = {
+  allergies: string[] | null;
+  diet_type: string | null;
+  food_dislikes: string | null;
+};
+
+const dietLabel: Record<string, string> = {
+  omnivore: "Omnívoro",
+  vegetarian: "Vegetariano",
+  vegan: "Vegano",
+  pescatarian: "Pescetariano",
+  keto: "Keto / Low-carb",
+  gluten_free: "Sin gluten",
+};
+
+const allergyLabel: Record<string, string> = {
+  lactose: "Lácteos",
+  gluten: "Gluten",
+  nuts: "Frutos secos",
+  shellfish: "Mariscos",
+  eggs: "Huevo",
+  soy: "Soya",
+  fish: "Pescado",
+  pork: "Cerdo",
+};
+
 export function IntakeResultClient({
   intakeId,
   clientName,
   client,
   result,
+  dietaryPreferences,
 }: {
   intakeId: string;
   clientName: string | null;
   client: ClientInfo;
   result: CaloricResult;
+  dietaryPreferences?: DietaryPreferences;
 }) {
   const router = useRouter();
   const [kcal, setKcal] = useState(result.target_kcal);
@@ -114,6 +142,43 @@ export function IntakeResultClient({
           </p>
         )}
       </div>
+
+      {/* Dietary Preferences */}
+      {dietaryPreferences && (dietaryPreferences.diet_type || (dietaryPreferences.allergies && dietaryPreferences.allergies.length > 0) || dietaryPreferences.food_dislikes) && (
+        <div className="card-luxe p-6">
+          <p className="eyebrow" style={{ color: "var(--gold)" }}>
+            Preferencias alimentarias
+          </p>
+          <div className="mt-4 space-y-3">
+            {dietaryPreferences.diet_type && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium" style={{ color: "var(--ink-strong)" }}>Dieta:</span>
+                <span className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: "rgba(201,169,97,0.12)", color: "var(--gold)" }}>
+                  {dietLabel[dietaryPreferences.diet_type] ?? dietaryPreferences.diet_type}
+                </span>
+              </div>
+            )}
+            {dietaryPreferences.allergies && dietaryPreferences.allergies.length > 0 && (
+              <div>
+                <span className="text-sm font-medium" style={{ color: "var(--ink-strong)" }}>Alergias / Intolerancias:</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {dietaryPreferences.allergies.map((a) => (
+                    <span key={a} className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: "rgba(244,63,94,0.1)", color: "#fb7185", border: "1px solid rgba(244,63,94,0.3)" }}>
+                      ⚠️ {allergyLabel[a] ?? a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {dietaryPreferences.food_dislikes && (
+              <div>
+                <span className="text-sm font-medium" style={{ color: "var(--ink-strong)" }}>No le gusta:</span>
+                <p className="mt-1 text-sm" style={{ color: "var(--ink-muted)" }}>{dietaryPreferences.food_dislikes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Calculation */}
       <div className="card-luxe p-6">
