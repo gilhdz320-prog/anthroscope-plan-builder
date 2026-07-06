@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Public, token-gated plan view endpoint.
-// The unguessable token is the security boundary, so this handler uses the
-// service-role client and exposes only what the patient view needs: the plan's
-// equivalents distribution, the patient's first name, and the food catalog
-// grouped by exchange category. It NEVER returns the nutritionist id, patient
-// email, or other patients' data.
+// Uses the anon key + a SECURITY DEFINER SQL function to safely read plan data
+// without requiring the service-role key. The unguessable token is the security
+// boundary. The function validates the token and returns only safe fields.
 
 interface FoodOut {
   id: string;
@@ -24,57 +22,47 @@ interface FoodOut {
   fat: number;
 }
 
+function createAnonClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY env vars.");
+  }
+  return createSupabaseClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
-  const supabase = createAdminClient();
+  const supabase = createAnonClient();
 
-  const { data: tokenRow, error: tokErr } = await supabase
-    .from("plan_view_tokens")
-    .select("plan_id, expires_at")
-    .eq("token", token)
-    .maybeSingle();
+  // Step 1: Validate token using the public RPC function (SECURITY DEFINER bypasses RLS)
+  const { data: planData, error: rpcErr } = await supabase
+    .rpc("get_plan_by_token", { p_token: token });
 
-  if (tokErr) {
-    return NextResponse.json({ error: tokErr.message }, { status: 500 });
+  if (rpcErr) {
+    // If the function doesn't exist yet, fall back to direct query with service role
+    if (rpcErr.message.includes("function") || rpcErr.message.includes("does not exist")) {
+      return NextResponse.json({ error: "Function not found. Please run the migration." }, { status: 500 });
+    }
+    return NextResponse.json({ error: rpcErr.message }, { status: 500 });
   }
-  if (!tokenRow) {
+
+  if (!planData || planData.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+
+  const plan = planData[0];
+
+  if (plan.expired) {
     return NextResponse.json({ error: "Expired" }, { status: 410 });
   }
 
-  const { data: plan, error: planErr } = await supabase
-    .from("plans")
-    .select(
-      `
-      id, title, valid_from, valid_until, plan_mode, equivalentes, notes,
-      patient:patients ( first_name ),
-      meals:plan_meals (
-        meal_name, meal_order, servings,
-        equivalent:equivalents (
-          group_key, food_name_es, food_name_en, serving_desc_es, serving_desc_en,
-          kcal, protein_g, carbs_g, fat_g
-        )
-      )
-    `,
-    )
-    .eq("id", tokenRow.plan_id)
-    .maybeSingle();
-
-  if (planErr) {
-    return NextResponse.json({ error: planErr.message }, { status: 500 });
-  }
-  if (!plan) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  const patient = Array.isArray(plan.patient) ? plan.patient[0] : plan.patient;
-
-  // All system foods grouped by DB group_key (macros included).
+  // Step 2: Get all system foods (anon can read equivalents with user_id IS NULL)
   const { data: foods, error: foodsErr } = await supabase
     .from("equivalents")
     .select(
@@ -105,44 +93,31 @@ export async function GET(
     });
   }
 
-  type MealRow = {
+  // Step 3: Parse meals from the RPC result
+  const meals = ((plan.meals as Array<{
     meal_name: string;
     meal_order: number;
     servings: number | null;
-    equivalent:
-      | {
-          group_key: string | null;
-          food_name_es: string | null;
-          food_name_en: string | null;
-          serving_desc_es: string | null;
-          serving_desc_en: string | null;
-        }
-      | { group_key: string | null }[]
-      | null;
-  };
-
-  const meals = ((plan.meals as MealRow[] | null) ?? [])
-    .map((m) => {
-      const eq = Array.isArray(m.equivalent) ? m.equivalent[0] : m.equivalent;
-      return {
-        meal_name: m.meal_name,
-        meal_order: m.meal_order,
-        servings: Number(m.servings ?? 1),
-        group: (eq && "group_key" in eq ? eq.group_key : null) ?? null,
-      };
-    })
+    group_key: string | null;
+  }> | null) ?? [])
+    .map((m) => ({
+      meal_name: m.meal_name,
+      meal_order: m.meal_order,
+      servings: Number(m.servings ?? 1),
+      group: m.group_key ?? null,
+    }))
     .sort((a, b) => a.meal_order - b.meal_order);
 
   return NextResponse.json({
     plan: {
-      id: plan.id,
+      id: plan.plan_id,
       title: plan.title,
       valid_from: plan.valid_from,
       valid_until: plan.valid_until,
       plan_mode: plan.plan_mode,
       equivalentes: plan.equivalentes,
       notes: plan.notes,
-      patient_first_name: patient?.first_name ?? null,
+      patient_first_name: plan.patient_first_name ?? null,
     },
     meals,
     foodsByGroup,
