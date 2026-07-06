@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   EquivalentesEditor,
   type PlanEquivalentesData,
@@ -67,7 +68,7 @@ export default async function PlanDetailPage({
     .from("plans")
     .select(
       `
-      id, title, status, valid_from, valid_until, notes, created_at, plan_mode, equivalentes,
+      id, title, status, valid_from, valid_until, notes, created_at, plan_mode, equivalentes, template_id,
       patient:patients (
         id, first_name, last_name, sex, birth_date, sport, goal, weight_kg, height_cm, body_fat_pct
       ),
@@ -79,6 +80,40 @@ export default async function PlanDetailPage({
 
   if (!plan) {
     notFound();
+  }
+
+  // Auto-clone template_meals into plan_meals on first load if the plan was
+  // created from a template but has no meals yet (handles redirect-interrupted server actions).
+  const planTemplateId = (plan as unknown as { template_id?: string | null }).template_id;
+  if (planTemplateId) {
+    const { count: existingMealsCount } = await supabase
+      .from('plan_meals')
+      .select('id', { count: 'exact', head: true })
+      .eq('plan_id', id);
+    if (!existingMealsCount || existingMealsCount === 0) {
+      try {
+        const admin = createAdminClient();
+        const { data: tplMeals } = await admin
+          .from('template_meals')
+          .select('meal_name, meal_order, equivalent_id, servings, notes')
+          .eq('template_id', planTemplateId)
+          .order('meal_order', { ascending: true });
+        if (tplMeals && tplMeals.length > 0) {
+          await admin.from('plan_meals').insert(
+            tplMeals.map((m) => ({
+              plan_id: id,
+              meal_name: m.meal_name,
+              meal_order: m.meal_order,
+              equivalent_id: m.equivalent_id ?? null,
+              servings: m.servings ?? 1,
+              notes: m.notes ?? null,
+            }))
+          );
+        }
+      } catch (_cloneErr) {
+        // Non-fatal — plan still renders without pre-loaded meals
+      }
+    }
   }
 
   const { data: meals } = await supabase
