@@ -151,6 +151,12 @@ export default async function PlanDetailPage({
     equivalent: Array.isArray(m.equivalent) ? m.equivalent[0] : m.equivalent,
   }));
 
+  // Build a lookup: equivalent_id → group_key from catalog
+  const groupById = new Map<string, string>();
+  for (const f of catalog ?? []) {
+    groupById.set(f.id as string, (f.group_key as string) ?? "otros");
+  }
+
   const mealItems: MealItem[] = rows.map((m) => ({
     id: m.id,
     meal_name: m.meal_name,
@@ -171,6 +177,8 @@ export default async function PlanDetailPage({
     serving_en:
       m.equivalent?.serving_desc_en ?? m.equivalent?.serving_desc ?? "—",
     kcal: Number(m.equivalent?.kcal ?? 0),
+    group: m.equivalent_id ? (groupById.get(m.equivalent_id) ?? "otros") : "otros",
+    equivalent_id: m.equivalent_id,
   }));
 
   // Aggregate macros
@@ -492,7 +500,12 @@ export default async function PlanDetailPage({
       </div>
 
       {/* Meals — interactive builder */}
-      <MealBuilder planId={plan.id} foods={foods} items={mealItems} />
+      <MealBuilder
+        planId={plan.id}
+        foods={foods}
+        items={mealItems}
+        targetGroups={planEquivalentes?.groups ?? null}
+      />
 
       {plan.notes && (
         <div className="card-luxe p-6 rise rise-4">
