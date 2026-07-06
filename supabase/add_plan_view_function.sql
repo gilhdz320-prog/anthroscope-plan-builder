@@ -77,6 +77,13 @@ $$;
 -- Grant execute to anon and authenticated roles
 grant execute on function public.get_plan_by_token(text) to anon, authenticated;
 
+-- Also allow anon to read system equivalents (user_id IS NULL) for the swap catalog
+drop policy if exists "equivalents_select_anon" on public.equivalents;
+create policy "equivalents_select_anon"
+  on public.equivalents for select
+  to anon
+  using (user_id is null);
+
 -- =============================================================================
 -- End
 -- =============================================================================
