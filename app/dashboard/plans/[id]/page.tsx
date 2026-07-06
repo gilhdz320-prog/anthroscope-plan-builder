@@ -93,11 +93,40 @@ export default async function PlanDetailPage({
     if (!existingMealsCount || existingMealsCount === 0) {
       try {
         const admin = createAdminClient();
-        const { data: tplMeals } = await admin
+
+        // First try the linked template directly
+        let { data: tplMeals } = await admin
           .from('template_meals')
           .select('meal_name, meal_order, equivalent_id, servings, notes')
           .eq('template_id', planTemplateId)
           .order('meal_order', { ascending: true });
+
+        // If the linked template has no meals (e.g. it was a user copy with no meals cloned),
+        // fall back to the seed template with the same name.
+        if (!tplMeals || tplMeals.length === 0) {
+          const { data: linkedTpl } = await admin
+            .from('templates')
+            .select('name')
+            .eq('id', planTemplateId)
+            .single();
+          if (linkedTpl?.name) {
+            const { data: seedTpl } = await admin
+              .from('templates')
+              .select('id')
+              .eq('name', linkedTpl.name)
+              .eq('is_seed', true)
+              .single();
+            if (seedTpl?.id) {
+              const { data: seedMeals } = await admin
+                .from('template_meals')
+                .select('meal_name, meal_order, equivalent_id, servings, notes')
+                .eq('template_id', seedTpl.id)
+                .order('meal_order', { ascending: true });
+              tplMeals = seedMeals;
+            }
+          }
+        }
+
         if (tplMeals && tplMeals.length > 0) {
           await admin.from('plan_meals').insert(
             tplMeals.map((m) => ({
