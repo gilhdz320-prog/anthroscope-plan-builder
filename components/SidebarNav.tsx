@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/dashboard/intake/new", label: "Intake", labelEn: "Intake" },
   { href: "/dashboard/templates", label: "Plantillas", labelEn: "Templates" },
   { href: "/dashboard/equivalents", label: "Equivalentes", labelEn: "Equivalents" },
+  { href: "/dashboard/calculadora", label: "Calculadora", labelEn: "Calculator" },
   { href: "/dashboard/settings", label: "Ajustes", labelEn: "Settings" },
 ];
 

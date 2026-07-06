@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import {
   EquivalentesEditor,
   type PlanEquivalentesData,
@@ -80,69 +79,6 @@ export default async function PlanDetailPage({
 
   if (!plan) {
     notFound();
-  }
-
-  // Auto-clone template_meals into plan_meals on first load if the plan was
-  // created from a template but has no meals yet (handles redirect-interrupted server actions).
-  const planTemplateId = (plan as unknown as { template_id?: string | null }).template_id;
-  if (planTemplateId) {
-    const { count: existingMealsCount } = await supabase
-      .from('plan_meals')
-      .select('id', { count: 'exact', head: true })
-      .eq('plan_id', id);
-    if (!existingMealsCount || existingMealsCount === 0) {
-      try {
-        const admin = createAdminClient();
-
-        // First try the linked template directly
-        let { data: tplMeals } = await admin
-          .from('template_meals')
-          .select('meal_name, meal_order, equivalent_id, servings, notes')
-          .eq('template_id', planTemplateId)
-          .order('meal_order', { ascending: true });
-
-        // If the linked template has no meals (e.g. it was a user copy with no meals cloned),
-        // fall back to the seed template with the same name.
-        if (!tplMeals || tplMeals.length === 0) {
-          const { data: linkedTpl } = await admin
-            .from('templates')
-            .select('name')
-            .eq('id', planTemplateId)
-            .single();
-          if (linkedTpl?.name) {
-            const { data: seedTpl } = await admin
-              .from('templates')
-              .select('id')
-              .eq('name', linkedTpl.name)
-              .eq('is_seed', true)
-              .single();
-            if (seedTpl?.id) {
-              const { data: seedMeals } = await admin
-                .from('template_meals')
-                .select('meal_name, meal_order, equivalent_id, servings, notes')
-                .eq('template_id', seedTpl.id)
-                .order('meal_order', { ascending: true });
-              tplMeals = seedMeals;
-            }
-          }
-        }
-
-        if (tplMeals && tplMeals.length > 0) {
-          await admin.from('plan_meals').insert(
-            tplMeals.map((m) => ({
-              plan_id: id,
-              meal_name: m.meal_name,
-              meal_order: m.meal_order,
-              equivalent_id: m.equivalent_id ?? null,
-              servings: m.servings ?? 1,
-              notes: m.notes ?? null,
-            }))
-          );
-        }
-      } catch (_cloneErr) {
-        // Non-fatal — plan still renders without pre-loaded meals
-      }
-    }
   }
 
   const { data: meals } = await supabase
