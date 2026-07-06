@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 function nullable(v: FormDataEntryValue | null): string | null {
   const s = (v ?? '').toString().trim()
@@ -63,9 +64,12 @@ export async function createPlan(formData: FormData) {
     redirect('/dashboard/plans/new?error=' + encodeURIComponent(error?.message ?? 'Error creando plan'))
   }
 
-  // Clone template_meals into plan_meals if a template was selected
+  // Clone template_meals into plan_meals if a template was selected.
+  // Uses admin client to bypass RLS — template_meals may not be readable
+  // by the authenticated user if the policy wasn't applied in production.
   if (template_id && newPlan) {
-    const { data: tplMeals } = await supabase
+    const admin = createAdminClient()
+    const { data: tplMeals } = await admin
       .from('template_meals')
       .select('meal_name, meal_order, equivalent_id, servings, notes')
       .eq('template_id', template_id)
@@ -80,7 +84,7 @@ export async function createPlan(formData: FormData) {
         servings: m.servings ?? 1,
         notes: m.notes ?? null,
       }))
-      await supabase.from('plan_meals').insert(rows)
+      await admin.from('plan_meals').insert(rows)
     }
   }
 
