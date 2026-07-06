@@ -88,33 +88,10 @@ export function TemplatesClient({
 
   async function handleUse(tpl: Template) {
     setError(null);
-    // Non-seed templates belong to the user: go straight to the plan editor.
-    if (!tpl.is_seed) {
-      router.push(`/dashboard/plans/new?template_id=${tpl.id}`);
-      return;
-    }
-    // Seed templates are read-only: duplicate under the current user first,
-    // then open the plan editor with the new copy.
-    setUsingId(tpl.id);
-    const { data, error: insErr } = await supabase
-      .from("templates")
-      .insert({
-        name: tpl.name,
-        description: tpl.description,
-        goal: tpl.goal,
-        kcal_target: tpl.kcal_target,
-        user_id: userId,
-        is_seed: false,
-        is_public: false,
-      })
-      .select("id")
-      .single();
-    if (insErr || !data) {
-      setUsingId(null);
-      setError(insErr?.message ?? "No se pudo duplicar la plantilla.");
-      return;
-    }
-    router.push(`/dashboard/plans/new?template_id=${data.id}`);
+    // Pass the template_id directly to the new plan form.
+    // createPlan uses the admin client to read template_meals and clone them
+    // into plan_meals, so no duplication of the template is needed here.
+    router.push(`/dashboard/plans/new?template_id=${tpl.id}`);
   }
 
   const visible = useMemo(
@@ -332,7 +309,7 @@ export function TemplatesClient({
                   style={{ padding: "8px 14px", fontSize: "13px", opacity: usingId === tpl.id ? 0.6 : 1 }}
                 >
                   {usingId === tpl.id && <span className="spinner" />}
-                  {tpl.is_seed ? "Duplicar y usar" : "Usar plantilla"}
+                  Usar plantilla
                 </button>
               </div>
             );
