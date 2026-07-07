@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/dashboard/patients", label: "Pacientes", labelEn: "Patients" },
   { href: "/dashboard/plans", label: "Planes", labelEn: "Plans" },
   { href: "/dashboard/intake/new", label: "Intake", labelEn: "Intake" },
+  { href: "/dashboard/recall/new", label: "Recall Dietético", labelEn: "Dietary Recall" },
   { href: "/dashboard/templates", label: "Plantillas", labelEn: "Templates" },
   { href: "/dashboard/equivalents", label: "Equivalentes", labelEn: "Equivalents" },
   { href: "/dashboard/calculadora", label: "Calculadora", labelEn: "Calculator" },
