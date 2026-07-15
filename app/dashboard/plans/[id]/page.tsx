@@ -181,8 +181,9 @@ export default async function PlanDetailPage({
     equivalent_id: m.equivalent_id,
   }));
 
-  // Aggregate macros
-  const totals = rows.reduce(
+  // Aggregate macros from the actual meals (used as fallback when the plan
+  // has no `equivalentes` JSONB yet, and to show "what's actually plated").
+  const mealsTotals = rows.reduce(
     (acc, m) => {
       const e = m.equivalent;
       if (!e) return acc;
@@ -196,15 +197,36 @@ export default async function PlanDetailPage({
     { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   );
 
+  // When the plan has an `equivalentes` JSONB with kcalTarget, use it as the
+  // single source of truth for the "Totales del día" panel. This keeps the
+  // green totals panel in sync with the EquivalentesEditor table above it,
+  // instead of summing per-food kcal from `plan_meals.equivalents.kcal`
+  // (which uses different per-group kcal constants and produces mismatches).
+  //
+  // If the plan was created before this fix and has no `equivalentes`, fall
+  // back to the meals aggregate so the panel still shows something useful.
+  const planEquivalentesRaw =
+    ((plan as { equivalentes?: PlanEquivalentesData | null }).equivalentes ??
+      null) as PlanEquivalentesData | null;
+
+  const totals = planEquivalentesRaw?.kcalTarget
+    ? {
+        kcal: planEquivalentesRaw.kcalTarget,
+        protein: planEquivalentesRaw.proteinG ?? 0,
+        carbs: planEquivalentesRaw.carbsG ?? 0,
+        fat: planEquivalentesRaw.fatG ?? 0,
+      }
+    : mealsTotals;
+
+  // Keep the same alias the rest of the file already uses.
+  const planEquivalentes = planEquivalentesRaw;
+
   const patient = Array.isArray(plan.patient) ? plan.patient[0] : plan.patient;
   const template = Array.isArray(plan.template)
     ? plan.template[0]
     : plan.template;
 
   const planMode = ((plan as { plan_mode?: string }).plan_mode ?? "macros") as PlanMode;
-  const planEquivalentes =
-    ((plan as { equivalentes?: PlanEquivalentesData | null }).equivalentes ??
-      null) as PlanEquivalentesData | null;
 
   // ── Clinical view data ────────────────────────────────────────────────
   // Prefer the saved equivalentes distribution; otherwise fall back to the

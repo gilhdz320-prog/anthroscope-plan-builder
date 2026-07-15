@@ -4,10 +4,75 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  EQUIVALENTES_GRUPOS,
+  GRUPO_KEYS,
+  calcularEquivalentes,
+  type Equivalentes,
+} from '@/lib/equivalentes'
 
 function nullable(v: FormDataEntryValue | null): string | null {
   const s = (v ?? '').toString().trim()
   return s === '' ? null : s
+}
+
+/**
+ * Build the `equivalentes` JSONB payload for a newly created plan.
+ *
+ * Why this exists: previously the kcal target + macros entered in the "new plan"
+ * form were stored only as a text summary inside `notes`. The column
+ * `plans.equivalentes` (JSONB) was left NULL, which made the editor default to
+ * 2000 kcal and broke "Remaining equivalents". We now persist the structured
+ * object at creation time.
+ *
+ * Returns `null` only when no kcal target was provided.
+ */
+function buildEquivalentesPayload(planMode: 'macros' | 'equivalentes', kcalStr: string | null, proteinStr: string | null, carbsStr: string | null, fatStr: string | null) {
+  const kcal = kcalStr ? Number(kcalStr) : 0
+  if (!kcal || Number.isNaN(kcal)) return null
+
+  const proteinG = proteinStr ? Number(proteinStr) : 0
+  const carbsG = carbsStr ? Number(carbsStr) : 0
+  const fatG = fatStr ? Number(fatStr) : 0
+
+  // Derive macro percentages from grams (kcal-weighted)
+  const macroKcal = proteinG * 4 + carbsG * 4 + fatG * 9
+  let proteinPct: number
+  let carbsPct: number
+  let fatPct: number
+  if (macroKcal > 0) {
+    proteinPct = Math.round((proteinG * 4 / macroKcal) * 100)
+    fatPct = Math.round((fatG * 9 / macroKcal) * 100)
+    carbsPct = 100 - proteinPct - fatPct
+    // Clamp to [0, 100] in case of rounding drift
+    if (carbsPct < 0) { carbsPct = 0; proteinPct = Math.min(100, proteinPct); fatPct = Math.min(100, fatPct) }
+  } else {
+    // No grams provided: default 30/40/30 split
+    proteinPct = 30
+    carbsPct = 40
+    fatPct = 30
+  }
+
+  const emptyGroups: Equivalentes = GRUPO_KEYS.reduce((acc, k) => {
+    acc[k] = 0
+    return acc
+  }, {} as Equivalentes)
+
+  const groups = planMode === 'equivalentes'
+    ? calcularEquivalentes(kcal, proteinPct, carbsPct, fatPct)
+    : emptyGroups
+
+  return {
+    mode: planMode,
+    kcalTarget: kcal,
+    proteinPct,
+    carbsPct,
+    fatPct,
+    proteinG,
+    carbsG,
+    fatG,
+    groups,
+  }
 }
 
 export async function createPlan(formData: FormData) {
@@ -32,8 +97,14 @@ export async function createPlan(formData: FormData) {
   const carbs = nullable(formData.get('carbs_g'))
   const fat = nullable(formData.get('fat_g'))
 
+  // Build the structured equivalentes JSONB payload so the plan editor opens
+  // with the correct kcal target and macro distribution (previously this was
+  // only persisted as text inside `notes`, leaving `equivalentes` NULL).
+  const equivalentesPayload = buildEquivalentesPayload(plan_mode, kcal, protein, carbs, fat)
+
   // The plans table has no dedicated macro columns, so the energy target and
-  // macro split are recorded as a leading summary line in notes.
+  // macro split are also recorded as a leading summary line in notes (kept for
+  // human-readable reference and backwards compatibility).
   const summaryParts: string[] = []
   if (kcal) summaryParts.push(`Meta: ${kcal} kcal`)
   if (protein || carbs || fat) {
@@ -58,6 +129,7 @@ export async function createPlan(formData: FormData) {
     valid_until,
     notes: finalNotes,
     plan_mode,
+    equivalentes: equivalentesPayload,
   }).select('id').single()
 
   if (error || !newPlan) {
