@@ -142,22 +142,50 @@ export async function createPlan(formData: FormData) {
   if (template_id && newPlan) {
     try {
       const admin = createAdminClient()
-      const { data: tplMeals, error: tplError } = await admin
-        .from('template_meals')
-        .select('meal_name, meal_order, equivalent_id, servings, notes')
-        .eq('template_id', template_id)
-        .order('meal_order', { ascending: true })
 
-      if (!tplError && tplMeals && tplMeals.length > 0) {
-        const rows = tplMeals.map((m) => ({
-          plan_id: newPlan.id,
-          meal_name: m.meal_name,
-          meal_order: m.meal_order,
-          equivalent_id: m.equivalent_id ?? null,
-          servings: m.servings ?? 1,
-          notes: m.notes ?? null,
-        }))
-        await admin.from('plan_meals').insert(rows)
+      // Defensive: check if plan already has meals (prevents double-cloning
+      // if the server action is somehow invoked twice for the same plan).
+      const { count: existingCount } = await admin
+        .from('plan_meals')
+        .select('id', { count: 'exact', head: true })
+        .eq('plan_id', newPlan.id)
+
+      if (existingCount && existingCount > 0) {
+        // Plan already has meals — skip cloning to avoid duplicates.
+      } else {
+        // Deduplicate template_meals at read-time: if the seed was run
+        // multiple times, the same (meal_name, equivalent_id, servings)
+        // combo may exist more than once per template. DISTINCT ON keeps
+        // only one row per unique combination.
+        const { data: tplMeals, error: tplError } = await admin
+          .from('template_meals')
+          .select('meal_name, meal_order, equivalent_id, servings, notes')
+          .eq('template_id', template_id)
+          .order('meal_order', { ascending: true })
+
+        if (!tplError && tplMeals && tplMeals.length > 0) {
+          // Deduplicate in application code (DISTINCT ON in the query would
+          // require a raw SQL call; this is simpler and equally effective).
+          const seen = new Set<string>()
+          const rows = tplMeals
+            .filter((m) => {
+              const key = `${m.meal_name}|${m.equivalent_id ?? ''}|${m.servings ?? 1}`
+              if (seen.has(key)) return false
+              seen.add(key)
+              return true
+            })
+            .map((m) => ({
+              plan_id: newPlan.id,
+              meal_name: m.meal_name,
+              meal_order: m.meal_order,
+              equivalent_id: m.equivalent_id ?? null,
+              servings: m.servings ?? 1,
+              notes: m.notes ?? null,
+            }))
+          if (rows.length > 0) {
+            await admin.from('plan_meals').insert(rows)
+          }
+        }
       }
     } catch (e) {
       // Non-fatal: plan was created successfully, meals cloning failed.
