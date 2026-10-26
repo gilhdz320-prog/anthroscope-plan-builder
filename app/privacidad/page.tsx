@@ -1,17 +1,14 @@
 import { LegalLayout } from "@/components/legal/LegalLayout";
+import { LEGAL } from "@/lib/legal";
 
 export const metadata = {
   title: "Aviso de privacidad · Anthroscope Plan Builder",
 };
 
-/**
- * NOTA PARA EL RESPONSABLE (no visible al público):
- * Los campos marcados con «[…]» deben completarse con los datos legales reales
- * antes de publicar. Ver docs/LEGAL-REVISION.md.
- */
-const RESPONSABLE = "[RAZÓN SOCIAL O NOMBRE DEL RESPONSABLE]";
-const DOMICILIO = "[DOMICILIO FISCAL, CIUDAD, ESTADO, MÉXICO]";
-const CORREO = "privacidad@anthroscope.pro";
+/** Los datos del responsable se editan en un solo lugar: lib/legal.ts */
+const RESPONSABLE = LEGAL.responsable;
+const DOMICILIO = LEGAL.domicilio;
+const CORREO = LEGAL.emailPrivacidad;
 
 export default function PrivacidadPage() {
   return (

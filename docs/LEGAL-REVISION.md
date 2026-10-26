@@ -9,14 +9,28 @@ qué pasa si cancela), pero **deben revisarse antes de cobrar**.
 
 ## 1. Datos que hay que completar (obligatorio)
 
-En `app/privacidad/page.tsx` y `app/terminos/page.tsx`, sustituir:
+**Un solo archivo:** `lib/legal.ts`. De ahí leen `/privacidad` y `/terminos`.
 
-| Placeholder | Qué poner |
+```ts
+export const LEGAL = {
+  responsable: "[TU NOMBRE O RAZÓN SOCIAL]",
+  domicilio: "[CALLE, NÚMERO, CIUDAD, ESTADO, MÉXICO]",
+  emailPrivacidad: "privacidad@anthroscope.pro",
+  emailContacto: "hola@anthroscope.pro",
+  actualizado: "octubre de 2026",
+} as const;
+```
+
+| Campo | Qué poner |
 |---|---|
-| `[RAZÓN SOCIAL O NOMBRE DEL RESPONSABLE]` | tu nombre o razón social (persona física con actividad empresarial es válido) |
-| `[DOMICILIO FISCAL, CIUDAD, ESTADO, MÉXICO]` | domicilio real para efectos de notificaciones |
-| `privacidad@anthroscope.pro` | correo que **de verdad** revises (ARCO tiene plazos legales) |
-| `hola@anthroscope.pro` | igual |
+| `responsable` | tu nombre completo o razón social (persona física con actividad empresarial es válido) |
+| `domicilio` | domicilio real para efectos de notificaciones |
+| `emailPrivacidad` | correo que **de verdad** revises: por ahí llegan las solicitudes ARCO (tienen plazo legal) |
+| `emailContacto` | correo general de soporte |
+| `actualizado` | mes y año de la última revisión |
+
+Cuando `responsable` y `domicilio` ya no tienen corchetes, `legalIsComplete()`
+devuelve `true` y los documentos están listos para publicarse.
 
 ---
 

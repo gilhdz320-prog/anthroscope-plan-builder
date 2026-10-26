@@ -1,11 +1,13 @@
 import { LegalLayout } from "@/components/legal/LegalLayout";
+import { LEGAL } from "@/lib/legal";
 
 export const metadata = {
   title: "Términos de servicio · Anthroscope Plan Builder",
 };
 
-const RESPONSABLE = "[RAZÓN SOCIAL O NOMBRE DEL RESPONSABLE]";
-const CORREO = "hola@anthroscope.pro";
+/** Los datos del responsable se editan en un solo lugar: lib/legal.ts */
+const RESPONSABLE = LEGAL.responsable;
+const CORREO = LEGAL.emailContacto;
 
 export default function TerminosPage() {
   return (
