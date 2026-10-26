@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:bootstrap:build": "node scripts/build-sql-bootstrap.mjs",
-    "db:bootstrap:check": "node scripts/build-sql-bootstrap.mjs --check"
+    "db:bootstrap:check": "node scripts/build-sql-bootstrap.mjs --check",
+    "db:apply-saas:build": "node scripts/build-apply-saas.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
