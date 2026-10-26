@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { NutritionistProfileForm } from "@/components/NutritionistProfileForm";
 import { getProfile } from "./profile-actions";
+import { getAccess } from "@/lib/billing/access";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -11,6 +12,18 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
 
   const profile = user ? await getProfile(user.id) : null;
+  const access = user ? await getAccess(supabase, user.id) : null;
+
+  const accessLabel = (() => {
+    if (!access) return "—";
+    if (access.kind === "legacy") return "Acceso de por vida (compra original)";
+    if (access.kind === "active") return "Suscripción activa";
+    if (access.kind === "trial")
+      return `Prueba — ${access.trialDaysLeft} ${access.trialDaysLeft === 1 ? "día" : "días"} restantes`;
+    if (access.kind === "past_due")
+      return `Pago rechazado — ${access.graceDaysLeft} ${access.graceDaysLeft === 1 ? "día" : "días"} de gracia`;
+    return "Sin acceso";
+  })();
 
   return (
     <div className="space-y-10">
@@ -134,6 +147,57 @@ export default async function SettingsPage() {
             Subir
           </button>
         </div>
+      </section>
+
+      {/* Suscripción */}
+      <section className="card-luxe max-w-2xl p-7 rise rise-2">
+        <div className="flex items-baseline justify-between">
+          <p className="eyebrow">Suscripción</p>
+          <span className="text-xs" style={{ color: "var(--ink-muted)" }}>
+            {accessLabel}
+          </span>
+        </div>
+        <p className="mt-2 text-sm" style={{ color: "var(--ink-muted)" }}>
+          Cambia tu tarjeta, descarga facturas o cancela cuando quieras. Sin
+          contratos forzosos.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/suscripcion" className="btn btn-ghost">
+            Gestionar suscripción
+          </Link>
+          <Link href="/suscripcion" className="btn btn-ghost">
+            Ver planes
+          </Link>
+        </div>
+      </section>
+
+      {/* Exportar datos */}
+      <section className="card-luxe max-w-2xl p-7 rise rise-3">
+        <div className="flex items-baseline justify-between">
+          <p className="eyebrow">Tus datos</p>
+          <span className="text-xs" style={{ color: "var(--ink-subtle)" }}>
+            Exportación
+          </span>
+        </div>
+        <p className="mt-2 text-sm" style={{ color: "var(--ink-muted)" }}>
+          Tus pacientes y planes son tuyos. Descárgalos cuando quieras; sirven
+          para respaldo o para migrar a otro sistema.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a href="/api/export/patients" download className="btn btn-ghost">
+            Pacientes (CSV)
+          </a>
+          <a href="/api/export/plans" download className="btn btn-ghost">
+            Planes (CSV)
+          </a>
+          <a href="/api/export/all" download className="btn btn-ghost">
+            Todo (JSON)
+          </a>
+        </div>
+        <p className="mt-3 text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+          El CSV abre directo en Excel. El JSON es el respaldo completo
+          (pacientes, planes, comidas, plantillas).
+        </p>
       </section>
 
       {/* Upgrade CTA */}

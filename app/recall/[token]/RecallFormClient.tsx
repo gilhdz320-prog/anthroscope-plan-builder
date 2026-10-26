@@ -73,8 +73,9 @@ export function RecallFormClient({ token }: { token: string }) {
         setCoachName(data.recall?.coachName || "tu nutriólogo");
         setRecallType(data.recall?.recallType || "24h");
         if (data.recall?.status === "completed") setAlreadyDone(true);
-      } catch (e: any) {
-        if (active) setError(e?.message || "Este formulario no está disponible.");
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Este formulario no está disponible.";
+        if (active) setError(message);
       } finally {
         if (active) setLoading(false);
       }
@@ -119,8 +120,9 @@ export function RecallFormClient({ token }: { token: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error al enviar");
       setDone(true);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo enviar. Intenta de nuevo.");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "No se pudo enviar. Intenta de nuevo.";
+      setError(message);
     } finally {
       setSubmitting(false);
     }

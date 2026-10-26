@@ -1,36 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-import { Resend } from "resend";
+import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateAccessCode } from "@/lib/access-codes";
 import { buildAccessCodeEmail } from "@/lib/emails/access-code";
+import {
+  buildPaymentFailedEmail,
+  buildSubscriptionCanceledEmail,
+  buildSubscriptionStartedEmail,
+} from "@/lib/emails/lifecycle";
+import { sendEmail } from "@/lib/emails/send";
+import { trackEvent } from "@/lib/analytics/track";
+import { BILLING } from "@/lib/billing/config";
+import { getAppUrl, getStripe } from "@/lib/billing/stripe";
+import { syncStripeSubscription } from "@/lib/billing/sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const stripeKey = process.env.STRIPE_SECRET_KEY;
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const resendKey = process.env.RESEND_API_KEY;
-const fromEmail =
-  process.env.RESEND_FROM_EMAIL ?? "Anthroscope <no-reply@anthroscope.pro>";
-const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  "https://planbuilder.anthroscope.pro";
-
-const stripe = stripeKey ? new Stripe(stripeKey) : null;
-const resend = resendKey ? new Resend(resendKey) : null;
-
+/**
+ * Webhook de Stripe. Dos responsabilidades:
+ *
+ * 1) Suscripciones (modelo actual): mantener public.subscriptions al día y
+ *    mandar los correos de ciclo de vida (alta, impago, cancelación).
+ * 2) Pago único legacy ($57 de por vida): emitir código de acceso, como antes.
+ *    Se conserva para no romper a quien ya compró con ese modelo.
+ */
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   if (!stripe || !webhookSecret) {
     return NextResponse.json(
-      { error: "Stripe not configured (missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET)" },
+      {
+        error:
+          "Stripe no configurado (falta STRIPE_SECRET_KEY o STRIPE_WEBHOOK_SECRET)",
+      },
       { status: 500 },
     );
   }
 
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
-    return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
+    return NextResponse.json({ error: "Falta stripe-signature" }, { status: 400 });
   }
 
   const rawBody = await req.text();
@@ -38,109 +49,238 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Invalid signature";
+    const msg = err instanceof Error ? err.message : "Firma inválida";
     return NextResponse.json({ error: `Webhook error: ${msg}` }, { status: 400 });
   }
 
-  // Only act on successful payments
-  if (
-    event.type !== "checkout.session.completed" &&
-    event.type !== "checkout.session.async_payment_succeeded"
-  ) {
-    return NextResponse.json({ received: true, ignored: event.type });
-  }
-
-  const session = event.data.object as Stripe.Checkout.Session;
-
-  // Guard: must be paid
-  if (session.payment_status !== "paid") {
-    return NextResponse.json({ received: true, skipped: "not_paid" });
-  }
-
-  const customerEmail =
-    session.customer_details?.email ??
-    session.customer_email ??
-    null;
-
-  if (!customerEmail) {
-    return NextResponse.json(
-      { error: "No customer email on session" },
-      { status: 400 },
-    );
-  }
-
   const admin = createAdminClient();
+  const appUrl = getAppUrl();
 
-  // Idempotency: if we already created a code for this session, just re-send it.
-  const { data: existing } = await admin
-    .from("access_codes")
-    .select("code, customer_email")
-    .eq("stripe_session_id", session.id)
-    .maybeSingle();
-
-  let code = existing?.code;
-
-  if (!code) {
-    // Generate a unique code (retry on rare collision)
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const candidate = generateAccessCode();
-      const { error } = await admin.from("access_codes").insert({
-        code: candidate,
-        stripe_session_id: session.id,
-        customer_email: customerEmail,
-        amount_paid_cents: session.amount_total ?? null,
-        currency: session.currency ?? "usd",
-      });
-      if (!error) {
-        code = candidate;
-        break;
-      }
-      // If unique violation on stripe_session_id, another concurrent webhook won.
-      if (error.code === "23505" && error.message.includes("stripe_session_id")) {
-        const { data: race } = await admin
-          .from("access_codes")
-          .select("code")
-          .eq("stripe_session_id", session.id)
-          .maybeSingle();
-        if (race?.code) {
-          code = race.code;
-          break;
-        }
-      }
-      // Otherwise keep trying (code collision)
+  /** Email de la usuaria: de auth.users, con fallback al de la sesión. */
+  async function emailForUser(
+    userId: string,
+    fallback?: string | null,
+  ): Promise<string | null> {
+    try {
+      const { data } = await admin.auth.admin.getUserById(userId);
+      return data.user?.email ?? fallback ?? null;
+    } catch {
+      return fallback ?? null;
     }
   }
 
-  if (!code) {
-    return NextResponse.json(
-      { error: "Could not generate access code" },
-      { status: 500 },
-    );
-  }
+  /** Pago único legacy: emite y envía código de acceso. */
+  async function handleLegacyPurchase(session: Stripe.Checkout.Session) {
+    if (session.payment_status !== "paid") {
+      return NextResponse.json({ received: true, skipped: "not_paid" });
+    }
 
-  // Send email
-  if (resend) {
+    const customerEmail =
+      session.customer_details?.email ?? session.customer_email ?? null;
+    if (!customerEmail) {
+      return NextResponse.json({ error: "Sin email en la sesión" }, { status: 400 });
+    }
+
+    const { data: existing } = await admin
+      .from("access_codes")
+      .select("code")
+      .eq("stripe_session_id", session.id)
+      .maybeSingle();
+
+    let code = (existing as { code?: string } | null)?.code ?? null;
+
+    if (!code) {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const candidate = generateAccessCode();
+        const { error } = await admin.from("access_codes").insert({
+          code: candidate,
+          stripe_session_id: session.id,
+          customer_email: customerEmail,
+          amount_paid_cents: session.amount_total ?? null,
+          currency: session.currency ?? "usd",
+        });
+        if (!error) {
+          code = candidate;
+          break;
+        }
+        if (error.code === "23505" && error.message.includes("stripe_session_id")) {
+          const { data: race } = await admin
+            .from("access_codes")
+            .select("code")
+            .eq("stripe_session_id", session.id)
+            .maybeSingle();
+          if ((race as { code?: string } | null)?.code) {
+            code = (race as { code: string }).code;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!code) {
+      return NextResponse.json(
+        { error: "No se pudo generar el código" },
+        { status: 500 },
+      );
+    }
+
     const { subject, html, text } = buildAccessCodeEmail({
       code,
       customerEmail,
       signupUrl: `${appUrl}/signup?code=${encodeURIComponent(code)}`,
     });
+    await sendEmail({ to: customerEmail, subject, html, text });
 
-    try {
-      await resend.emails.send({
-        from: fromEmail,
-        to: customerEmail,
-        subject,
-        html,
-        text,
-      });
-    } catch (err) {
-      // Log but don't fail the webhook — code is still saved and retrievable
-      console.error("[stripe-webhook] resend send failed", err);
-    }
-  } else {
-    console.warn("[stripe-webhook] RESEND_API_KEY missing — skipping email");
+    return NextResponse.json({ received: true, code_issued: true });
   }
 
-  return NextResponse.json({ received: true, code_issued: true });
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+
+        if (session.mode === "payment") {
+          return await handleLegacyPurchase(session);
+        }
+        if (session.mode !== "subscription") {
+          return NextResponse.json({ received: true, ignored: session.mode });
+        }
+
+        const subscriptionId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id ?? null;
+        if (!subscriptionId) {
+          return NextResponse.json(
+            { error: "Sesión sin suscripción" },
+            { status: 400 },
+          );
+        }
+
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const { userId } = await syncStripeSubscription(admin, sub);
+
+        if (userId && sub.status === "active") {
+          const email = await emailForUser(
+            userId,
+            session.customer_details?.email,
+          );
+          if (email) {
+            const plan =
+              (sub.metadata?.plan as "monthly" | "annual" | undefined) ?? "monthly";
+            const { subject, html, text } = buildSubscriptionStartedEmail({
+              appUrl,
+              plan,
+            });
+            await sendEmail({ to: email, subject, html, text });
+          }
+        }
+
+        if (userId && sub.status === "active") {
+          await trackEvent({
+            name: "subscription_active",
+            userId,
+            props: { plan: sub.metadata?.plan ?? "monthly" },
+          });
+        }
+
+        return NextResponse.json({ received: true, subscription: sub.status });
+      }
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        await syncStripeSubscription(admin, sub);
+        return NextResponse.json({ received: true, subscription: sub.status });
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+        const { userId } = await syncStripeSubscription(admin, sub);
+
+        if (userId) {
+          const email = await emailForUser(userId);
+          if (email) {
+            const { subject, html, text } = buildSubscriptionCanceledEmail({
+              appUrl,
+            });
+            await sendEmail({ to: email, subject, html, text });
+          }
+        }
+
+        return NextResponse.json({ received: true, canceled: true });
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId =
+          typeof invoice.customer === "string"
+            ? invoice.customer
+            : invoice.customer?.id ?? null;
+
+        if (!customerId) {
+          return NextResponse.json({ received: true, ignored: "no_customer" });
+        }
+
+        const { data: row } = await admin
+          .from("subscriptions")
+          .select("user_id")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle();
+        const userId = (row as { user_id?: string } | null)?.user_id ?? null;
+
+        if (userId) {
+          await admin
+            .from("subscriptions")
+            .update({ status: "past_due", updated_at: new Date().toISOString() })
+            .eq("user_id", userId);
+
+          const email = await emailForUser(
+            userId,
+            invoice.customer_email ?? undefined,
+          );
+          if (email) {
+            const { subject, html, text } = buildPaymentFailedEmail({
+              appUrl,
+              graceDays: BILLING.graceDays,
+            });
+            await sendEmail({ to: email, subject, html, text });
+          }
+
+          await trackEvent({
+            name: "payment_failed",
+            userId,
+            props: { amount_due: invoice.amount_due ?? null },
+          });
+        }
+
+        return NextResponse.json({ received: true, past_due: true });
+      }
+
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const maybeSubscription = (
+          invoice as unknown as { subscription?: string | { id?: string } }
+        ).subscription;
+        const subscriptionId =
+          typeof maybeSubscription === "string"
+            ? maybeSubscription
+            : maybeSubscription?.id;
+
+        if (subscriptionId) {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          await syncStripeSubscription(admin, sub);
+        }
+        return NextResponse.json({ received: true });
+      }
+
+      default:
+        return NextResponse.json({ received: true, ignored: event.type });
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    console.error("[stripe-webhook]", event.type, message);
+    // 500 → Stripe reintenta. Es lo correcto si falló la escritura en BD.
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

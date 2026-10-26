@@ -1,4 +1,12 @@
-# Acceso pagado con códigos — Setup paso a paso
+# Acceso pagado con códigos — Setup paso a paso (LEGACY)
+
+> ⚠️ **Modelo antiguo.** Este documento describe el pago único de $57 USD con
+> código de acceso. El producto ya se vende por **suscripción** ($199 MXN/mes):
+> ver [`BILLING-SETUP.md`](BILLING-SETUP.md).
+>
+> Se conserva porque los códigos siguen funcionando: quien ya compró el acceso
+> de por vida lo canjea en `/signup` y mantiene su acceso (ver
+> `lib/billing/access.ts`, tipo `legacy`). No emitas códigos nuevos.
 
 Este documento explica cómo activar el flujo completo:
 **Cliente paga $57 en Stripe → recibe código por correo → puede crear cuenta.**

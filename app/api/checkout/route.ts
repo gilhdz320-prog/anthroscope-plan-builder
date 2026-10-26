@@ -1,115 +1,147 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { BILLING, type PlanInterval } from "@/lib/billing/config";
+import { getAppUrl, requireStripe } from "@/lib/billing/stripe";
+import { getSubscriptionRow } from "@/lib/billing/sync";
+import { trackEvent } from "@/lib/analytics/track";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const stripeKey = process.env.STRIPE_SECRET_KEY;
-const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://planbuilder.anthroscope.pro";
+function isPlanInterval(value: unknown): value is PlanInterval {
+  return value === "monthly" || value === "annual";
+}
 
-const stripe = stripeKey ? new Stripe(stripeKey) : null;
-
+/**
+ * Crea una sesión de Stripe Checkout en modo suscripción.
+ *
+ * Reglas:
+ * - Requiere sesión iniciada (la suscripción se ata a un user_id).
+ * - Si la usuaria nunca ha tenido suscripción, aplica 14 días de trial en Stripe.
+ *   Si ya tuvo trial local (fila creada al registrarse), cobra desde hoy.
+ * - Precio: $199 MXN/mes o $1,990 MXN/año (o price IDs si están configurados).
+ */
 export async function POST(req: NextRequest) {
-  if (!stripe) {
+  let stripe: Stripe;
+  try {
+    stripe = requireStripe();
+  } catch {
     return NextResponse.json(
-      { error: "Stripe not configured (missing STRIPE_SECRET_KEY)" },
+      { error: "Stripe no está configurado en el servidor." },
       { status: 500 },
     );
   }
 
-  try {
-    // Detect locale from Accept-Language header
-    const acceptLang = req.headers.get("accept-language") ?? "";
-    const isSpanish = acceptLang.toLowerCase().includes("es");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [
+  if (!user) {
+    return NextResponse.json(
+      {
+        error: "Necesitas iniciar sesión.",
+        loginUrl: "/login?redirect=/suscripcion",
+      },
+      { status: 401 },
+    );
+  }
+
+  let body: { interval?: unknown } = {};
+  try {
+    body = (await req.json()) as { interval?: unknown };
+  } catch {
+    // Sin body → plan mensual por defecto
+  }
+  const interval: PlanInterval = isPlanInterval(body.interval)
+    ? body.interval
+    : "monthly";
+  const plan = BILLING.plans[interval];
+
+  await trackEvent({
+    name: "checkout_started",
+    userId: user.id,
+    props: { interval },
+  });
+
+  try {
+    const admin = createAdminClient();
+    const existing = await getSubscriptionRow(admin, user.id);
+
+    // Cliente de Stripe: reutiliza el existente o crea uno nuevo.
+    let customerId = existing?.stripe_customer_id ?? null;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        metadata: { user_id: user.id },
+      });
+      customerId = customer.id;
+      await admin.from("subscriptions").upsert(
         {
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" },
+      );
+    }
+
+    // Trial de 14 días solo si nunca ha tenido suscripción.
+    const trialPeriodDays = existing ? undefined : BILLING.trialDays;
+
+    const priceId = process.env[plan.priceEnv];
+    const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = priceId
+      ? { price: priceId, quantity: 1 }
+      : {
+          quantity: 1,
           price_data: {
-            currency: "usd",
-            unit_amount: 5700, // $57.00 USD
+            currency: BILLING.currency,
+            unit_amount: plan.amount,
+            recurring: { interval: plan.interval },
             product_data: {
-              name: "Anthroscope Plan Builder",
-              description: isSpanish
-                ? "Plan nutricional personalizado con 224 alimentos USDA bilingues, equivalencias mexicanas y PDF descargable. Acceso unico de por vida."
-                : "Personalized nutrition plan with 224 bilingual USDA foods, Mexican equivalents, and downloadable PDF. Lifetime single-use access.",
+              name: `${BILLING.productName} · ${plan.label}`,
+              description: BILLING.productDescription,
             },
           },
-          quantity: 1,
-        },
-      ],
-      locale: isSpanish ? "es" : "en",
-      success_url: `${appUrl}/gracias?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/comprar?canceled=1`,
+        };
+
+    const appUrl = getAppUrl();
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: user.id,
+      line_items: [lineItem],
+      subscription_data: {
+        metadata: { user_id: user.id, plan: interval },
+        ...(trialPeriodDays ? { trial_period_days: trialPeriodDays } : {}),
+      },
+      metadata: { user_id: user.id, plan: interval },
+      locale: "es",
       allow_promotion_codes: true,
       billing_address_collection: "auto",
-      customer_creation: "always",
+      payment_method_collection: "always",
+      success_url: `${appUrl}/gracias?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/suscripcion?canceled=1`,
     });
 
     if (!session.url) {
       return NextResponse.json(
-        { error: "No checkout URL returned by Stripe" },
+        { error: "Stripe no devolvió una URL de pago." },
         { status: 500 },
       );
     }
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[checkout] error:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    console.error("[checkout] error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
-  // Convenience: GET /api/checkout redirects directly to Stripe Checkout
-  if (!stripe) {
-    return NextResponse.redirect(`${appUrl}/comprar?error=config`);
-  }
-
-  try {
-    const acceptLang = req.headers.get("accept-language") ?? "";
-    const isSpanish = acceptLang.toLowerCase().includes("es");
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            unit_amount: 5700,
-            product_data: {
-              name: "Anthroscope Plan Builder",
-              description: isSpanish
-                ? "Plan nutricional personalizado con 224 alimentos USDA bilingues, equivalencias mexicanas y PDF descargable. Acceso unico de por vida."
-                : "Personalized nutrition plan with 224 bilingual USDA foods, Mexican equivalents, and downloadable PDF. Lifetime single-use access.",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      locale: isSpanish ? "es" : "en",
-      success_url: `${appUrl}/gracias?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/comprar?canceled=1`,
-      allow_promotion_codes: true,
-      billing_address_collection: "auto",
-      customer_creation: "always",
-    });
-
-    if (!session.url) {
-      return NextResponse.redirect(`${appUrl}/comprar?error=nourl`);
-    }
-
-    return NextResponse.redirect(session.url, 303);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[checkout GET] error:", msg);
-    return NextResponse.redirect(
-      `${appUrl}/comprar?error=${encodeURIComponent(msg.slice(0, 80))}`,
-    );
-  }
+export async function GET() {
+  // El checkout necesita saber el plan y la usuaria: siempre vía /suscripcion.
+  return NextResponse.redirect(`${getAppUrl()}/suscripcion`, 303);
 }

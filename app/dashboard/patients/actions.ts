@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MAX_CLIENTS } from '@/lib/constants'
+import { HAS_CLIENT_LIMIT, MAX_CLIENTS } from '@/lib/constants'
+import { trackEvent } from '@/lib/analytics/track'
 
 function nullable(v: FormDataEntryValue | null): string | null {
   const s = (v ?? '').toString().trim()
@@ -53,18 +54,21 @@ export async function createPatient(formData: FormData) {
     )
   }
 
-  const { count } = await supabase
-    .from('patients')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+  // El tope es opcional (por defecto 0 = sin límite).
+  if (HAS_CLIENT_LIMIT) {
+    const { count } = await supabase
+      .from('patients')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
 
-  if ((count ?? 0) >= MAX_CLIENTS) {
-    redirect(
-      '/dashboard/patients/new?error=' +
-        encodeURIComponent(
-          `Has alcanzado el límite de ${MAX_CLIENTS} clientes. / You have reached the ${MAX_CLIENTS} client limit.`,
-        ),
-    )
+    if ((count ?? 0) >= MAX_CLIENTS) {
+      redirect(
+        '/dashboard/patients/new?error=' +
+          encodeURIComponent(
+            `Has alcanzado el límite de ${MAX_CLIENTS} clientes de tu plan.`,
+          ),
+      )
+    }
   }
 
   const { error } = await supabase.from('patients').insert(payload)
@@ -74,6 +78,8 @@ export async function createPatient(formData: FormData) {
       '/dashboard/patients/new?error=' + encodeURIComponent(error.message),
     )
   }
+
+  await trackEvent({ name: 'patient_created', userId: user.id })
 
   revalidatePath('/dashboard/patients')
   revalidatePath('/dashboard')

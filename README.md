@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anthroscope Plan Builder
 
-## Getting Started
+Software para nutricionistas en México: pacientes, planes alimentarios con
+equivalentes SMAE, PDF con marca propia y portal del paciente.
 
-First, run the development server:
+- **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind 4 · Supabase (PostgreSQL) · Stripe · Resend
+- **Precio:** $199 MXN/mes o $1.990 MXN/año · 14 días de prueba · sin límite de pacientes
+
+---
+
+## Arranque local
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local     # completa las claves
+pnpm dev                       # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplicar la base de datos: pega `supabase/bootstrap.sql` en el SQL Editor de
+Supabase (proyecto vacío) o ejecuta los archivos listados en
+[`docs/BILLING-SETUP.md`](docs/BILLING-SETUP.md).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando | Qué hace |
+|---|---|
+| `pnpm dev` | servidor de desarrollo |
+| `pnpm build` / `pnpm start` | build y arranque de producción |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | tests (vitest) |
+| `pnpm db:bootstrap:build` | regenera `supabase/bootstrap.sql` |
+| `pnpm db:bootstrap:check` | falla si el bootstrap está desactualizado |
 
-## Learn More
+## Cómo está organizado
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/
+  page.tsx                 landing (venta a nutricionistas)
+  suscripcion/             precios + alta de suscripción (Stripe Checkout)
+  signup, login, ...       autenticación
+  dashboard/               panel: pacientes, planes, plantillas, ajustes
+  api/
+    checkout/              crea la sesión de suscripción
+    stripe/webhook/        sincroniza suscripciones + pago único legacy
+    stripe/portal/         portal de facturación
+    export/                CSV/JSON de pacientes y planes
+    plans/[id]/pdf/        PDF del plan
+    cron/trial-reminders/  aviso de fin de prueba (diario)
+lib/
+  billing/                 precios, acceso, sincronización con Stripe
+  emails/                  layout + correos de ciclo de vida
+  export/                  CSV (RFC 4180, BOM)
+  analytics/               eventos del embudo
+  supabase/                clientes server/admin
+supabase/
+  bootstrap.sql            (generado) esquema completo en un archivo
+  subscriptions.sql        suscripciones, trial, funciones de acceso
+  analytics.sql            eventos del embudo
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Modelo de acceso
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Una cuenta accede si cumple **una** de estas condiciones:
 
-## Deploy on Vercel
+1. **Legacy:** compró el pago único antiguo (código de acceso canjeado).
+2. **Trial:** 14 días desde el alta (los crea un trigger en la BD).
+3. **Suscripción activa** en Stripe.
+4. **`past_due`** dentro de los 5 días de gracia.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+El bloqueo ocurre en `app/dashboard/layout.tsx`: sin acceso, redirige a
+`/suscripcion`. La decisión se toma leyendo `public.subscriptions`, nunca
+llamando a Stripe en cada request.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentación
+
+- [Puesta en marcha de cobros (Stripe)](docs/BILLING-SETUP.md)
+- [Revisión legal antes de publicar](docs/LEGAL-REVISION.md)
+- [Códigos de acceso legacy](docs/ACCESS_CODES_SETUP.md)
+
+## CI
+
+`.github/workflows/ci.yml` ejecuta en cada push: lint → typecheck → tests →
+verificación del bootstrap SQL → build de producción.

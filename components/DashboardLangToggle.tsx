@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- el idioma se hidrata desde localStorage al montar (evita mismatch SSR) */
 "use client";
 
 import { useEffect, useState } from "react";

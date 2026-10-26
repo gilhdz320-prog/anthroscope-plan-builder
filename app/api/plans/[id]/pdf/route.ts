@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { createElement, type ReactElement } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { trackEvent } from "@/lib/analytics/track";
 import { PlanPdf, type PlanPdfData } from "@/lib/pdf/PlanPdf";
 import {
   calculateCalories,
@@ -285,6 +286,12 @@ export async function GET(
       .replace(/[^a-zA-Z0-9-_ ]/g, "")
       .replace(/\s+/g, "_")
       .slice(0, 60) || "plan";
+
+    await trackEvent({
+      name: "plan_pdf_generated",
+      userId: user.id,
+      props: { plan_id: id },
+    });
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
