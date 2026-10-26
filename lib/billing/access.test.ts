@@ -11,15 +11,20 @@ type FakeOptions = {
     current_period_end?: string | null;
     cancel_at_period_end?: boolean | null;
   } | null;
+  error?: { code?: string; message?: string } | null;
 };
 
-function fakeSupabase({ legacy = false, row = null }: FakeOptions): SupabaseClient {
+function fakeSupabase({
+  legacy = false,
+  row = null,
+  error = null,
+}: FakeOptions): SupabaseClient {
   return {
     rpc: async () => ({ data: legacy, error: null }),
     from: () => ({
       select: () => ({
         eq: () => ({
-          maybeSingle: async () => ({ data: row, error: null }),
+          maybeSingle: async () => ({ data: row, error }),
         }),
       }),
     }),
@@ -106,5 +111,24 @@ describe("getAccess", () => {
     const access = await getAccess(fakeSupabase({}), "u1");
     expect(access.hasAccess).toBe(false);
     expect(access.kind).toBe("none");
+  });
+
+  it("un trial sin fecha no regala acceso", async () => {
+    const access = await getAccess(
+      fakeSupabase({ row: { status: "trialing", trial_end: null } }),
+      "u1",
+    );
+    expect(access.hasAccess).toBe(false);
+    expect(access.kind).toBe("expired");
+  });
+
+  it("no bloquea a todas si aún no se aplicó la migración de suscripciones", async () => {
+    const access = await getAccess(
+      fakeSupabase({
+        error: { code: "42P01", message: 'relation "public.subscriptions" does not exist' },
+      }),
+      "u1",
+    );
+    expect(access.hasAccess).toBe(true);
   });
 });

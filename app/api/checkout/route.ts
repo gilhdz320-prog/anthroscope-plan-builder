@@ -78,10 +78,14 @@ export async function POST(req: NextRequest) {
         metadata: { user_id: user.id },
       });
       customerId = customer.id;
+      // Sin fila previa (p. ej. cuenta anterior al trial automático): se crea en
+      // 'incomplete' para NO conceder acceso hasta que el webhook confirme el pago.
       await admin.from("subscriptions").upsert(
         {
           user_id: user.id,
           stripe_customer_id: customerId,
+          status: "incomplete",
+          provider: "stripe",
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" },

@@ -71,6 +71,20 @@ export async function getAccess(
   const isLegacy = legacyResult.data === true;
   const sub = (subResult.data ?? null) as SubscriptionRow | null;
 
+  // Guard de despliegue: si aún no se aplicó supabase/subscriptions.sql, no
+  // bloqueamos a todo el mundo. Se registra y se abre el acceso hasta migrar.
+  const missingTable =
+    subResult.error?.code === "42P01" ||
+    /relation .*subscriptions.* does not exist/i.test(
+      subResult.error?.message ?? "",
+    );
+  if (missingTable) {
+    console.error(
+      "[billing] falta aplicar supabase/subscriptions.sql: acceso abierto temporalmente",
+    );
+    return { ...empty, hasAccess: true, kind: "legacy" };
+  }
+
   if (sub) {
     const status = sub.status ?? "incomplete";
     const base = {
@@ -83,8 +97,8 @@ export async function getAccess(
 
     if (status === "trialing") {
       const trialDaysLeft = daysUntil(sub.trial_end);
-      // trial_end null = trial abierto (no debería pasar, pero no bloqueamos)
-      const hasAccess = trialDaysLeft === null || trialDaysLeft > 0;
+      // Sin trial_end no hay trial válido: no se puede regalar acceso indefinido.
+      const hasAccess = trialDaysLeft !== null && trialDaysLeft > 0;
       return {
         ...base,
         hasAccess,
