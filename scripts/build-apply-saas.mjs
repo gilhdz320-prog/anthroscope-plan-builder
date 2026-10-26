@@ -37,5 +37,31 @@ for (const file of FILES) {
   parts.push(`\n-- ${"=".repeat(76)}\n-- ORIGEN: supabase/${file}\n-- ${"=".repeat(76)}\n\n${sql}\n`);
 }
 
+// 4) Cuentas que ya existían: conservan el acceso (fundadoras y compradoras del
+//    pago único). Sin esto, el trigger no las cubre y quedarían bloqueadas.
+const backfill = `\n-- ${"=".repeat(76)}
+-- 4) BACKFILL: cuentas existentes conservan acceso
+-- ${"=".repeat(76)}
+-- El trigger del trial solo aplica a usuarios NUEVOS. Quien ya tenía cuenta
+-- (fundadoras, compradoras del pago único) se queda sin fila y el dashboard la
+-- mandaría a /suscripcion. Esta inserción les da acceso permanente.
+-- Idempotente: no toca a quien ya tiene fila.
+
+insert into public.subscriptions (user_id, status, provider)
+select u.id, 'active', 'legacy'
+from auth.users u
+where not exists (
+  select 1 from public.subscriptions s where s.user_id = u.id
+)
+on conflict (user_id) do nothing;
+
+-- Comprobación: cuántas cuentas tienen acceso
+select
+  (select count(*) from auth.users) as cuentas_totales,
+  (select count(*) from public.subscriptions) as cuentas_con_acceso;
+`;
+
+parts.push(backfill);
+
 writeFileSync(join(supabase, "apply-saas.sql"), parts.join(""), "utf8");
 console.log("supabase/apply-saas.sql generado.");
