@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProgressHistory } from "../progress-actions";
 import { PatientProgressClient } from "./PatientProgressClient";
+import { deriveMetrics } from "@/lib/anthropometry";
 
 const goalLabel: Record<string, string> = {
   weight_loss: "Pérdida de peso",
@@ -56,23 +57,26 @@ export default async function PatientDetailPage({
   const history = await getProgressHistory(id, 90);
 
   const age = ageFrom(patient.birth_date);
-  const weight = patient.weight_kg != null ? Number(patient.weight_kg) : null;
-  const height = patient.height_cm != null ? Number(patient.height_cm) : null;
-  const bodyFat = patient.body_fat_pct != null ? Number(patient.body_fat_pct) : null;
-  const leanMass =
-    weight != null && bodyFat != null
-      ? Math.round(weight * (1 - bodyFat / 100) * 10) / 10
-      : null;
-  const bmi =
-    weight != null && height != null && height > 0
-      ? Math.round((weight / (height / 100) ** 2) * 10) / 10
-      : null;
+  const weight =
+    patient.weight_kg != null ? Number(patient.weight_kg) : null;
+
+  // Índices derivados (IMC, cintura/cadera, cintura/altura, grasa, masa magra)
+  const metrics = deriveMetrics({
+    weightKg: patient.weight_kg,
+    heightCm: patient.height_cm,
+    waistCm: patient.waist_cm,
+    hipCm: patient.hip_cm,
+    bodyFatPct: patient.body_fat_pct,
+    birthDate: patient.birth_date,
+    sex: patient.sex,
+  });
 
   const stats = [
-    { label: "Peso", value: weight != null ? `${weight} kg` : "—" },
-    { label: "% Grasa", value: bodyFat != null ? `${bodyFat}%` : "—" },
-    { label: "Masa magra", value: leanMass != null ? `${leanMass} kg` : "—" },
-    { label: "IMC", value: bmi != null ? `${bmi}` : "—" },
+    {
+      label: "Peso",
+      value: weight != null ? `${weight} kg` : "—",
+    },
+    ...metrics.map((metric) => ({ label: metric.label, value: metric.value })),
   ];
 
   return (

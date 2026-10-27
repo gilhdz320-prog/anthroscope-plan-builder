@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createPatient } from "../actions";
+import { AnthropometryFields } from "@/components/patients/AnthropometryFields";
 
 export default async function NewPatientPage({
   searchParams,
@@ -113,30 +114,8 @@ export default async function NewPatientPage({
               Anthropometry
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="weight_kg" className="label">Peso (kg)</label>
-              <input id="weight_kg" name="weight_kg" type="number" step="0.1" className="input" />
-            </div>
-            <div>
-              <label htmlFor="height_cm" className="label">Altura (cm)</label>
-              <input id="height_cm" name="height_cm" type="number" step="0.1" className="input" />
-            </div>
-            <div>
-              <label htmlFor="body_fat_pct" className="label">% Grasa</label>
-              <input id="body_fat_pct" name="body_fat_pct" type="number" step="0.1" className="input" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="waist_cm" className="label">Cintura (cm)</label>
-              <input id="waist_cm" name="waist_cm" type="number" step="0.1" className="input" />
-            </div>
-            <div>
-              <label htmlFor="hip_cm" className="label">Cadera (cm)</label>
-              <input id="hip_cm" name="hip_cm" type="number" step="0.1" className="input" />
-            </div>
-          </div>
+          {/* Campos + índices derivados en vivo (IMC, ICC, ICT, %grasa est.) */}
+          <AnthropometryFields />
         </section>
 
         {/* Sport */}
