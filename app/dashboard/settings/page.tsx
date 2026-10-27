@@ -165,6 +165,9 @@ export default async function SettingsPage() {
           <Link href="/suscripcion" className="btn btn-ghost">
             Gestionar suscripción
           </Link>
+          <Link href="/suscripcion/recibos" className="btn btn-ghost">
+            Mis recibos
+          </Link>
           <Link href="/suscripcion" className="btn btn-ghost">
             Ver planes
           </Link>

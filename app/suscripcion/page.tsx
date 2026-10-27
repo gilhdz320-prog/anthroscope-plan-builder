@@ -192,6 +192,18 @@ export default async function SuscripcionPage({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <PoweredByAnthroscope variant="minimal" />
             <p className="text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+              <Link href="/comparativa" className="underline underline-offset-2">
+                Comparación
+              </Link>
+              {" · "}
+              {user && (
+                <>
+                  <Link href="/suscripcion/recibos" className="underline underline-offset-2">
+                    Mis recibos
+                  </Link>
+                  {" · "}
+                </>
+              )}
               <Link href="/privacidad" className="underline underline-offset-2">
                 Aviso de privacidad
               </Link>

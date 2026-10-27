@@ -403,6 +403,12 @@ export default function HomePage() {
             <Link href="/suscripcion" className="underline underline-offset-2">
               Precios
             </Link>
+            <Link href="/demo" className="underline underline-offset-2">
+              Demo
+            </Link>
+            <Link href="/comparativa" className="underline underline-offset-2">
+              Comparación
+            </Link>
             <Link href="/privacidad" className="underline underline-offset-2">
               Aviso de privacidad
             </Link>
