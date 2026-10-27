@@ -41,9 +41,16 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Anthroscope Plan Builder — Planes de nutrición profesionales",
+  title: "Anthroscope Plan Builder — Planes de alimentación con SMAE en minutos",
   description:
-    "Sistema enfocado para nutriólogos y coaches: del intake al plan final con equivalentes, plantillas y cálculos automáticos. Powered by Anthroscope.",
+    "Software para nutricionistas en México: pacientes ilimitados, equivalentes SMAE, PDF con tu marca y portal del paciente. $199 MXN al mes con 14 días de prueba.",
+  openGraph: {
+    title: "Anthroscope Plan Builder",
+    description:
+      "El plan de alimentación de tu consulta, en 10 minutos. Equivalentes SMAE, PDF con tu marca y portal del paciente.",
+    locale: "es_MX",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
