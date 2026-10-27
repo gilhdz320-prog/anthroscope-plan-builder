@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:bootstrap:build": "node scripts/build-sql-bootstrap.mjs",
+    "db:bootstrap:check": "node scripts/build-sql-bootstrap.mjs --check",
+    "db:apply-saas:build": "node scripts/build-apply-saas.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
@@ -29,6 +35,7 @@
     "supabase": "^2.108.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.5"
   }
 }

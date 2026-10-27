@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { trackEvent } from '@/lib/analytics/track'
 import {
   EQUIVALENTES_GRUPOS,
   GRUPO_KEYS,
@@ -193,6 +194,12 @@ export async function createPlan(formData: FormData) {
       console.error('[createPlan] Failed to clone template_meals:', e)
     }
   }
+
+  await trackEvent({
+    name: 'plan_created',
+    userId: user.id,
+    props: { plan_mode, from_template: Boolean(template_id) },
+  })
 
   revalidatePath('/dashboard/plans')
   revalidatePath('/dashboard')

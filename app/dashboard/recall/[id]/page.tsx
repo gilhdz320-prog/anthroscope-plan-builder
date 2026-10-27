@@ -58,7 +58,7 @@ export default async function RecallDetailPage({
           className="mt-2"
           style={{ ...cormorant, fontSize: "36px", color: "var(--ink-strong)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
         >
-          {data.client_name || data.client_email || "Sin nombre"}
+          {String(data.client_name || data.client_email || "Sin nombre")}
         </h1>
         <p className="mt-1 text-xs" style={{ color: "var(--ink-muted)" }}>
           Completado: {data.completed_at ? new Date(data.completed_at).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" }) : "—"}
@@ -97,13 +97,13 @@ export default async function RecallDetailPage({
       })}
 
       {/* Extras */}
-      {(responses.tipico || responses.suplementos || responses.notas_generales) && (
+      {(Boolean(responses.tipico) || Boolean(responses.suplementos) || Boolean(responses.notas_generales)) && (
         <div className="card-luxe p-5 rise">
           <h3 className="mb-3 text-base font-semibold" style={{ color: "var(--gold)" }}>
             Información adicional
           </h3>
           <div className="space-y-3">
-            {responses.tipico && (
+            {Boolean(responses.tipico) && (
               <div>
                 <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--ink-subtle)" }}>
                   ¿Fue un día típico?
@@ -111,7 +111,7 @@ export default async function RecallDetailPage({
                 <p className="text-sm" style={{ color: "var(--ink-strong)" }}>{String(responses.tipico)}</p>
               </div>
             )}
-            {responses.suplementos && (
+            {Boolean(responses.suplementos) && (
               <div>
                 <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--ink-subtle)" }}>
                   Suplementos
@@ -119,7 +119,7 @@ export default async function RecallDetailPage({
                 <p className="text-sm whitespace-pre-line" style={{ color: "var(--ink-strong)" }}>{String(responses.suplementos)}</p>
               </div>
             )}
-            {responses.notas_generales && (
+            {Boolean(responses.notas_generales) && (
               <div>
                 <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--ink-subtle)" }}>
                   Notas generales

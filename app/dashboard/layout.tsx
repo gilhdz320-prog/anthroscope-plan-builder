@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/SidebarNav";
 import { PoweredByAnthroscope } from "@/components/PoweredByAnthroscope";
 import { DashboardLangToggle } from "@/components/DashboardLangToggle";
 import { getLocale, tr } from "@/lib/i18n";
+import { getAccess } from "@/lib/billing/access";
 
 export default async function DashboardLayout({
   children,
@@ -15,6 +17,15 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
   const locale = await getLocale();
+
+  if (!user) {
+    redirect("/login?redirect=/dashboard");
+  }
+
+  const access = await getAccess(supabase, user.id);
+  if (!access.hasAccess) {
+    redirect("/suscripcion?expired=1");
+  }
 
   let avatarUrl: string | null = null;
   if (user) {
@@ -152,7 +163,49 @@ export default async function DashboardLayout({
         </header>
 
         <main className="flex-1 px-6 py-8 md:px-10" style={{ background: "#0a0a0a" }}>
-          <div className="mx-auto max-w-6xl">{children}</div>
+          <div className="mx-auto max-w-6xl">
+            {access.kind === "trial" && (
+              <div
+                className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md px-4 py-3"
+                style={{ background: "#1a1a12", border: "1px solid #3a3320" }}
+              >
+                <p className="text-xs" style={{ color: "#d4b876" }}>
+                  Estás en prueba: te quedan {access.trialDaysLeft}{" "}
+                  {access.trialDaysLeft === 1 ? "día" : "días"} de acceso completo.
+                </p>
+                <Link
+                  href="/suscripcion"
+                  className="rounded-md px-3 py-1.5 text-xs font-semibold"
+                  style={{ background: "#c9a961", color: "#111111" }}
+                >
+                  Activar suscripción
+                </Link>
+              </div>
+            )}
+
+            {access.kind === "past_due" && (
+              <div
+                className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md px-4 py-3"
+                style={{ background: "#1a1212", border: "1px solid #4a2626" }}
+              >
+                <p className="text-xs" style={{ color: "#e0a3a3" }}>
+                  No pudimos cobrar tu suscripción. Te quedan{" "}
+                  {access.graceDaysLeft}{" "}
+                  {access.graceDaysLeft === 1 ? "día" : "días"} antes de que se
+                  pause el acceso.
+                </p>
+                <Link
+                  href="/suscripcion"
+                  className="rounded-md px-3 py-1.5 text-xs font-semibold"
+                  style={{ background: "#e0a3a3", color: "#111111" }}
+                >
+                  Actualizar tarjeta
+                </Link>
+              </div>
+            )}
+
+            {children}
+          </div>
         </main>
 
         <footer

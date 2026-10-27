@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect -- los swaps guardados se cargan de localStorage al montar */
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";

@@ -52,9 +52,9 @@ export function calcularEquivalentes(
   const remainingProteinG = Math.max(0, proteinG - fixedProteinG);
 
   // Distribute remaining protein: 70% animal, 30% plant
-  let proteinas_ao = round((remainingProteinG * 0.7) / 7);
-  let proteinas_av = round((remainingProteinG * 0.3) / 7);
-  let leguminosas = round(proteinas_av * 0.4);
+  const proteinas_ao = round((remainingProteinG * 0.7) / 7);
+  const proteinas_av = round((remainingProteinG * 0.3) / 7);
+  const leguminosas = round(proteinas_av * 0.4);
 
   // Step 2: Fat — subtract fat contributed by protein-bearing groups and dairy
   const fatFromOther =
@@ -63,7 +63,7 @@ export function calcularEquivalentes(
     lacteos * EQUIVALENTES_GRUPOS.lacteos.fat +
     leguminosas * EQUIVALENTES_GRUPOS.leguminosas.fat;
   const remainingFatG = Math.max(0, fatG - fatFromOther);
-  let grasas = round(remainingFatG / 5);
+  const grasas = round(remainingFatG / 5);
 
   // Step 3: Carbs — subtract carbs from all carb-bearing groups
   const fixedCarbsG =
@@ -72,10 +72,10 @@ export function calcularEquivalentes(
     lacteos * EQUIVALENTES_GRUPOS.lacteos.carbs +
     leguminosas * EQUIVALENTES_GRUPOS.leguminosas.carbs;
   const remainingCarbsG = Math.max(0, carbsG - fixedCarbsG);
-  let cereales = round(remainingCarbsG / 15);
+  const cereales = round(remainingCarbsG / 15);
 
   // Step 4: Normalization — scale adjustable groups if total overshoots target
-  let result: Equivalentes = {
+  const result: Equivalentes = {
     cereales,
     leguminosas,
     verduras,

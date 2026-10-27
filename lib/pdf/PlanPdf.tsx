@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/static-components -- react-pdf exige componentes declarados dentro del documento */
 import {
   Document,
   Page,

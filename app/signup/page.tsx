@@ -70,13 +70,12 @@ export default async function SignupPage({
             <form action={signup} className="space-y-5">
               <div>
                 <label htmlFor="access_code" className="label">
-                  {tr("signup_access_code", locale)}
+                  Código de acceso <span style={{ color: "var(--ink-subtle)" }}>(opcional)</span>
                 </label>
                 <input
                   id="access_code"
                   name="access_code"
                   type="text"
-                  required
                   defaultValue={prefillCode}
                   placeholder="APB-XXXX-XXXX-XXXX"
                   autoComplete="off"
@@ -91,15 +90,8 @@ export default async function SignupPage({
                   className="mt-1.5 text-[11px]"
                   style={{ color: "var(--ink-subtle)" }}
                 >
-                  {tr("signup_access_hint_pre", locale)}{" "}
-                  <Link
-                    href="https://anthroscope.pro/recursos"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "var(--brand-700)" }}
-                  >
-                    {tr("signup_access_hint_link", locale)}
-                  </Link>
+                  ¿Compraste antes el acceso de por vida? Pega tu código aquí.
+                  Si no, deja el campo vacío y empiezas con <strong>14 días gratis</strong>.
                 </p>
               </div>
 
