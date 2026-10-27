@@ -359,7 +359,7 @@ export default async function PlanDetailPage({
               planKcal={planEquivalentes?.kcalTarget ?? null}
               planNotes={plan.notes}
             />
-            <SharePlanButton planId={plan.id} />
+            <SharePlanButton planId={plan.id} planTitle={plan.title} />
             <a
               href={`/api/plans/${plan.id}/pdf`}
               download

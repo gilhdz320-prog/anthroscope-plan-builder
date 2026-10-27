@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { HAS_CLIENT_LIMIT, MAX_CLIENTS } from '@/lib/constants'
 import { trackEvent } from '@/lib/analytics/track'
+import { buildDemo } from '@/lib/demo/fixture'
 
 function nullable(v: FormDataEntryValue | null): string | null {
   const s = (v ?? '').toString().trim()
@@ -118,4 +119,99 @@ export async function deletePatient(formData: FormData) {
 
   await supabase.from('patients').delete().eq('id', id)
   revalidatePath('/dashboard/patients')
+}
+
+/**
+ * Carga un caso de práctica en la cuenta: paciente + plan borrador con la
+ * distribución de equivalentes ya calculada (sin comidas, para que la persona
+ * practique el paso que importa en el editor).
+ *
+ * Idempotente: si ya existe "Ana Pérez", no duplica; abre la existente.
+ */
+export async function createDemoPatient() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: existing } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('first_name', 'Ana')
+    .eq('last_name', 'Pérez')
+    .limit(1)
+    .maybeSingle()
+
+  if (existing?.id) {
+    redirect(`/dashboard/patients/${existing.id}`)
+  }
+
+  const demo = buildDemo()
+  const p = demo.patient
+
+  const { data: patient, error } = await supabase
+    .from('patients')
+    .insert({
+      user_id: user.id,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      sex: p.sex,
+      birth_date: '1994-03-12',
+      weight_kg: p.weight_kg,
+      height_cm: p.height_cm,
+      body_fat_pct: p.body_fat_pct,
+      waist_cm: p.waist_cm,
+      hip_cm: p.hip_cm,
+      goal: p.goal,
+      sport: p.sport,
+      notes: `Caso de práctica. ${p.notes}`,
+    })
+    .select('id')
+    .single()
+
+  if (error || !patient) {
+    redirect(
+      '/dashboard/patients?error=' +
+        encodeURIComponent(error?.message ?? 'No se pudo crear el caso de práctica'),
+    )
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const inAMonth = new Date()
+  inAMonth.setDate(inAMonth.getDate() + 30)
+
+  await supabase.from('plans').insert({
+    user_id: user.id,
+    patient_id: patient.id,
+    title: 'Plan de práctica',
+    status: 'draft',
+    valid_from: today,
+    valid_until: inAMonth.toISOString().slice(0, 10),
+    plan_mode: 'equivalentes',
+    equivalentes: {
+      mode: 'equivalentes',
+      kcalTarget: demo.targetKcal,
+      proteinPct: demo.macros.proteinPct,
+      carbsPct: demo.macros.carbsPct,
+      fatPct: demo.macros.fatPct,
+      proteinG: demo.totalsMacros.proteinG,
+      carbsG: demo.totalsMacros.carbsG,
+      fatG: demo.totalsMacros.fatG,
+      groups: demo.totals,
+    },
+    notes:
+      'Caso de práctica generado con el motor real: la meta de equivalentes ya está calculada. Ármalo en el editor de comidas.',
+  })
+
+  await trackEvent({
+    name: 'patient_created',
+    userId: user.id,
+    props: { demo: true },
+  })
+
+  revalidatePath('/dashboard/patients')
+  revalidatePath('/dashboard')
+  redirect(`/dashboard/patients/${patient.id}`)
 }

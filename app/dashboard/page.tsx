@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+import { createDemoPatient } from "./patients/actions";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -19,6 +21,67 @@ export default async function DashboardPage() {
   // "Primera visita" = todavía no tiene pacientes ni planes propios.
   // (Las plantillas y los equivalentes son del sistema, no cuentan.)
   const isFirstRun = (patientsCount ?? 0) === 0 && (plansCount ?? 0) === 0;
+
+  // Estado real para el checklist de activación
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [{ data: brand }, { count: pdfCount }] = await Promise.all([
+    supabase
+      .from("nutritionist_profiles")
+      .select("clinic_name, professional_name, logo_url")
+      .eq("user_id", user?.id ?? "")
+      .maybeSingle(),
+    supabase
+      .from("analytics_events")
+      .select("id", { count: "exact", head: true })
+      .eq("name", "plan_pdf_generated")
+      .eq("user_id", user?.id ?? ""),
+  ]);
+
+  const brandRow = brand as
+    | { clinic_name?: string | null; professional_name?: string | null; logo_url?: string | null }
+    | null;
+
+  const hasBrand = Boolean(
+    brandRow?.professional_name || brandRow?.clinic_name || brandRow?.logo_url,
+  );
+
+  const activationSteps = [
+    {
+      key: "patient",
+      title: "Crea tu primer paciente",
+      description: "Con antropometría si la tienes: el cálculo sale solo.",
+      href: "/dashboard/patients/new",
+      cta: "Crear",
+      done: (patientsCount ?? 0) > 0,
+    },
+    {
+      key: "plan",
+      title: "Arma su plan de alimentación",
+      description: "Con equivalentes SMAE repartidos por comida.",
+      href: "/dashboard/plans/new",
+      cta: "Armar",
+      done: (plansCount ?? 0) > 0,
+    },
+    {
+      key: "pdf",
+      title: "Genera el PDF para tu paciente",
+      description: "Es lo que se lleva a casa (y lo que te va a vender).",
+      href: "/dashboard/plans",
+      cta: "Generar",
+      done: (pdfCount ?? 0) > 0,
+    },
+    {
+      key: "brand",
+      title: "Pon tu marca en el PDF",
+      description: "Nombre, cédula y logo: aparece en la cabecera.",
+      href: "/dashboard/settings",
+      cta: "Agregar",
+      done: hasBrand,
+    },
+  ];
 
   const stats = [
     {
@@ -108,6 +171,23 @@ export default async function DashboardPage() {
             : "Tu estudio profesional para construir planes de nutrición de alto nivel."}
         </p>
       </div>
+
+      <ActivationChecklist
+        steps={activationSteps}
+        extraAction={
+          (patientsCount ?? 0) === 0 ? (
+            <form action={createDemoPatient}>
+              <button type="submit" className="btn btn-ghost">
+                Cargar caso de práctica (Ana Pérez)
+              </button>
+              <p className="mt-2 text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+                Crea un paciente de ejemplo con antropometría y un plan con la meta
+                de equivalentes ya calculada, para que practiques sin usar datos reales.
+              </p>
+            </form>
+          ) : undefined
+        }
+      />
 
       <section className="rise rise-1">
         <div className="mb-4 flex items-baseline justify-between">

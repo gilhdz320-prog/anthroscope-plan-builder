@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { deletePatient } from "./actions";
+import { createDemoPatient, deletePatient } from "./actions";
 
 const goalLabel: Record<string, string> = {
   weight_loss: "Pérdida de peso",
@@ -41,9 +41,20 @@ export default async function PatientsPage() {
             Administra los expedientes de tus pacientes activos.
           </p>
         </div>
-        <Link href="/dashboard/patients/new" className="btn btn-brand">
-          + Nuevo paciente
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <form action={createDemoPatient}>
+            <button
+              type="submit"
+              className="btn btn-ghost"
+              title="Paciente de ejemplo con antropometría y plan de práctica"
+            >
+              Caso de práctica
+            </button>
+          </form>
+          <Link href="/dashboard/patients/new" className="btn btn-brand">
+            + Nuevo paciente
+          </Link>
+        </div>
       </div>
 
       {error && (

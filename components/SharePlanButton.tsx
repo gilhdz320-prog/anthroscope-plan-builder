@@ -6,7 +6,13 @@ import { generateQR, qrToSvg } from "@/lib/qrcode";
 
 const SHARE_HOST = "planbuilder.anthroscope.pro";
 
-export function SharePlanButton({ planId }: { planId: string }) {
+export function SharePlanButton({
+  planId,
+  planTitle,
+}: {
+  planId: string;
+  planTitle?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -138,6 +144,24 @@ export function SharePlanButton({ planId }: { planId: string }) {
                     {copied ? "✓ Copiado" : "Copiar"}
                   </button>
                 </div>
+
+                {/* WhatsApp: el canal real por el que se manda el plan en México */}
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `Hola, te comparto tu plan de alimentación${
+                      planTitle ? ` "${planTitle}"` : ""
+                    }: https://${url}`,
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold"
+                  style={{ background: "#25D366", color: "#0B2E13" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M20.5 3.5A11.8 11.8 0 0 0 12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6A12 12 0 0 0 12 24c6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.5-8.5zM12 21.8c-1.8 0-3.6-.5-5.1-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 21.8 12c0 5.4-4.4 9.8-9.8 9.8zm5.4-7.3c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2 3.1 4.9 4.3 2.4 1 2.9.8 3.4.8.5 0 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.3-.5-.4z" />
+                  </svg>
+                  Enviar por WhatsApp
+                </a>
               </div>
             )}
 
