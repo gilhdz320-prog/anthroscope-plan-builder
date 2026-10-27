@@ -1,4 +1,8 @@
+# Aprobación de scripts de build de dependencias nativas.
+# pnpm 10+ bloquea por defecto los postinstall; estas tres los necesitan:
+#   - esbuild / unrs-resolver: binarios nativos (vitest, eslint)
+#   - sharp: optimización de imágenes de Next
 allowBuilds:
-  esbuild: set this to true or false
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
