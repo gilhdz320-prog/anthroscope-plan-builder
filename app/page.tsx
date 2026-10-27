@@ -111,12 +111,15 @@ export default function HomePage() {
               <Link href="/signup" className="btn btn-primary">
                 Empezar 14 días gratis
               </Link>
-              <Link href="/suscripcion" className="btn btn-ghost">
-                Ver precios
+              <Link href="/demo" className="btn btn-ghost">
+                Ver un plan de ejemplo
               </Link>
             </div>
             <p className="mt-3 text-xs rise rise-3" style={{ color: "var(--ink-subtle)" }}>
-              Sin tarjeta para la prueba · Cancela cuando quieras
+              Sin tarjeta para la prueba · Cancela cuando quieras ·{" "}
+              <Link href="/demo" className="underline underline-offset-2">
+                o mira un plan terminado
+              </Link>
             </p>
 
             <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 rise rise-3">
