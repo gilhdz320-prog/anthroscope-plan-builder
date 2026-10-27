@@ -10,6 +10,12 @@ import {
   type ProgressEntry,
   type ProgressInput,
 } from "../progress-actions";
+import {
+  bodyFatISAK,
+  ISAK_FOLDS,
+  ISAK_GIRTHS,
+  sumFolds,
+} from "@/lib/anthropometry";
 
 function t(locale: "es" | "en", es: string, en: string): string {
   return locale === "en" ? en : es;
@@ -212,9 +218,12 @@ const blank: ProgressInput = {
 
 export function PatientProgressClient({
   patientId,
+  patientSex,
   history,
 }: {
   patientId: string;
+  /** Sexo del paciente: necesario para la ecuación de pliegues. */
+  patientSex?: string | null;
   history: ProgressEntry[];
 }) {
   const { locale } = useLocale();
@@ -251,6 +260,36 @@ export function PatientProgressClient({
     .filter((h) => h.hip_cm != null)
     .map((h) => ({ date: h.recorded_at, value: Number(h.hip_cm) }));
 
+  // ISAK: suma de pliegues por fecha y %grasa por Durnin-Womersley.
+  const foldsOf = (entry: ProgressEntry) => ({
+    triceps: entry.fold_triceps_mm,
+    subscapular: entry.fold_subscapular_mm,
+    biceps: entry.fold_biceps_mm,
+    iliac: entry.fold_iliac_mm,
+    supraspinal: entry.fold_supraspinal_mm,
+    abdominal: entry.fold_abdominal_mm,
+    thigh: entry.fold_thigh_mm,
+    calf: entry.fold_calf_mm,
+  });
+
+  const foldsSeries = history
+    .map((entry) => ({
+      date: entry.recorded_at,
+      value: sumFolds(foldsOf(entry)),
+    }))
+    .filter(
+      (point): point is { date: string; value: number } => point.value != null,
+    );
+
+  const isakFatSeries = history
+    .map((entry) => ({
+      date: entry.recorded_at,
+      value: bodyFatISAK(foldsOf(entry), patientSex)?.pct ?? null,
+    }))
+    .filter(
+      (point): point is { date: string; value: number } => point.value != null,
+    );
+
   // Trend helpers: latest vs ~30 days earlier.
   function trend(series: { date: string; value: number }[]) {
     if (series.length === 0) return null;
@@ -285,6 +324,19 @@ export function PatientProgressClient({
       waist_cm: e.waist_cm,
       hip_cm: e.hip_cm,
       notes: e.notes,
+      // Medidas ISAK (si la entrada las tiene)
+      fold_triceps_mm: e.fold_triceps_mm ?? null,
+      fold_subscapular_mm: e.fold_subscapular_mm ?? null,
+      fold_biceps_mm: e.fold_biceps_mm ?? null,
+      fold_iliac_mm: e.fold_iliac_mm ?? null,
+      fold_supraspinal_mm: e.fold_supraspinal_mm ?? null,
+      fold_abdominal_mm: e.fold_abdominal_mm ?? null,
+      fold_thigh_mm: e.fold_thigh_mm ?? null,
+      fold_calf_mm: e.fold_calf_mm ?? null,
+      girth_arm_cm: e.girth_arm_cm ?? null,
+      girth_thigh_cm: e.girth_thigh_cm ?? null,
+      girth_calf_cm: e.girth_calf_cm ?? null,
+      girth_chest_cm: e.girth_chest_cm ?? null,
     });
     setError(null);
     setModalOpen(true);
@@ -413,6 +465,48 @@ export function PatientProgressClient({
         </div>
       </div>
 
+      {/* ISAK: suma de pliegues y %grasa por pliegues (solo si hay datos) */}
+      {(foldsSeries.length > 0 || isakFatSeries.length > 0) && (
+        <div className="card-luxe p-5">
+          <div className="flex items-center justify-between">
+            <p className="eyebrow" style={{ color: "var(--gold)" }}>
+              {t(locale, "Pliegues ISAK", "ISAK skinfolds")}
+            </p>
+            {foldsSeries.length > 0 && (
+              <p className="font-mono-tabular text-xs" style={{ color: "var(--ink-muted)" }}>
+                {t(locale, "Suma", "Sum")}:{" "}
+                {foldsSeries[foldsSeries.length - 1].value.toFixed(1)} mm
+                {isakFatSeries.length > 0 && (
+                  <>
+                    {" · "}
+                    {t(locale, "% grasa", "Body fat")}:{" "}
+                    {isakFatSeries[isakFatSeries.length - 1].value.toFixed(1)}%
+                  </>
+                )}
+              </p>
+            )}
+          </div>
+          <div className="mt-3">
+            <DualLineChart
+              seriesA={foldsSeries}
+              seriesB={isakFatSeries}
+              colorA="#b08cc9"
+              colorB="#d98c5f"
+              labelA={t(locale, "Suma pliegues (mm)", "Folds sum (mm)")}
+              labelB={t(locale, "% grasa (DW)", "Body fat % (DW)")}
+              locale={locale}
+            />
+          </div>
+          <p className="mt-2 text-[10px]" style={{ color: "var(--ink-subtle)" }}>
+            {t(
+              locale,
+              "Suma de los 8 sitios capturados. El % de grasa usa Durnin-Womersley cuando están los 4 sitios (bíceps, tríceps, subescapular, cresta ilíaca).",
+              "Sum of captured sites. Body fat uses Durnin-Womersley when the 4 sites are present (biceps, triceps, subscapular, iliac crest).",
+            )}
+          </p>
+        </div>
+      )}
+
       {/* History table */}
       <div className="card-luxe overflow-hidden" style={{ padding: 0 }}>
         <table className="w-full text-sm">
@@ -510,7 +604,7 @@ export function PatientProgressClient({
           onClick={() => setModalOpen(false)}
         >
           <div
-            className="card-luxe w-full max-w-md p-6"
+            className="card-luxe max-h-[85vh] w-full max-w-lg overflow-y-auto p-6"
             style={{ background: "#141414" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -592,6 +686,46 @@ export function PatientProgressClient({
                   />
                 </div>
               </div>
+
+              {/* ISAK opcional: pliegues y perímetros del día */}
+              <details className="rounded-md p-3" style={{ background: "var(--surface-sunken)" }}>
+                <summary className="cursor-pointer text-xs" style={{ color: "var(--ink-muted)" }}>
+                  {t(locale, "Medidas ISAK (opcional)", "ISAK measures (optional)")}
+                </summary>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {ISAK_FOLDS.map((fold) => (
+                    <div key={fold.key}>
+                      <label className="label text-[11px]">{fold.label} (mm)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="input"
+                        value={(form[`fold_${fold.key}_mm` as keyof ProgressInput] as number | null | undefined) ?? ""}
+                        onChange={(e) =>
+                          setField(`fold_${fold.key}_mm` as keyof ProgressInput, e.target.value)
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {ISAK_GIRTHS.map((girth) => (
+                    <div key={girth.key}>
+                      <label className="label text-[11px]">{girth.label} (cm)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="input"
+                        value={(form[girth.key as keyof ProgressInput] as number | null | undefined) ?? ""}
+                        onChange={(e) =>
+                          setField(girth.key as keyof ProgressInput, e.target.value)
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </details>
+
               <div>
                 <label className="label">{t(locale, "Notas", "Notes")}</label>
                 <textarea

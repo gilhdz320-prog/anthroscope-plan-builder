@@ -188,7 +188,11 @@ export default async function PatientDetailPage({
       </div>
 
       <div className="rise rise-2">
-        <PatientProgressClient patientId={id} history={history} />
+        <PatientProgressClient
+          patientId={id}
+          patientSex={patient.sex}
+          history={history}
+        />
       </div>
     </div>
   );

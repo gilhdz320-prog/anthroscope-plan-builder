@@ -4,7 +4,23 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export interface ProgressEntry {
+/** Pliegues y perímetros ISAK (mm / cm). Opcionales en cada medición. */
+export interface IsakMeasures {
+  fold_triceps_mm: number | null
+  fold_subscapular_mm: number | null
+  fold_biceps_mm: number | null
+  fold_iliac_mm: number | null
+  fold_supraspinal_mm: number | null
+  fold_abdominal_mm: number | null
+  fold_thigh_mm: number | null
+  fold_calf_mm: number | null
+  girth_arm_cm: number | null
+  girth_thigh_cm: number | null
+  girth_calf_cm: number | null
+  girth_chest_cm: number | null
+}
+
+export type ProgressEntry = {
   id: string
   patient_id: string
   recorded_at: string
@@ -14,9 +30,9 @@ export interface ProgressEntry {
   waist_cm: number | null
   hip_cm: number | null
   notes: string | null
-}
+} & Partial<IsakMeasures>
 
-export interface ProgressInput {
+export type ProgressInput = {
   recorded_at?: string | null
   weight_kg?: number | null
   body_fat_pct?: number | null
@@ -24,7 +40,22 @@ export interface ProgressInput {
   waist_cm?: number | null
   hip_cm?: number | null
   notes?: string | null
-}
+} & Partial<Record<keyof IsakMeasures, number | null>>
+
+const ISAK_KEYS: Array<keyof IsakMeasures> = [
+  'fold_triceps_mm',
+  'fold_subscapular_mm',
+  'fold_biceps_mm',
+  'fold_iliac_mm',
+  'fold_supraspinal_mm',
+  'fold_abdominal_mm',
+  'fold_thigh_mm',
+  'fold_calf_mm',
+  'girth_arm_cm',
+  'girth_thigh_cm',
+  'girth_calf_cm',
+  'girth_chest_cm',
+]
 
 function num(v: unknown): number | null {
   if (v === null || v === undefined || v === '') return null
@@ -35,6 +66,19 @@ function num(v: unknown): number | null {
 function str(v: unknown): string | null {
   const s = (v ?? '').toString().trim()
   return s === '' ? null : s
+}
+
+/**
+ * Solo envía las medidas ISAK que tienen valor. Así la acción funciona en una
+ * base donde todavía no se aplicó add_isak_progress.sql.
+ */
+function isakPayload(data: ProgressInput): Partial<IsakMeasures> {
+  const out: Partial<IsakMeasures> = {}
+  for (const key of ISAK_KEYS) {
+    const value = num(data[key])
+    if (value !== null) out[key] = value
+  }
+  return out
 }
 
 // Derive lean mass from weight + body-fat % when not supplied explicitly.
@@ -90,6 +134,7 @@ export async function addProgressEntry(patientId: string, data: ProgressInput) {
     waist_cm: clean.waist_cm,
     hip_cm: clean.hip_cm,
     notes: clean.notes,
+    ...isakPayload(data),
   }
 
   // One measurement per date: overwrite an existing same-day entry.
@@ -123,6 +168,7 @@ export async function updateProgressEntry(id: string, data: ProgressInput) {
     waist_cm: clean.waist_cm,
     hip_cm: clean.hip_cm,
     notes: clean.notes,
+    ...isakPayload(data),
   }
   if (clean.recorded_at) patch.recorded_at = clean.recorded_at
 
@@ -167,11 +213,10 @@ export async function getProgressHistory(
   since.setDate(since.getDate() - days)
   const sinceStr = since.toISOString().slice(0, 10)
 
+  // select("*") para no romper la ficha si aún no se aplicó la migración ISAK.
   const { data } = await supabase
     .from('patient_progress')
-    .select(
-      'id, patient_id, recorded_at, weight_kg, body_fat_pct, lean_mass_kg, waist_cm, hip_cm, notes',
-    )
+    .select('*')
     .eq('patient_id', patientId)
     .gte('recorded_at', sinceStr)
     .order('recorded_at', { ascending: true })

@@ -40,6 +40,7 @@ const FILES = [
   "add_plan_view_function.sql",
   "add_template_meals_food.sql",
   "add_isak_measures.sql",
+  "add_isak_progress.sql",
   "migration_bilingual.sql",
   // 5. Permisos y RLS (después de crear tablas)
   "fix_permissions.sql",
