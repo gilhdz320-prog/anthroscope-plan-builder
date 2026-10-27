@@ -9,28 +9,30 @@ qué pasa si cancela), pero **deben revisarse antes de cobrar**.
 
 ## 1. Datos que hay que completar (obligatorio)
 
-**Un solo archivo:** `lib/legal.ts`. De ahí leen `/privacidad` y `/terminos`.
+**No van en el código.** Como el repositorio es público, los datos se configuran
+como variables de entorno en Vercel (Settings → Environment Variables), y
+`lib/legal.ts` los lee para `/privacidad` y `/terminos`.
 
-```ts
-export const LEGAL = {
-  responsable: "[TU NOMBRE O RAZÓN SOCIAL]",
-  domicilio: "[CALLE, NÚMERO, CIUDAD, ESTADO, MÉXICO]",
-  emailPrivacidad: "privacidad@anthroscope.pro",
-  emailContacto: "hola@anthroscope.pro",
-  actualizado: "octubre de 2026",
-} as const;
-```
+| Variable | Qué poner | Ejemplo |
+|---|---|---|
+| `NEXT_PUBLIC_LEGAL_RESPONSABLE` | tu nombre completo o razón social | `Gilbert Hernández` o `GH Nutrición S.A.S. de C.V.` |
+| `NEXT_PUBLIC_LEGAL_DOMICILIO` | domicilio para notificaciones | `Calle 123, Col. Centro, Hermosillo, Sonora, CP 83000` |
+| `NEXT_PUBLIC_LEGAL_EMAIL_PRIVACIDAD` | correo que **de verdad** revises (ARCO tiene plazo legal) | `privacidad@anthroscope.pro` |
+| `NEXT_PUBLIC_LEGAL_EMAIL_CONTACTO` | correo general de soporte | `hola@anthroscope.pro` |
+| `NEXT_PUBLIC_LEGAL_ACTUALIZADO` | mes y año de la última revisión | `octubre de 2026` |
 
-| Campo | Qué poner |
-|---|---|
-| `responsable` | tu nombre completo o razón social (persona física con actividad empresarial es válido) |
-| `domicilio` | domicilio real para efectos de notificaciones |
-| `emailPrivacidad` | correo que **de verdad** revises: por ahí llegan las solicitudes ARCO (tienen plazo legal) |
-| `emailContacto` | correo general de soporte |
-| `actualizado` | mes y año de la última revisión |
+Después de guardarlas hay que **redesplegar** (Vercel no aplica env nuevas a un
+deployment existente). Cuando `responsable` y `domicilio` ya no tienen corchetes,
+`legalIsComplete()` devuelve `true` y los documentos están listos.
 
-Cuando `responsable` y `domicilio` ya no tienen corchetes, `legalIsComplete()`
-devuelve `true` y los documentos están listos para publicarse.
+> **Privacidad:** el domicilio que pongas será público en la web. Si no quieres
+> publicar tu casa, usa el domicilio de tu consultorio o uno fiscal de
+> notificaciones (buzón o coworking). La ley pide un domicilio, no
+> necesariamente el de tu vivienda.
+
+**Aparte (no es legal, es facturación):** el RFC va en la cuenta de Stripe
+(Settings → Business details → Tax ID) para emitir facturas. No se muestra en
+las páginas públicas.
 
 ---
 
