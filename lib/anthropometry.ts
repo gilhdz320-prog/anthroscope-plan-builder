@@ -136,6 +136,7 @@ export function deriveMetrics(input: {
   bodyFatPct?: string | number | null;
   birthDate?: string | null;
   sex?: Sex;
+  folds?: FoldMap;
 }): Metric[] {
   const metrics: Metric[] = [];
 
@@ -177,6 +178,23 @@ export function deriveMetrics(input: {
 
   const measuredFat = num(input.bodyFatPct);
   const age = ageFromBirthDate(input.birthDate);
+
+  // Pliegues: suma siempre visible si hay al menos uno.
+  const foldsSum = input.folds ? sumFolds(input.folds) : null;
+  const foldsCount = input.folds ? countFolds(input.folds) : 0;
+  if (foldsSum) {
+    metrics.push({
+      key: "pliegues",
+      label: "Suma pliegues",
+      value: `${foldsSum.toFixed(1)} mm`,
+      hint: `${foldsCount}/8 sitios ISAK`,
+      tone: "neutral",
+    });
+  }
+
+  const isakFat = input.folds ? bodyFatISAK(input.folds, input.sex) : null;
+
+  // Prioridad: medición directa > ISAK > estimación por IMC.
   if (measuredFat) {
     metrics.push({
       key: "grasa",
@@ -184,15 +202,14 @@ export function deriveMetrics(input: {
       value: `${measuredFat.toFixed(1)}%`,
       tone: "neutral",
     });
-    const lean = leanMass(input.weightKg, measuredFat);
-    if (lean) {
-      metrics.push({
-        key: "magra",
-        label: "Masa magra",
-        value: `${lean.toFixed(1)} kg`,
-        tone: "neutral",
-      });
-    }
+  } else if (isakFat) {
+    metrics.push({
+      key: "grasa-isak",
+      label: "% grasa (ISAK)",
+      value: `${isakFat.pct.toFixed(1)}%`,
+      hint: `${isakFat.equation} · 4 pliegues`,
+      tone: "neutral",
+    });
   } else {
     const estimated = bodyFatDeurenberg(bmiValue, age, input.sex);
     if (estimated) {
@@ -206,7 +223,128 @@ export function deriveMetrics(input: {
     }
   }
 
+  // Masa magra: con la grasa medida o la de ISAK (no con la estimada por IMC).
+  const fatForLean = measuredFat ?? isakFat?.pct ?? null;
+  if (fatForLean) {
+    const lean = leanMass(input.weightKg, fatForLean);
+    if (lean) {
+      metrics.push({
+        key: "magra",
+        label: "Masa magra",
+        value: `${lean.toFixed(1)} kg`,
+        tone: "neutral",
+      });
+    }
+  }
+
   return metrics;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ISAK: pliegues cutáneos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type FoldKey =
+  | "triceps"
+  | "subscapular"
+  | "biceps"
+  | "iliac"
+  | "supraspinal"
+  | "abdominal"
+  | "thigh"
+  | "calf";
+
+export const ISAK_FOLDS: Array<{ key: FoldKey; label: string; hint: string }> = [
+  { key: "triceps", label: "Tríceps", hint: "Punto medio acromion-radial" },
+  { key: "subscapular", label: "Subescapular", hint: "Bajo el ángulo inferior de la escápula" },
+  { key: "biceps", label: "Bíceps", hint: "Punto medio acromion-radial, cara anterior" },
+  { key: "iliac", label: "Cresta ilíaca", hint: "Sobre la cresta, línea axilar media" },
+  { key: "supraspinal", label: "Supraespinal", hint: "Punto iliocrestal, línea axilar" },
+  { key: "abdominal", label: "Abdominal", hint: "2 cm a la derecha del ombligo" },
+  { key: "thigh", label: "Muslo frontal", hint: "Punto medio trocánter-rotuliano" },
+  { key: "calf", label: "Pantorrilla medial", hint: "Perímetro máximo, cara medial" },
+];
+
+export const ISAK_GIRTHS: Array<{ key: string; label: string }> = [
+  { key: "girth_arm_cm", label: "Brazo relajado" },
+  { key: "girth_thigh_cm", label: "Muslo medio" },
+  { key: "girth_calf_cm", label: "Pantorrilla" },
+  { key: "girth_chest_cm", label: "Tórax" },
+];
+
+export type FoldMap = Partial<Record<FoldKey, unknown>>;
+
+/** Suma de los pliegues capturados (mm). Null si no hay ninguno. */
+export function sumFolds(folds: FoldMap): number | null {
+  const values = Object.values(folds)
+    .map((value) => (typeof value === "string" ? Number(value.replace(",", ".")) : Number(value)))
+    .filter((value) => Number.isFinite(value) && value > 0) as number[];
+  if (values.length === 0) return null;
+  return values.reduce((total, value) => total + value, 0);
+}
+
+export function countFolds(folds: FoldMap): number {
+  return Object.values(folds).filter((value) => {
+    const n = typeof value === "string" ? Number(value.replace(",", ".")) : Number(value);
+    return Number.isFinite(n) && n > 0;
+  }).length;
+}
+
+function num2(value: unknown): number | null {
+  const n = typeof value === "string" ? Number(value.replace(",", ".")) : Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Densidad corporal por Durnin & Womersley (1974), 4 pliegues:
+ * bíceps, tríceps, subescapular y cresta ilíaca (suma en mm).
+ *
+ *   hombres: D = 1.1765 − 0.0744 · log10(Σ4)
+ *   mujeres: D = 1.1567 − 0.0720 · log10(Σ4)
+ *
+ * Es una de las ecuaciones con más uso clínico y encaja con los 8 sitios ISAK.
+ */
+export function bodyDensityDW(
+  folds: FoldMap,
+  sex: Sex,
+): number | null {
+  const isMale = sex === "masculino" || sex === "male" || sex === "m";
+  const isFemale = sex === "femenino" || sex === "female" || sex === "f";
+  if (!isMale && !isFemale) return null;
+
+  const sites = ["biceps", "triceps", "subscapular", "iliac"] as const;
+  const values = sites.map((site) => num2(folds[site]));
+  if (values.some((value) => value === null)) return null;
+
+  const sum4 = (values as number[]).reduce((total, value) => total + value, 0);
+  if (sum4 <= 0) return null;
+
+  const density = isMale
+    ? 1.1765 - 0.0744 * Math.log10(sum4)
+    : 1.1567 - 0.072 * Math.log10(sum4);
+
+  return density > 0.9 && density < 1.15 ? density : null;
+}
+
+/** Ecuación de Siri: %grasa = (495 / densidad) − 450. */
+export function siriFromDensity(density: number | null): number | null {
+  if (!density || density <= 0) return null;
+  const pct = 495 / density - 450;
+  return pct > 0 && pct < 70 ? pct : null;
+}
+
+/**
+ * % de grasa a partir de pliegues ISAK.
+ * Devuelve null si faltan los 4 sitios de Durnin-Womersley o el sexo.
+ */
+export function bodyFatISAK(
+  folds: FoldMap,
+  sex: Sex,
+): { pct: number; equation: string; sites: number } | null {
+  const density = bodyDensityDW(folds, sex);
+  const pct = siriFromDensity(density);
+  if (pct === null) return null;
+  return { pct, equation: "Durnin-Womersley · Siri", sites: 4 };
 }
 
 /** Color de cada tono, alineado con el tema del panel. */

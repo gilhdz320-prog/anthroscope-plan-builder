@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { deriveMetrics, TONE_COLORS, type Metric } from "@/lib/anthropometry";
+import {
+  deriveMetrics,
+  ISAK_FOLDS,
+  ISAK_GIRTHS,
+  TONE_COLORS,
+  type FoldMap,
+  type Metric,
+} from "@/lib/anthropometry";
 
 /**
  * Campos de antropometría del alta de paciente.
  *
- * Además de capturar los datos, calcula en vivo los índices derivados
- * (IMC, cintura/cadera, cintura/altura, % grasa estimado). Lee el sexo y la
- * fecha de nacimiento del resto del formulario para poder clasificar el riesgo.
+ * - Básicos: peso, talla, %grasa, cintura, cadera.
+ * - ISAK opcional: 8 pliegues + 4 perímetros (desplegable, cerrado por defecto).
+ *
+ * Calcula en vivo IMC, cintura/cadera, cintura/altura, suma de pliegues y
+ * %grasa por Durnin-Womersley. Lee sexo y fecha de nacimiento del resto del
+ * formulario para poder clasificar el riesgo.
  */
 export function AnthropometryFields() {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -19,6 +29,8 @@ export function AnthropometryFields() {
     waist_cm: "",
     hip_cm: "",
   });
+  const [folds, setFolds] = useState<Record<string, string>>({});
+  const [girths, setGirths] = useState<Record<string, string>>({});
   const [siblings, setSiblings] = useState<{ sex: string; birthDate: string }>({
     sex: "",
     birthDate: "",
@@ -47,8 +59,17 @@ export function AnthropometryFields() {
     };
   }, []);
 
-  const set = (key: keyof typeof values) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setValues((prev) => ({ ...prev, [key]: event.target.value }));
+  const set =
+    (key: keyof typeof values) => (event: React.ChangeEvent<HTMLInputElement>) =>
+      setValues((prev) => ({ ...prev, [key]: event.target.value }));
+
+  const setFold =
+    (key: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
+      setFolds((prev) => ({ ...prev, [key]: event.target.value }));
+
+  const setGirth =
+    (key: string) => (event: React.ChangeEvent<HTMLInputElement>) =>
+      setGirths((prev) => ({ ...prev, [key]: event.target.value }));
 
   const metrics: Metric[] = deriveMetrics({
     weightKg: values.weight_kg,
@@ -58,7 +79,10 @@ export function AnthropometryFields() {
     bodyFatPct: values.body_fat_pct,
     birthDate: siblings.birthDate,
     sex: siblings.sex,
+    folds: folds as FoldMap,
   });
+
+  const foldsCount = ISAK_FOLDS.filter((fold) => folds[fold.key]).length;
 
   return (
     <div ref={wrapperRef} className="space-y-5">
@@ -133,6 +157,63 @@ export function AnthropometryFields() {
         </div>
       </div>
 
+      {/* ISAK opcional */}
+      <details className="rounded-lg p-4" style={{ background: "var(--surface-sunken, #141414)" }}>
+        <summary className="cursor-pointer text-xs" style={{ color: "var(--ink-muted)" }}>
+          Medidas ISAK (opcional) — 8 pliegues y 4 perímetros
+          {foldsCount > 0 && (
+            <span style={{ color: "var(--gold)" }}> · {foldsCount}/8 capturados</span>
+          )}
+        </summary>
+
+        <p className="mt-3 text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+          Pliegues en <strong>milímetros</strong> y perímetros en{" "}
+          <strong>centímetros</strong>. Con los 4 sitios de Durnin-Womersley
+          (bíceps, tríceps, subescapular, cresta ilíaca) se calcula el % de grasa.
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {ISAK_FOLDS.map((fold) => (
+            <div key={fold.key}>
+              <label htmlFor={`fold_${fold.key}_mm`} className="label text-[11px]">
+                {fold.label} (mm)
+              </label>
+              <input
+                id={`fold_${fold.key}_mm`}
+                name={`fold_${fold.key}_mm`}
+                type="number"
+                step="0.1"
+                inputMode="decimal"
+                placeholder={fold.hint}
+                className="input"
+                value={folds[fold.key] ?? ""}
+                onChange={setFold(fold.key)}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {ISAK_GIRTHS.map((girth) => (
+            <div key={girth.key}>
+              <label htmlFor={girth.key} className="label text-[11px]">
+                {girth.label} (cm)
+              </label>
+              <input
+                id={girth.key}
+                name={girth.key}
+                type="number"
+                step="0.1"
+                inputMode="decimal"
+                className="input"
+                value={girths[girth.key] ?? ""}
+                onChange={setGirth(girth.key)}
+              />
+            </div>
+          ))}
+        </div>
+      </details>
+
       {metrics.length > 0 && (
         <div
           className="rounded-lg p-4"
@@ -166,8 +247,8 @@ export function AnthropometryFields() {
             ))}
           </dl>
           <p className="mt-3 text-[10px]" style={{ color: "var(--ink-subtle)" }}>
-            El % de grasa estimado es una referencia poblacional (Deurenberg), no
-            sustituye una medición. Los pliegues ISAK irán en una sección aparte.
+            El % de grasa por pliegues usa Durnin-Womersley (1974) + Siri. La
+            estimación por IMC (Deurenberg) solo aparece si no hay medición.
           </p>
         </div>
       )}

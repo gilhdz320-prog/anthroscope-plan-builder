@@ -33,11 +33,11 @@ export default async function PatientDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
+  // select("*") en vez de columnas explícitas: así la ficha no se rompe si la
+  // migración de medidas ISAK todavía no se aplicó en la base.
   const { data: patient } = await supabase
     .from("patients")
-    .select(
-      "id, first_name, last_name, email, sex, birth_date, sport, goal, weight_kg, height_cm, body_fat_pct, waist_cm, hip_cm",
-    )
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
@@ -60,7 +60,7 @@ export default async function PatientDetailPage({
   const weight =
     patient.weight_kg != null ? Number(patient.weight_kg) : null;
 
-  // Índices derivados (IMC, cintura/cadera, cintura/altura, grasa, masa magra)
+  // Índices derivados (IMC, cintura/cadera, cintura/altura, grasa ISAK/masa magra)
   const metrics = deriveMetrics({
     weightKg: patient.weight_kg,
     heightCm: patient.height_cm,
@@ -69,7 +69,25 @@ export default async function PatientDetailPage({
     bodyFatPct: patient.body_fat_pct,
     birthDate: patient.birth_date,
     sex: patient.sex,
+    folds: {
+      triceps: patient.fold_triceps_mm,
+      subscapular: patient.fold_subscapular_mm,
+      biceps: patient.fold_biceps_mm,
+      iliac: patient.fold_iliac_mm,
+      supraspinal: patient.fold_supraspinal_mm,
+      abdominal: patient.fold_abdominal_mm,
+      thigh: patient.fold_thigh_mm,
+      calf: patient.fold_calf_mm,
+    },
   });
+
+  // Perímetros capturados (solo se muestran si existen)
+  const girths = [
+    { label: "Brazo", value: patient.girth_arm_cm },
+    { label: "Muslo", value: patient.girth_thigh_cm },
+    { label: "Pantorrilla", value: patient.girth_calf_cm },
+    { label: "Tórax", value: patient.girth_chest_cm },
+  ].filter((girth) => girth.value != null);
 
   const stats = [
     {
@@ -155,6 +173,18 @@ export default async function PatientDetailPage({
             </div>
           ))}
         </div>
+
+        {girths.length > 0 && (
+          <p
+            className="mt-5 border-t pt-4 text-[11px]"
+            style={{ borderColor: "var(--border-subtle, #2a2a2a)", color: "var(--ink-muted)" }}
+          >
+            <span style={{ color: "var(--ink-subtle)" }}>Perímetros ISAK:</span>{" "}
+            {girths
+              .map((girth) => `${girth.label} ${Number(girth.value)} cm`)
+              .join(" · ")}
+          </p>
+        )}
       </div>
 
       <div className="rise rise-2">

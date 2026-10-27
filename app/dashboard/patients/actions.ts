@@ -28,6 +28,25 @@ export async function createPatient(formData: FormData) {
     redirect('/login')
   }
 
+  // Pliegues y perímetros ISAK: se envían SOLO si tienen valor. Así el alta
+  // funciona aunque la migración de medidas todavía no se haya aplicado.
+  const isak = Object.fromEntries(
+    Object.entries({
+      fold_triceps_mm: numOrNull(formData.get('fold_triceps_mm')),
+      fold_subscapular_mm: numOrNull(formData.get('fold_subscapular_mm')),
+      fold_biceps_mm: numOrNull(formData.get('fold_biceps_mm')),
+      fold_iliac_mm: numOrNull(formData.get('fold_iliac_mm')),
+      fold_supraspinal_mm: numOrNull(formData.get('fold_supraspinal_mm')),
+      fold_abdominal_mm: numOrNull(formData.get('fold_abdominal_mm')),
+      fold_thigh_mm: numOrNull(formData.get('fold_thigh_mm')),
+      fold_calf_mm: numOrNull(formData.get('fold_calf_mm')),
+      girth_arm_cm: numOrNull(formData.get('girth_arm_cm')),
+      girth_thigh_cm: numOrNull(formData.get('girth_thigh_cm')),
+      girth_calf_cm: numOrNull(formData.get('girth_calf_cm')),
+      girth_chest_cm: numOrNull(formData.get('girth_chest_cm')),
+    }).filter(([, value]) => value !== null),
+  )
+
   const payload = {
     user_id: user.id,
     first_name: String(formData.get('first_name') ?? '').trim(),
@@ -42,6 +61,7 @@ export async function createPatient(formData: FormData) {
     body_fat_pct: numOrNull(formData.get('body_fat_pct')),
     waist_cm: numOrNull(formData.get('waist_cm')),
     hip_cm: numOrNull(formData.get('hip_cm')),
+    ...isak,
     sport: nullable(formData.get('sport')),
     activity_level: nullable(formData.get('activity_level')),
     goal: nullable(formData.get('goal')),
