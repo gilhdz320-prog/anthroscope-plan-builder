@@ -22,7 +22,8 @@ with esperado as (
     ('tabla', 'plan_meals'),
     ('tabla', 'alerts'),
     ('tabla', 'purchases'),
-    ('tabla', 'avatars'),
+    -- Storage (no es tabla: es un bucket)
+    ('bucket', 'avatars'),
     -- Funciones del producto
     ('tabla', 'intake_forms'),
     ('tabla', 'dietary_recalls'),
@@ -49,6 +50,9 @@ select
   nombre,
   case
     when tipo = 'tabla' then to_regclass('public.' || nombre) is not null
+    when tipo = 'bucket' then exists (
+      select 1 from storage.buckets b where b.id = nombre
+    )
     else exists (
       select 1
       from pg_proc p
