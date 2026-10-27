@@ -16,6 +16,10 @@ export default async function DashboardPage() {
     supabase.from("equivalents").select("*", { count: "exact", head: true }),
   ]);
 
+  // "Primera visita" = todavía no tiene pacientes ni planes propios.
+  // (Las plantillas y los equivalentes son del sistema, no cuentan.)
+  const isFirstRun = (patientsCount ?? 0) === 0 && (plansCount ?? 0) === 0;
+
   const stats = [
     {
       label: "Pacientes",
@@ -92,13 +96,16 @@ export default async function DashboardPage() {
             lineHeight: 1.02,
           }}
         >
-          Bienvenido de vuelta.
+        {/* Primera visita (sin pacientes ni planes) ≠ "bienvenido de vuelta". */}
+        {isFirstRun ? "Empecemos." : "Bienvenido de vuelta."}
         </h1>
         <p
           className="mt-3 max-w-xl text-base"
           style={{ color: "var(--ink-muted)" }}
         >
-          Tu estudio profesional para construir planes de nutrición de alto nivel.
+          {isFirstRun
+            ? "Tu primer plan está a tres pasos: crea un paciente, arma su plan y genera el PDF. Unos 10 minutos."
+            : "Tu estudio profesional para construir planes de nutrición de alto nivel."}
         </p>
       </div>
 
