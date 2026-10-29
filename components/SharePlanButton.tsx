@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createPlanViewToken } from "@/app/dashboard/plans/actions";
+import { createPlanViewToken, emailPlanToPatient } from "@/app/dashboard/plans/actions";
 import { generateQR, qrToSvg } from "@/lib/qrcode";
 
 const SHARE_HOST = "planbuilder.anthroscope.pro";
@@ -19,6 +19,21 @@ export function SharePlanButton({
   const [qrSvg, setQrSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [emailState, setEmailState] = useState<{
+    sending: boolean;
+    message: string | null;
+    ok: boolean;
+  }>({ sending: false, message: null, ok: false });
+
+  async function sendByEmail() {
+    setEmailState({ sending: true, message: null, ok: false });
+    const res = await emailPlanToPatient(planId);
+    setEmailState({
+      sending: false,
+      message: res.error ?? "Correo enviado al paciente.",
+      ok: !res.error,
+    });
+  }
 
   async function handleShare() {
     setOpen(true);
@@ -162,6 +177,30 @@ export function SharePlanButton({
                   </svg>
                   Enviar por WhatsApp
                 </a>
+
+                <button
+                  type="button"
+                  onClick={sendByEmail}
+                  disabled={emailState.sending}
+                  className="w-full rounded-lg px-4 py-2.5 text-sm"
+                  style={{
+                    background: "var(--surface-muted)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--ink-strong)",
+                    opacity: emailState.sending ? 0.6 : 1,
+                  }}
+                >
+                  {emailState.sending ? "Enviando…" : "Enviar por correo al paciente"}
+                </button>
+
+                {emailState.message && (
+                  <p
+                    className="text-[11px]"
+                    style={{ color: emailState.ok ? "#0F7B5C" : "var(--danger, #c0392b)" }}
+                  >
+                    {emailState.message}
+                  </p>
+                )}
               </div>
             )}
 

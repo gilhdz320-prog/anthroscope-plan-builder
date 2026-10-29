@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createCustomFood, deleteCustomFood } from './actions'
+import { DB_GROUP_META } from '@/lib/food-groups'
 import { getLocale, tr, type Locale } from '@/lib/i18n'
 
 interface FoodGroup {
@@ -27,6 +29,7 @@ interface Equivalent {
   fat_g: number | null
   fiber_g: number | null
   source: string | null
+  user_id?: string | null
 }
 
 function pickName(item: Equivalent, locale: Locale): string {
@@ -39,14 +42,19 @@ function pickServing(item: Equivalent, locale: Locale): string {
   return item.serving_desc_es ?? item.serving_desc_en ?? item.serving_desc ?? '—'
 }
 
-export default async function EquivalentsPage() {
+export default async function EquivalentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; ok?: string }>
+}) {
+  const sp = await searchParams
   const locale = await getLocale()
   const supabase = await createClient()
 
   const [equivRes, groupsRes] = await Promise.all([
     supabase
       .from('equivalents')
-      .select('id, group_key, group_name, food_name, food_name_es, food_name_en, serving_desc, serving_desc_es, serving_desc_en, kcal, protein_g, carbs_g, fat_g, fiber_g, source')
+      .select('id, user_id, group_key, group_name, food_name, food_name_es, food_name_en, serving_desc, serving_desc_es, serving_desc_en, kcal, protein_g, carbs_g, fat_g, fiber_g, source')
       .order('group_key', { ascending: true, nullsFirst: false })
       .order('food_name_es', { ascending: true }),
     supabase
@@ -115,6 +123,89 @@ export default async function EquivalentsPage() {
         </div>
       )}
 
+
+      {sp.ok && (
+        <div
+          className="rounded-md border p-3 text-xs"
+          style={{ background: 'var(--brand-50, #F1F7F3)', borderColor: 'var(--border-emerald, #CFE3D8)', color: 'var(--brand-700)' }}
+        >
+          Alimento agregado: {sp.ok}
+        </div>
+      )}
+
+      {sp.error && (
+        <div
+          className="rounded-md border p-3 text-xs"
+          style={{ background: 'var(--danger-bg)', borderColor: 'rgba(184,60,42,0.2)', color: 'var(--danger)' }}
+        >
+          {sp.error}
+        </div>
+      )}
+
+      {/* Alimento propio */}
+      <details className="card-luxe p-5">
+        <summary className="cursor-pointer text-sm" style={{ color: 'var(--ink-strong)' }}>
+          {locale === 'es'
+            ? 'Agregar un alimento propio (no está en el catálogo)'
+            : 'Add your own food (not in the catalog)'}
+        </summary>
+        <form action={createCustomFood} className="mt-4 grid gap-3 md:grid-cols-3">
+          <label className="md:col-span-2">
+            <span className="label text-[11px]">{locale === 'es' ? 'Nombre' : 'Name'}</span>
+            <input name="food_name" required className="input" placeholder="Ej. Queso fresco de la región" />
+          </label>
+          <label>
+            <span className="label text-[11px]">{locale === 'es' ? 'Grupo' : 'Group'}</span>
+            <select name="group_key" required className="input" defaultValue="">
+              <option value="" disabled>
+                {locale === 'es' ? 'Elegir…' : 'Choose…'}
+              </option>
+              {groups.length > 0
+                ? groups.map((g) => (
+                    <option key={g.key} value={g.key}>
+                      {locale === 'es' ? g.name_es : g.name_en}
+                    </option>
+                  ))
+                : Object.entries(DB_GROUP_META).map(([key, meta]) => (
+                    <option key={key} value={key}>
+                      {meta[locale]}
+                    </option>
+                  ))}
+            </select>
+          </label>
+          <label>
+            <span className="label text-[11px]">{locale === 'es' ? 'Porción' : 'Serving'}</span>
+            <input name="serving_desc" className="input" placeholder="1 taza / 30 g" />
+          </label>
+          <label>
+            <span className="label text-[11px]">kcal</span>
+            <input name="kcal" type="number" step="0.1" className="input" />
+          </label>
+          <label>
+            <span className="label text-[11px]">{locale === 'es' ? 'Proteína (g)' : 'Protein (g)'}</span>
+            <input name="protein_g" type="number" step="0.1" className="input" />
+          </label>
+          <label>
+            <span className="label text-[11px]">{locale === 'es' ? 'Carbos (g)' : 'Carbs (g)'}</span>
+            <input name="carbs_g" type="number" step="0.1" className="input" />
+          </label>
+          <label>
+            <span className="label text-[11px]">{locale === 'es' ? 'Grasas (g)' : 'Fat (g)'}</span>
+            <input name="fat_g" type="number" step="0.1" className="input" />
+          </label>
+          <div className="flex items-end">
+            <button type="submit" className="btn btn-brand w-full">
+              {locale === 'es' ? 'Agregar' : 'Add'}
+            </button>
+          </div>
+        </form>
+        <p className="mt-3 text-[11px]" style={{ color: 'var(--ink-subtle)' }}>
+          {locale === 'es'
+            ? 'Solo lo ves tú. Aparece en la búsqueda de alimentos al armar un plan.'
+            : 'Only you can see it. It shows up in food search when building a plan.'}
+        </p>
+      </details>
+
       {orderedKeys.length === 0 ? (
         <div
           className="card-luxe px-6 py-16 text-center text-sm"
@@ -181,6 +272,14 @@ export default async function EquivalentsPage() {
                           >
                             {pickName(item, locale)}
                           </p>
+                          {item.user_id && (
+                            <span
+                              className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+                              style={{ background: 'rgba(201,169,97,0.18)', color: 'var(--gold-700)' }}
+                            >
+                              {locale === 'es' ? 'Propio' : 'Custom'}
+                            </span>
+                          )}
                           {item.source === 'usda' && (
                             <span
                               className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"

@@ -8,14 +8,29 @@ const statusLabel: Record<string, string> = {
   archived: "Archivado",
 };
 
-export default async function PlansPage() {
+export default async function PlansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; error?: string }>;
+}) {
+  const sp = await searchParams;
+  const query = (sp.q ?? "").trim();
+
   const supabase = await createClient();
-  const { data: plans, error } = await supabase
+  let request = supabase
     .from("plans")
     .select(
       "id, title, status, valid_from, valid_until, created_at, patient:patients(first_name, last_name), template:templates(name)",
     )
     .order("created_at", { ascending: false });
+
+  if (query) {
+    // Sin comas ni paréntesis: rompen la sintaxis de filtros de PostgREST.
+    const safe = query.replace(/[,()%]/g, " ").trim();
+    if (safe) request = request.ilike("title", `%${safe}%`);
+  }
+
+  const { data: plans, error } = await request;
 
   return (
     <div className="space-y-8">
@@ -41,6 +56,17 @@ export default async function PlansPage() {
           + Nuevo plan
         </Link>
       </div>
+
+      <form action="/dashboard/plans" method="get" className="max-w-sm">
+        <input
+          type="search"
+          name="q"
+          defaultValue={query}
+          placeholder="Buscar por título del plan…"
+          className="input"
+          aria-label="Buscar planes"
+        />
+      </form>
 
       {error && (
         <div

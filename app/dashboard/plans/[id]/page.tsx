@@ -8,9 +8,11 @@ import {
 } from "@/components/EquivalentesEditor";
 import { SharePlanButton } from "@/components/SharePlanButton";
 import { SaveAsTemplateButton } from "@/components/SaveAsTemplateButton";
+import { PrintButton } from "@/components/PrintButton";
 import { MealBuilder, type MealItem } from "@/components/MealBuilder";
 import type { FoodSearchItem } from "@/components/FoodSearch";
 import { ClinicToggle, type ClinicData, type ClinicFoodOption } from "./PlanClinicView";
+import { duplicatePlan, updatePlanInfo } from "../actions";
 import { CLINICAL_TO_DB_GROUPS } from "@/lib/food-groups";
 import { GRUPO_KEYS, type GrupoKey } from "@/lib/equivalentes";
 
@@ -180,6 +182,15 @@ export default async function PlanDetailPage({
     group: m.equivalent_id ? (groupById.get(m.equivalent_id) ?? "otros") : "otros",
     equivalent_id: m.equivalent_id,
   }));
+
+  // Lista de compras: suma porciones por alimento del plan.
+  const shoppingList = Array.from(
+    mealItems.reduce((map, item) => {
+      const key = item.food_es;
+      map.set(key, (map.get(key) ?? 0) + (item.servings || 1));
+      return map;
+    }, new Map<string, number>()),
+  ).sort((a, b) => a[0].localeCompare(b[0], "es"));
 
   // Aggregate macros from the actual meals (used as fallback when the plan
   // has no `equivalentes` JSONB yet, and to show "what's actually plated").
@@ -381,8 +392,53 @@ export default async function PlanDetailPage({
               </svg>
               Descargar PDF
             </a>
+            <form action={duplicatePlan}>
+              <input type="hidden" name="planId" value={plan.id} />
+              <button type="submit" className="btn btn-ghost" title="Crea un borrador con las mismas comidas">
+                Duplicar
+              </button>
+            </form>
           </div>
         </div>
+
+        {/* Editar datos del plan */}
+        <details className="mt-4 text-xs">
+          <summary className="cursor-pointer" style={{ color: "var(--ink-muted)" }}>
+            Editar datos del plan (título, fechas, estado)
+          </summary>
+          <form
+            action={updatePlanInfo}
+            className="mt-3 grid gap-3 rounded-md p-4 sm:grid-cols-4"
+            style={{ background: "var(--surface-sunken, #141414)", border: "1px solid var(--border-subtle)" }}
+          >
+            <input type="hidden" name="planId" value={plan.id} />
+            <label className="sm:col-span-2">
+              <span className="label text-[11px]">Título</span>
+              <input name="title" defaultValue={plan.title} className="input" required />
+            </label>
+            <label>
+              <span className="label text-[11px]">Desde</span>
+              <input type="date" name="valid_from" defaultValue={plan.valid_from ?? ""} className="input" />
+            </label>
+            <label>
+              <span className="label text-[11px]">Hasta</span>
+              <input type="date" name="valid_until" defaultValue={plan.valid_until ?? ""} className="input" />
+            </label>
+            <label>
+              <span className="label text-[11px]">Estado</span>
+              <select name="status" defaultValue={plan.status ?? "draft"} className="input">
+                <option value="draft">Borrador</option>
+                <option value="active">Activo</option>
+                <option value="archived">Archivado</option>
+              </select>
+            </label>
+            <div className="flex items-end">
+              <button type="submit" className="btn btn-brand w-full">
+                Guardar
+              </button>
+            </div>
+          </form>
+        </details>
       </div>
 
       <ClinicToggle clinical={clinicData}>
@@ -522,6 +578,43 @@ export default async function PlanDetailPage({
       </div>
 
       {/* Meals — interactive builder */}
+      {shoppingList.length > 0 && (
+        <details className="card-luxe p-6">
+          <summary
+            className="flex cursor-pointer flex-wrap items-center justify-between gap-2"
+          >
+            <span className="eyebrow" style={{ color: "var(--gold)" }}>
+              Lista de compras
+            </span>
+            <span className="text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+              {shoppingList.length} alimentos distintos · para el periodo del plan
+            </span>
+          </summary>
+
+          <ul className="mt-4 grid gap-x-8 gap-y-1 sm:grid-cols-2">
+            {shoppingList.map(([name, portions]) => (
+              <li
+                key={name}
+                className="flex items-baseline justify-between gap-3 border-b py-1.5 text-sm"
+                style={{ borderColor: "var(--border-subtle, #2a2a2a)" }}
+              >
+                <span style={{ color: "var(--ink-strong)" }}>{name}</span>
+                <span className="font-mono-tabular text-xs" style={{ color: "var(--ink-muted)" }}>
+                  {portions} {portions === 1 ? "porción" : "porciones"}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-4 flex items-center gap-3">
+            <PrintButton label="Imprimir lista" />
+            <span className="text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+              Suma las porciones de cada equivalencia que aparece en el plan.
+            </span>
+          </div>
+        </details>
+      )}
+
       <MealBuilder
         planId={plan.id}
         foods={foods}

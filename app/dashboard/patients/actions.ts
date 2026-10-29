@@ -19,17 +19,12 @@ function numOrNull(v: FormDataEntryValue | null): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-export async function createPatient(formData: FormData) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Pliegues y perímetros ISAK: se envían SOLO si tienen valor. Así el alta
+/**
+ * Campos del paciente a partir del formulario. Compartido por alta y edición
+ * para que las dos pantallas no se desincronicen.
+ */
+function buildPatientFields(formData: FormData) {
+  // Pliegues y perímetros ISAK: se envían SOLO si tienen valor. Así la acción
   // funciona aunque la migración de medidas todavía no se haya aplicado.
   const isak = Object.fromEntries(
     Object.entries({
@@ -48,8 +43,7 @@ export async function createPatient(formData: FormData) {
     }).filter(([, value]) => value !== null),
   )
 
-  const payload = {
-    user_id: user.id,
+  return {
     first_name: String(formData.get('first_name') ?? '').trim(),
     last_name: String(formData.get('last_name') ?? '').trim(),
     email: nullable(formData.get('email')),
@@ -67,6 +61,19 @@ export async function createPatient(formData: FormData) {
     activity_level: nullable(formData.get('activity_level')),
     goal: nullable(formData.get('goal')),
   }
+}
+
+export async function createPatient(formData: FormData) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const payload = { user_id: user.id, ...buildPatientFields(formData) }
 
   if (!payload.first_name || !payload.last_name) {
     redirect(
@@ -105,6 +112,42 @@ export async function createPatient(formData: FormData) {
   revalidatePath('/dashboard/patients')
   revalidatePath('/dashboard')
   redirect('/dashboard/patients')
+}
+
+export async function updatePatient(formData: FormData) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const id = String(formData.get('id') ?? '')
+  if (!id) redirect('/dashboard/patients')
+
+  const fields = buildPatientFields(formData)
+  if (!fields.first_name || !fields.last_name) {
+    redirect(
+      `/dashboard/patients/${id}/edit?error=` +
+        encodeURIComponent('Nombre y apellido son obligatorios.'),
+    )
+  }
+
+  const { error } = await supabase
+    .from('patients')
+    .update(fields)
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) {
+    redirect(
+      `/dashboard/patients/${id}/edit?error=` + encodeURIComponent(error.message),
+    )
+  }
+
+  revalidatePath(`/dashboard/patients/${id}`)
+  revalidatePath('/dashboard/patients')
+  revalidatePath('/dashboard')
+  redirect(`/dashboard/patients/${id}`)
 }
 
 export async function deletePatient(formData: FormData) {

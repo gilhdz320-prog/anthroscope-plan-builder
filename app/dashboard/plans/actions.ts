@@ -321,3 +321,193 @@ export async function deletePlan(formData: FormData) {
   await supabase.from('plans').delete().eq('id', id)
   revalidatePath('/dashboard/plans')
 }
+
+/**
+ * Duplica un plan completo (metadatos + comidas) como borrador nuevo.
+ * Es el atajo de la consulta mensual: misma estructura, nuevo periodo.
+ */
+export async function duplicatePlan(formData: FormData) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const planId = String(formData.get('planId') ?? '')
+  if (!planId) redirect('/dashboard/plans')
+
+  const { data: original } = await supabase
+    .from('plans')
+    .select('*')
+    .eq('id', planId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!original) {
+    redirect('/dashboard/plans?error=' + encodeURIComponent('Plan no encontrado.'))
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const inAMonth = new Date()
+  inAMonth.setDate(inAMonth.getDate() + 30)
+
+  const { data: copy, error } = await supabase
+    .from('plans')
+    .insert({
+      user_id: user.id,
+      patient_id: original.patient_id,
+      template_id: original.template_id,
+      title: `${original.title} (copia)`,
+      status: 'draft',
+      valid_from: today,
+      valid_until: inAMonth.toISOString().slice(0, 10),
+      notes: original.notes,
+      plan_mode: original.plan_mode,
+      equivalentes: original.equivalentes,
+    })
+    .select('id')
+    .single()
+
+  if (error || !copy) {
+    redirect(
+      `/dashboard/plans/${planId}?error=` +
+        encodeURIComponent(error?.message ?? 'No se pudo duplicar el plan'),
+    )
+  }
+
+  const { data: meals } = await supabase
+    .from('plan_meals')
+    .select('meal_name, meal_order, equivalent_id, servings, notes')
+    .eq('plan_id', planId)
+
+  if (meals && meals.length > 0) {
+    await supabase.from('plan_meals').insert(
+      meals.map((meal) => ({
+        plan_id: copy.id,
+        meal_name: meal.meal_name,
+        meal_order: meal.meal_order,
+        equivalent_id: meal.equivalent_id,
+        servings: meal.servings,
+        notes: meal.notes,
+      })),
+    )
+  }
+
+  revalidatePath('/dashboard/plans')
+  redirect(`/dashboard/plans/${copy.id}`)
+}
+
+/** Corrige título, fechas y estado de un plan ya creado. */
+export async function updatePlanInfo(formData: FormData) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const planId = String(formData.get('planId') ?? '')
+  if (!planId) redirect('/dashboard/plans')
+
+  const title = String(formData.get('title') ?? '').trim()
+  if (!title) {
+    redirect(
+      `/dashboard/plans/${planId}?error=` + encodeURIComponent('El título es obligatorio.'),
+    )
+  }
+
+  const status = String(formData.get('status') ?? 'draft')
+  const allowed = ['draft', 'active', 'archived']
+  const validFrom = String(formData.get('valid_from') ?? '').trim()
+  const validUntil = String(formData.get('valid_until') ?? '').trim()
+
+  const { error } = await supabase
+    .from('plans')
+    .update({
+      title,
+      status: allowed.includes(status) ? status : 'draft',
+      valid_from: validFrom || null,
+      valid_until: validUntil || null,
+    })
+    .eq('id', planId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    redirect(`/dashboard/plans/${planId}?error=` + encodeURIComponent(error.message))
+  }
+
+  revalidatePath(`/dashboard/plans/${planId}`)
+  revalidatePath('/dashboard/plans')
+  redirect(`/dashboard/plans/${planId}`)
+}
+
+/**
+ * Envía el enlace del plan al correo del paciente.
+ * Reutiliza el token de vista (el mismo del botón Compartir).
+ */
+export async function emailPlanToPatient(
+  planId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Sesión expirada. Vuelve a entrar.' }
+
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('id, title, patient:patients(first_name, last_name, email)')
+    .eq('id', planId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!plan) return { error: 'Plan no encontrado.' }
+
+  const patient = (plan as {
+    patient?: { first_name?: string | null; last_name?: string | null; email?: string | null } | null
+  }).patient
+
+  const email = patient?.email?.trim()
+  if (!email) {
+    return {
+      error:
+        'Este paciente no tiene correo registrado. Agrégalo en su ficha (Editar) y vuelve a intentar.',
+    }
+  }
+
+  const tokenResult = await createPlanViewToken(planId)
+  if (tokenResult.error || !tokenResult.token) {
+    return { error: tokenResult.error ?? 'No se pudo generar el enlace del plan.' }
+  }
+
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ?? 'https://planbuilder.anthroscope.pro'
+  const planUrl = `${appUrl}/plan/${tokenResult.token}`
+
+  const { data: profile } = await supabase
+    .from('nutritionist_profiles')
+    .select('professional_name')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const { buildPlanShareEmail } = await import('@/lib/emails/plan-share')
+  const { sendEmail } = await import('@/lib/emails/send')
+
+  const { subject, html, text } = buildPlanShareEmail({
+    patientName: `${patient?.first_name ?? ''} ${patient?.last_name ?? ''}`.trim() || 'paciente',
+    planTitle: plan.title,
+    planUrl,
+    practitionerName: (profile as { professional_name?: string | null } | null)?.professional_name,
+  })
+
+  const result = await sendEmail({ to: email, subject, html, text })
+  if (!result.ok) {
+    return {
+      error:
+        result.reason === 'not_configured'
+          ? 'El envío de correo no está configurado (falta RESEND_API_KEY).'
+          : 'No se pudo enviar el correo. Revisa que el dominio esté verificado en Resend.',
+    }
+  }
+
+  return { error: null }
+}

@@ -54,6 +54,14 @@ export default async function PatientDetailPage({
     .limit(1)
     .maybeSingle();
 
+  // Historial completo de planes del paciente (no solo el activo).
+  const { data: patientPlans } = await supabase
+    .from("plans")
+    .select("id, title, status, valid_from, valid_until, created_at")
+    .eq("patient_id", id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
   const history = await getProgressHistory(id, 90);
 
   const age = ageFrom(patient.birth_date);
@@ -141,17 +149,82 @@ export default async function PatientDetailPage({
             </div>
           </div>
 
-          {activePlan ? (
-            <Link href={`/dashboard/plans/${activePlan.id}`} className="btn btn-brand">
-              Plan activo: {activePlan.title}
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/dashboard/patients/${id}/edit`} className="btn btn-ghost">
+              Editar
             </Link>
-          ) : (
-            <Link href="/dashboard/plans/new" className="btn btn-ghost">
-              + Crear plan
-            </Link>
-          )}
+            {activePlan ? (
+              <Link href={`/dashboard/plans/${activePlan.id}`} className="btn btn-brand">
+                Plan activo: {activePlan.title}
+              </Link>
+            ) : (
+              <Link href="/dashboard/plans/new" className="btn btn-brand">
+                + Crear plan
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Historial de planes */}
+      {(patientPlans ?? []).length > 0 && (
+        <div className="card-luxe p-6 rise">
+          <div className="flex items-baseline justify-between">
+            <p className="eyebrow" style={{ color: "var(--gold)" }}>
+              Planes de {patient.first_name}
+            </p>
+            <p className="text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+              {(patientPlans ?? []).length} en total
+            </p>
+          </div>
+          <ul className="mt-3 divide-y" style={{ borderColor: "var(--border-subtle, #2a2a2a)" }}>
+            {(patientPlans ?? []).map((plan) => {
+              const row = plan as {
+                id: string;
+                title: string;
+                status: string | null;
+                valid_from: string | null;
+                valid_until: string | null;
+              };
+              const statusLabel =
+                row.status === "active"
+                  ? "Activo"
+                  : row.status === "draft"
+                    ? "Borrador"
+                    : row.status === "archived"
+                      ? "Archivado"
+                      : (row.status ?? "—");
+              return (
+                <li
+                  key={row.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <Link
+                      href={`/dashboard/plans/${row.id}`}
+                      className="text-sm"
+                      style={{ color: "var(--ink-strong)" }}
+                    >
+                      {row.title}
+                    </Link>
+                    <p className="text-[11px]" style={{ color: "var(--ink-subtle)" }}>
+                      {row.valid_from ?? "sin fecha"} → {row.valid_until ?? "sin fecha"} ·{" "}
+                      {statusLabel}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/dashboard/plans/${row.id}`}
+                    className="text-xs"
+                    style={{ color: "var(--gold)" }}
+                  >
+                    Abrir →
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       {/* Current stats */}
       <div className="card-luxe p-6 rise rise-1">

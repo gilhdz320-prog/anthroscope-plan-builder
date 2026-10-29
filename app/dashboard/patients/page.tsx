@@ -9,14 +9,33 @@ const goalLabel: Record<string, string> = {
   performance: "Rendimiento",
 };
 
-export default async function PatientsPage() {
+export default async function PatientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; error?: string }>;
+}) {
+  const sp = await searchParams;
+  const query = (sp.q ?? "").trim();
+
   const supabase = await createClient();
-  const { data: patients, error } = await supabase
+  let request = supabase
     .from("patients")
     .select(
       "id, first_name, last_name, email, sex, birth_date, sport, goal, created_at",
     )
     .order("created_at", { ascending: false });
+
+  if (query) {
+    // Se limpian comas y paréntesis: rompen la sintaxis de `.or()` de PostgREST.
+    const safe = query.replace(/[,()%]/g, " ").trim();
+    if (safe) {
+      request = request.or(
+        `first_name.ilike.%${safe}%,last_name.ilike.%${safe}%,email.ilike.%${safe}%`,
+      );
+    }
+  }
+
+  const { data: patients, error } = await request;
 
   return (
     <div className="space-y-8">
@@ -56,6 +75,17 @@ export default async function PatientsPage() {
           </Link>
         </div>
       </div>
+
+      <form action="/dashboard/patients" method="get" className="max-w-sm">
+        <input
+          type="search"
+          name="q"
+          defaultValue={query}
+          placeholder="Buscar por nombre o correo…"
+          className="input"
+          aria-label="Buscar pacientes"
+        />
+      </form>
 
       {error && (
         <div

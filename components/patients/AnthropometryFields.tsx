@@ -20,17 +20,39 @@ import {
  * %grasa por Durnin-Womersley. Lee sexo y fecha de nacimiento del resto del
  * formulario para poder clasificar el riesgo.
  */
-export function AnthropometryFields() {
+export function AnthropometryFields({
+  defaults = {},
+}: {
+  /** Valores iniciales (modo edición). Claves planas: weight_kg, fold_triceps_mm… */
+  defaults?: Record<string, unknown>;
+}) {
+  const initial = (key: string) => {
+    const raw = defaults[key];
+    return raw == null ? "" : String(raw);
+  };
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [values, setValues] = useState({
-    weight_kg: "",
-    height_cm: "",
-    body_fat_pct: "",
-    waist_cm: "",
-    hip_cm: "",
+    weight_kg: initial("weight_kg"),
+    height_cm: initial("height_cm"),
+    body_fat_pct: initial("body_fat_pct"),
+    waist_cm: initial("waist_cm"),
+    hip_cm: initial("hip_cm"),
   });
-  const [folds, setFolds] = useState<Record<string, string>>({});
-  const [girths, setGirths] = useState<Record<string, string>>({});
+  const [folds, setFolds] = useState<Record<string, string>>(
+    Object.fromEntries(
+      ISAK_FOLDS.map((fold) => [fold.key, initial(`fold_${fold.key}_mm`)]).filter(
+        ([, value]) => value !== "",
+      ),
+    ),
+  );
+  const [girths, setGirths] = useState<Record<string, string>>(
+    Object.fromEntries(
+      ISAK_GIRTHS.map((girth) => [girth.key, initial(girth.key)]).filter(
+        ([, value]) => value !== "",
+      ),
+    ),
+  );
   const [siblings, setSiblings] = useState<{ sex: string; birthDate: string }>({
     sex: "",
     birthDate: "",
